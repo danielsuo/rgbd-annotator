@@ -12,5 +12,10 @@ Right now, just works on Ubuntu. Tested on 15.04.
 ```bash
 npm start
 
-# navigate to 
+# navigate to http://localhost:8080
+```
+
+## Publishing to GitHub Pages
+```bash
+./scripts/publish "Commit message"
 ```
