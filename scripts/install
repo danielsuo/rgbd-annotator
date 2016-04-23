@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+if uname -a | grep -iq ubuntu; then
+  sudo apt-get install -y build-essential
+
+  curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+
+  sudo npm install -g webpack babel-cli
+
+  npm install
+else
+  echo 'Please use Ubuntu for now!'
+fi
