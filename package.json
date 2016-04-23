@@ -32,6 +32,9 @@
     "react-dom": "^0.14.3",
     "react-redux": "^4.0.0",
     "react-router": "^2.0.1",
-    "redux": "^3.0.4"
+    "react-three": "^0.9.1",
+    "redux": "^3.0.4",
+    "stats.js": "git+https://github.com/mrdoob/stats.js.git",
+    "three": "^0.76.1"
   }
 }
