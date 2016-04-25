@@ -14,10 +14,6 @@
 //   </Provider>
 //   , document.querySelector('.container'));
 
-// PRIORITY LOW
-// TODO: Handle window resize
-// TODO: Handle on mobile (touch input)
-
 import THREE from 'three';
 import Stats from 'stats.js';
 
@@ -43,9 +39,17 @@ animate();
 function init() {
 
   camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 1000 );
+  camera.position.x = 0.5;
+  camera.position.y = 0.5;
   camera.position.z = 0.5;
 
-  // resetControls('camera');
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+  camera.up.set(0, 0, 1);
+
+  var test = true;
+  test = false;
+
+  if (test) resetControls('camera');
 
   // world
 
@@ -58,14 +62,15 @@ function init() {
   var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
 
     model = new THREE.Mesh(geometry, material);
-    var ball = new ArcBallHelper(geometry);
-    model.add(ball);
+    // var ball = new ArcBallHelper(geometry);
+    // model.add(ball);
     scene.add(model);
 
-    resetControls('object');
-    controls.attach(model);
+    if (!test) {
+      resetControls('object');
+      controls.attach(model);
+    }
     
-    console.log('added!');
     render();
   });
 
@@ -116,15 +121,10 @@ function resetControls(mode) {
     controls.noZoom = false;
     controls.noPan = false;
 
-    controls.staticMoving = true;
-    controls.dynamicDampingFactor = 0.3;
-
     controls.keys = [ 65, 83, 68 ];
 
-    controls.addEventListener( 'change', render );
   } else if (mode === 'object') {
     controls = new TransformControls(camera, renderer.domElement);
-    controls.addEventListener( 'change', render );
     scene.add(controls);
 
     window.addEventListener( 'keydown', function ( event ) {
@@ -179,6 +179,13 @@ function resetControls(mode) {
 
     });
   }
+  
+  controls.rotateSpeed = 5.0;
+  controls.panSpeed = 0.8;
+
+  controls.staticMoving = true;
+  controls.dynamicDampingFactor = 0.3;
+  controls.addEventListener( 'change', render );
 }
 
 function onWindowResize() {

@@ -99,10 +99,6 @@
 	//   </Provider>
 	//   , document.querySelector('.container'));
 
-	// PRIORITY LOW
-	// TODO: Handle window resize
-	// TODO: Handle on mobile (touch input)
-
 	var container, stats;
 
 	var camera, controls, scene, renderer, light;
@@ -117,9 +113,17 @@
 	function init() {
 
 	  camera = new _three2.default.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 1000);
+	  camera.position.x = 0.5;
+	  camera.position.y = 0.5;
 	  camera.position.z = 0.5;
 
-	  // resetControls('camera');
+	  camera.lookAt(new _three2.default.Vector3(0, 0, 0));
+	  camera.up.set(0, 0, 1);
+
+	  var test = true;
+	  test = false;
+
+	  if (test) resetControls('camera');
 
 	  // world
 
@@ -132,14 +136,15 @@
 	    var material = new _three2.default.MeshPhongMaterial({ color: 0xffffff, shading: _three2.default.FlatShading });
 
 	    model = new _three2.default.Mesh(geometry, material);
-	    var ball = new _ArcBallHelper2.default(geometry);
-	    model.add(ball);
+	    // var ball = new ArcBallHelper(geometry);
+	    // model.add(ball);
 	    scene.add(model);
 
-	    resetControls('object');
-	    controls.attach(model);
+	    if (!test) {
+	      resetControls('object');
+	      controls.attach(model);
+	    }
 
-	    console.log('added!');
 	    render();
 	  });
 
@@ -189,15 +194,9 @@
 	    controls.noZoom = false;
 	    controls.noPan = false;
 
-	    controls.staticMoving = true;
-	    controls.dynamicDampingFactor = 0.3;
-
 	    controls.keys = [65, 83, 68];
-
-	    controls.addEventListener('change', render);
 	  } else if (mode === 'object') {
 	    controls = new _TransformControls2.default(camera, renderer.domElement);
-	    controls.addEventListener('change', render);
 	    scene.add(controls);
 
 	    window.addEventListener('keydown', function (event) {
@@ -258,6 +257,13 @@
 	      }
 	    });
 	  }
+
+	  controls.rotateSpeed = 5.0;
+	  controls.panSpeed = 0.8;
+
+	  controls.staticMoving = true;
+	  controls.dynamicDampingFactor = 0.3;
+	  controls.addEventListener('change', render);
 	}
 
 	function onWindowResize() {
@@ -42077,7 +42083,7 @@
 	TransformGizmo.prototype = Object.create(_three2.default.Object3D.prototype);
 	TransformGizmo.prototype.constructor = TransformGizmo;
 
-	TransformGizmo.prototype.update = function (rotation, eye) {
+	TransformGizmo.prototype.update = function (rotation, eyeObject) {
 
 	  var vec1 = new _three2.default.Vector3(0, 0, 0);
 	  var vec2 = new _three2.default.Vector3(0, 1, 0);
@@ -42087,7 +42093,7 @@
 
 	    if (child.name.search("E") !== -1) {
 
-	      child.quaternion.setFromRotationMatrix(lookAtMatrix.lookAt(eye, vec1, vec2));
+	      child.quaternion.setFromRotationMatrix(lookAtMatrix.lookAt(eyeObject, vec1, vec2));
 	    } else if (child.name.search("X") !== -1 || child.name.search("Y") !== -1 || child.name.search("Z") !== -1) {
 
 	      child.quaternion.setFromEuler(rotation);
@@ -42151,30 +42157,30 @@
 
 	  };
 
-	  this.setActivePlane = function (axis, eye) {
+	  this.setActivePlane = function (axis, eyeObject) {
 
 	    var tempMatrix = new _three2.default.Matrix4();
-	    eye.applyMatrix4(tempMatrix.getInverse(tempMatrix.extractRotation(this.planes["XY"].matrixWorld)));
+	    eyeObject.applyMatrix4(tempMatrix.getInverse(tempMatrix.extractRotation(this.planes["XY"].matrixWorld)));
 
 	    if (axis === "X") {
 
 	      this.activePlane = this.planes["XY"];
 
-	      if (Math.abs(eye.y) > Math.abs(eye.z)) this.activePlane = this.planes["XZ"];
+	      if (Math.abs(eyeObject.y) > Math.abs(eyeObject.z)) this.activePlane = this.planes["XZ"];
 	    }
 
 	    if (axis === "Y") {
 
 	      this.activePlane = this.planes["XY"];
 
-	      if (Math.abs(eye.x) > Math.abs(eye.z)) this.activePlane = this.planes["YZ"];
+	      if (Math.abs(eyeObject.x) > Math.abs(eyeObject.z)) this.activePlane = this.planes["YZ"];
 	    }
 
 	    if (axis === "Z") {
 
 	      this.activePlane = this.planes["XZ"];
 
-	      if (Math.abs(eye.x) > Math.abs(eye.y)) this.activePlane = this.planes["YZ"];
+	      if (Math.abs(eyeObject.x) > Math.abs(eyeObject.y)) this.activePlane = this.planes["YZ"];
 	    }
 
 	    if (axis === "XYZ") this.activePlane = this.planes["XYZE"];
@@ -42273,13 +42279,13 @@
 	    var quaternionX = new _three2.default.Quaternion();
 	    var quaternionY = new _three2.default.Quaternion();
 	    var quaternionZ = new _three2.default.Quaternion();
-	    var eye = eye2.clone();
+	    var eyeObject = eye2.clone();
 
 	    worldRotation.copy(this.planes["XY"].rotation);
 	    tempQuaternion.setFromEuler(worldRotation);
 
 	    tempMatrix.makeRotationFromQuaternion(tempQuaternion).getInverse(tempMatrix);
-	    eye.applyMatrix4(tempMatrix);
+	    eyeObject.applyMatrix4(tempMatrix);
 
 	    this.traverse(function (child) {
 
@@ -42287,21 +42293,21 @@
 
 	      if (child.name === "X") {
 
-	        quaternionX.setFromAxisAngle(unitX, Math.atan2(-eye.y, eye.z));
+	        quaternionX.setFromAxisAngle(unitX, Math.atan2(-eyeObject.y, eyeObject.z));
 	        tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
 	        child.quaternion.copy(tempQuaternion);
 	      }
 
 	      if (child.name === "Y") {
 
-	        quaternionY.setFromAxisAngle(unitY, Math.atan2(eye.x, eye.z));
+	        quaternionY.setFromAxisAngle(unitY, Math.atan2(eyeObject.x, eyeObject.z));
 	        tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionY);
 	        child.quaternion.copy(tempQuaternion);
 	      }
 
 	      if (child.name === "Z") {
 
-	        quaternionZ.setFromAxisAngle(unitZ, Math.atan2(eye.y, eye.x));
+	        quaternionZ.setFromAxisAngle(unitZ, Math.atan2(eyeObject.y, eyeObject.x));
 	        tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionZ);
 	        child.quaternion.copy(tempQuaternion);
 	      }
@@ -42358,27 +42364,27 @@
 
 	  };
 
-	  this.setActivePlane = function (axis, eye) {
+	  this.setActivePlane = function (axis, eyeObject) {
 
 	    var tempMatrix = new _three2.default.Matrix4();
-	    eye.applyMatrix4(tempMatrix.getInverse(tempMatrix.extractRotation(this.planes["XY"].matrixWorld)));
+	    eyeObject.applyMatrix4(tempMatrix.getInverse(tempMatrix.extractRotation(this.planes["XY"].matrixWorld)));
 
 	    if (axis === "X") {
 
 	      this.activePlane = this.planes["XY"];
-	      if (Math.abs(eye.y) > Math.abs(eye.z)) this.activePlane = this.planes["XZ"];
+	      if (Math.abs(eyeObject.y) > Math.abs(eyeObject.z)) this.activePlane = this.planes["XZ"];
 	    }
 
 	    if (axis === "Y") {
 
 	      this.activePlane = this.planes["XY"];
-	      if (Math.abs(eye.x) > Math.abs(eye.z)) this.activePlane = this.planes["YZ"];
+	      if (Math.abs(eyeObject.x) > Math.abs(eyeObject.z)) this.activePlane = this.planes["YZ"];
 	    }
 
 	    if (axis === "Z") {
 
 	      this.activePlane = this.planes["XZ"];
-	      if (Math.abs(eye.x) > Math.abs(eye.y)) this.activePlane = this.planes["YZ"];
+	      if (Math.abs(eyeObject.x) > Math.abs(eyeObject.y)) this.activePlane = this.planes["YZ"];
 	    }
 
 	    if (axis === "XYZ") this.activePlane = this.planes["XYZE"];
@@ -42445,8 +42451,8 @@
 	  var scale = 1;
 
 	  var lookAtMatrix = new _three2.default.Matrix4();
-	  var eye = new _three2.default.Vector3();
-	  var eyeWorld = new _three2.default.Vector3();
+	  var eyeObject = new _three2.default.Vector3();
+	  var eyeCamera = new _three2.default.Vector3();
 
 	  var tempMatrix = new _three2.default.Matrix4();
 	  var tempVector = new _three2.default.Vector3();
@@ -42474,17 +42480,34 @@
 	  var camPosition = new _three2.default.Vector3();
 	  var camRotation = new _three2.default.Euler();
 
+	  // Object size
+	  this.radius = 0;
+
 	  // Camera moving
+	  var EPS = 0.000001;
 	  var target = new _three2.default.Vector3();
 
+	  var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
+	  var currState = STATE.NONE;
+	  var prevState = STATE.NONE;
+
+	  // Camera zoom
 	  var zoomStart = new _three2.default.Vector2();
 	  var zoomEnd = new _three2.default.Vector2();
-	  var zoomSpeed = 1.2;
-	  var staticMoving = false;
-	  var dynamicDampingFactor = 0.2;
 
-	  var EPS = 0.000001;
+	  this.zoomSpeed = 1.2;
+	  this.staticMoving = false;
+	  this.dynamicDampingFactor = 0.2;
 
+	  // Camera pan
+	  var panStart = new _three2.default.Vector2();
+	  var panEnd = new _three2.default.Vector2();
+
+	  this.screen = { left: 0, top: 0, width: 0, height: 0 };
+
+	  this.panSpeed = 0.3;
+
+	  domElement.addEventListener('contextmenu', contextmenu, false);
 	  domElement.addEventListener("mousedown", onPointerDown, false);
 	  domElement.addEventListener("touchstart", onPointerDown, false);
 
@@ -42504,6 +42527,7 @@
 
 	  this.dispose = function () {
 
+	    domElement.removeEventListener("contextmenu", contextmenu);
 	    domElement.removeEventListener("mousedown", onPointerDown);
 	    domElement.removeEventListener("touchstart", onPointerDown);
 
@@ -42521,10 +42545,41 @@
 	    domElement.removeEventListener('mousewheel', OnMouseWheel);
 	  };
 
+	  this.handleResize = function () {
+
+	    if (this.domElement === document) {
+
+	      this.screen.left = 0;
+	      this.screen.top = 0;
+	      this.screen.width = window.innerWidth;
+	      this.screen.height = window.innerHeight;
+	    } else {
+
+	      var box = domElement.getBoundingClientRect();
+	      // adjustments come from similar code in the jquery offset() function
+	      var d = domElement.ownerDocument.documentElement;
+	      this.screen.left = box.left + window.pageXOffset - d.clientLeft;
+	      this.screen.top = box.top + window.pageYOffset - d.clientTop;
+	      this.screen.width = box.width;
+	      this.screen.height = box.height;
+	    }
+	  };
+
+	  this.handleResize();
+
+	  this.handleEvent = function (event) {
+
+	    if (typeof this[event.type] == 'function') {
+
+	      this[event.type](event);
+	    }
+	  };
+
 	  this.attach = function (object) {
 
 	    this.object = object;
 	    this.visible = true;
+	    this.radius = getObjectSize(object);
 	    this.update();
 	  };
 
@@ -42588,56 +42643,85 @@
 	    camPosition.setFromMatrixPosition(camera.matrixWorld);
 	    camRotation.setFromRotationMatrix(tempMatrix.extractRotation(camera.matrixWorld));
 
-	    scale = worldPosition.distanceTo(camPosition) / 6 * scope.size;
+	    // scale = worldPosition.distanceTo( camPosition ) / 6 * scope.size;
 	    this.position.copy(worldPosition);
-	    this.scale.set(scale, scale, scale);
+	    // this.scale.set( scale, scale, scale );
+	    this.scale.set(this.radius, this.radius, this.radius);
 
-	    eye.copy(camPosition).sub(worldPosition).normalize();
+	    eyeObject.copy(camPosition).sub(worldPosition).normalize();
 
 	    if (scope.space === "local") {
 
-	      _gizmo[_mode].update(worldRotation, eye);
+	      _gizmo[_mode].update(worldRotation, eyeObject);
 	    } else if (scope.space === "world") {
 
-	      _gizmo[_mode].update(new _three2.default.Euler(), eye);
+	      _gizmo[_mode].update(new _three2.default.Euler(), eyeObject);
 	    }
 
 	    _gizmo[_mode].highlight(scope.axis);
 
-	    eyeWorld.subVectors(camera.position, target);
+	    eyeCamera.subVectors(camera.position, target);
+	    scope.panCamera();
 	    scope.zoomCamera();
-	    camera.position.addVectors(target, eyeWorld);
+	    zoomStart.copy(zoomEnd);
+	    camera.position.addVectors(target, eyeCamera);
 	    camera.lookAt(target);
+
+	    scope.dispatchEvent(changeEvent);
 	  };
+
+	  this.rotateCamera = function () {
+	    var axis = new _three2.default.Vector3();
+	    var quaternion = new _three2.default.Quaternion();
+	    var eyeDirection = new _three2.default.Vector3();
+	    var cameraUp = new _three2.default.Vector3();
+	    var cameraSidewaysDirection = new _three2.default.Vector3();
+	  }();
+
+	  this.panCamera = function () {
+
+	    var mouseChange = new _three2.default.Vector2();
+	    var cameraUp = new _three2.default.Vector3();
+	    var pan = new _three2.default.Vector3();
+
+	    return function panCamera() {
+	      mouseChange.copy(panEnd).sub(panStart);
+
+	      if (mouseChange.lengthSq()) {
+	        mouseChange.multiplyScalar(eyeCamera.length() * this.panSpeed);
+	        pan.copy(eyeCamera).cross(camera.up).setLength(mouseChange.x);
+	        pan.add(cameraUp.copy(camera.up).setLength(mouseChange.y));
+
+	        camera.position.add(pan);
+	        target.add(pan);
+
+	        if (this.staticMoving) {
+	          panStart.copy(panEnd);
+	        } else {
+	          panStart.add(mouseChange.subVectors(panEnd, panStart).multiplyScalar(this.dynamicDampingFactor));
+	        }
+	      }
+	    };
+	  }();
 
 	  this.zoomCamera = function () {
 
 	    var factor;
 
-	    // if ( _state === STATE.TOUCH_ZOOM_PAN ) {
-
-	    //   factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
-	    //   _touchZoomDistanceStart = _touchZoomDistanceEnd;
-	    //   _eye.multiplyScalar( factor );
-
-	    // } else {
-
-	    factor = 1.0 + (zoomEnd.y - zoomStart.y) * zoomSpeed;
+	    factor = 1.0 + (zoomEnd.y - zoomStart.y) * this.zoomSpeed;
 
 	    if (factor !== 1.0 && factor > 0.0) {
 
-	      eyeWorld.multiplyScalar(factor);
+	      eyeCamera.multiplyScalar(factor);
 
-	      if (staticMoving) {
+	      if (this.staticMoving) {
 
 	        zoomStart.copy(zoomEnd);
 	      } else {
 
-	        zoomStart.y += (zoomEnd.y - zoomStart.y) * dynamicDampingFactor;
+	        zoomStart.y += (zoomEnd.y - zoomStart.y) * this.dynamicDampingFactor;
 	      }
 	    }
-
-	    // }
 	  };
 
 	  function onPointerHover(event) {
@@ -42667,18 +42751,19 @@
 
 	  function onPointerDown(event) {
 
-	    if (scope.object === undefined || _dragging === true || event.button !== undefined && event.button !== 0) return;
+	    if (scope.object === undefined || _dragging === true) return;
+
+	    event.preventDefault();
+	    event.stopPropagation();
 
 	    var pointer = event.changedTouches ? event.changedTouches[0] : event;
+	    var intersect = false;
 
 	    if (pointer.button === 0 || pointer.button === undefined) {
 
-	      var intersect = intersectObjects(pointer, _gizmo[_mode].pickers.children);
+	      intersect = intersectObjects(pointer, _gizmo[_mode].pickers.children);
 
 	      if (intersect) {
-
-	        event.preventDefault();
-	        event.stopPropagation();
 
 	        scope.dispatchEvent(mouseDownEvent);
 
@@ -42686,9 +42771,9 @@
 
 	        scope.update();
 
-	        eye.copy(camPosition).sub(worldPosition).normalize();
+	        eyeObject.copy(camPosition).sub(worldPosition).normalize();
 
-	        _gizmo[_mode].setActivePlane(scope.axis, eye);
+	        _gizmo[_mode].setActivePlane(scope.axis, eyeObject);
 
 	        var planeIntersect = intersectObjects(pointer, [_gizmo[_mode].activePlane]);
 
@@ -42708,12 +42793,54 @@
 	      }
 	    }
 
+	    if (!intersect) {
+
+	      if (currState === STATE.NONE) {
+	        currState = pointer.button;
+	      }
+
+	      if (currState === STATE.ROTATE) {} else if (currState === STATE.ZOOM) {} else if (currState === STATE.PAN) {
+	        panStart.copy(getMouseOnScreen(event.pageX, event.pageY));
+	        panEnd.copy(panStart);
+	      }
+
+	      document.addEventListener('mousemove', mousemove, false);
+	      document.addEventListener('mouseup', mouseup, false);
+
+	      scope.dispatchEvent(startEvent);
+	    }
+
 	    _dragging = true;
+	  }
+
+	  function mousemove(event) {
+	    event.preventDefault();
+	    event.stopPropagation();
+
+	    if (currState === STATE.NONE) {
+	      currState = pointer.button;
+	    }
+
+	    if (currState === STATE.ROTATE) {} else if (currState === STATE.ZOOM) {} else if (currState === STATE.PAN) {
+	      panEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
+	    }
+	  }
+
+	  function mouseup(event) {
+	    event.preventDefault();
+	    event.stopPropagation();
+
+	    currState = STATE.NONE;
+
+	    document.removeEventListener('mousemove', mousemove);
+	    document.removeEventListener('mouseup', mouseup);
+
+	    scope.dispatchEvent(endEvent);
 	  }
 
 	  function onPointerMove(event) {
 
-	    if (scope.object === undefined || scope.axis === null || _dragging === false || event.button !== undefined && event.button !== 0) return;
+	    if (scope.object === undefined || scope.axis === null || _dragging === false) return;
 
 	    var pointer = event.changedTouches ? event.changedTouches[0] : event;
 
@@ -42813,7 +42940,7 @@
 
 	        tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(parentRotationMatrix));
 
-	        quaternionE.setFromAxisAngle(eye, rotation.z - offsetRotation.z);
+	        quaternionE.setFromAxisAngle(eyeObject, rotation.z - offsetRotation.z);
 	        quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
 
 	        tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionE);
@@ -42898,7 +43025,7 @@
 
 	  function onPointerUp(event) {
 
-	    if (event.button !== undefined && event.button !== 0) return;
+	    // if ( event.button !== undefined && event.button !== 0 ) return;
 
 	    if (_dragging && scope.axis !== null) {
 
@@ -42932,7 +43059,6 @@
 	    }
 
 	    zoomStart.y += delta * 0.01;
-	    console.log(zoomStart.y);
 
 	    scope.dispatchEvent(startEvent);
 	    scope.dispatchEvent(endEvent);
@@ -42949,6 +43075,46 @@
 
 	    var intersections = ray.intersectObjects(objects, true);
 	    return intersections[0] ? intersections[0] : false;
+	  }
+
+	  function getObjectSize(object) {
+	    var x_min = Number.MAX_VALUE;
+	    var y_min = Number.MAX_VALUE;
+	    var z_min = Number.MAX_VALUE;
+	    var x_max = -Number.MAX_VALUE;
+	    var y_max = -Number.MAX_VALUE;
+	    var z_max = -Number.MAX_VALUE;
+
+	    var geometry = object.geometry;
+
+	    for (var i = 0; i < geometry.vertices.length; i++) {
+	      var vertex = geometry.vertices[i];
+
+	      if (vertex.x > x_max) x_max = vertex.x;else if (vertex.x < x_min) x_min = vertex.x;
+
+	      if (vertex.y > y_max) y_max = vertex.y;else if (vertex.y < y_min) y_min = vertex.y;
+
+	      if (vertex.z > z_max) z_max = vertex.z;else if (vertex.z < z_min) z_min = vertex.z;
+	    }
+
+	    return Math.max(x_max - x_min, y_max - y_min, z_max - z_min) / 2;
+	  }
+
+	  var getMouseOnScreen = function () {
+
+	    var vector = new _three2.default.Vector2();
+
+	    return function getMouseOnScreen(pageX, pageY) {
+
+	      vector.set((pageX - scope.screen.left) / scope.screen.width, (pageY - scope.screen.top) / scope.screen.height);
+
+	      return vector;
+	    };
+	  }();
+
+	  function contextmenu(event) {
+
+	    event.preventDefault();
 	  }
 	};
 
@@ -43393,7 +43559,7 @@
 	    }
 
 	    _zoomStart.y += delta * 0.01;
-	    console.log(_zoomStart.y);
+
 	    _this.dispatchEvent(startEvent);
 	    _this.dispatchEvent(endEvent);
 	  }
@@ -44007,8 +44173,6 @@
 	  }
 
 	  var radius = Math.max(x_max - x_min, y_max - y_min, z_max - z_min) / 2;
-
-	  console.log(radius);
 
 	  var x_geo = new _three2.default.CircleGeometry(radius, 64);
 	  var x_mat = new _three2.default.LineBasicMaterial({ color: 0xff0000 });

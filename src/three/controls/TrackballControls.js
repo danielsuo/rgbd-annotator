@@ -492,7 +492,7 @@ var TrackballControls = function ( object, domElement ) {
     }
 
     _zoomStart.y += delta * 0.01;
-    console.log(_zoomStart.y)
+    
     _this.dispatchEvent( startEvent );
     _this.dispatchEvent( endEvent );
 

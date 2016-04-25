@@ -27,8 +27,6 @@ var ArcBallHelper = function(geometry) {
 
   var radius = Math.max(x_max - x_min, y_max - y_min, z_max - z_min) / 2;
 
-  console.log(radius);
-
   var x_geo = new THREE.CircleGeometry(radius, 64);
   var x_mat = new THREE.LineBasicMaterial( { color: 0xff0000 } );
   var x_arc = new THREE.Line(x_geo, x_mat);
