@@ -25,7 +25,8 @@ import ArcBallHelper from './three/helpers/ArcBallHelper';
 
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
-var container, stats;
+var container = document.getElementById( 'container' );
+var stats;
 
 var camera, controls, scene, renderer, light;
 
@@ -38,7 +39,7 @@ animate();
 
 function init() {
 
-  camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 1000 );
+  camera = new THREE.PerspectiveCamera( 60, container.offsetWidth / container.offsetHeight, 0.01, 1000 );
   camera.position.x = 0.5;
   camera.position.y = 0.5;
   camera.position.z = 0.5;
@@ -94,10 +95,8 @@ function init() {
 
   renderer = new THREE.WebGLRenderer( { antialias: false } );
   renderer.setClearColor( scene.fog.color );
-  renderer.setPixelRatio( window.devicePixelRatio );
-  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.setSize( container.offsetWidth - 12, container.offsetHeight );
 
-  container = document.getElementById( 'container' );
   container.appendChild( renderer.domElement );
 
   stats = new Stats();
@@ -106,7 +105,6 @@ function init() {
   window.addEventListener( 'resize', onWindowResize, false );
 
   render();
-
 }
 
 function resetControls(mode) {
@@ -184,10 +182,10 @@ function resetControls(mode) {
 
 function onWindowResize() {
 
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = container.offsetWidth / container.offsetHeight;
   camera.updateProjectionMatrix();
 
-  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.setSize( container.offsetWidth, container.offsetHeight );
 
   controls.handleResize();
 

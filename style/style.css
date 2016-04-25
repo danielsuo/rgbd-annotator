@@ -1,0 +1,16 @@
+#container {
+  margin: 0px;
+  width: 80%;
+  height: 100vh;
+  background-color: red;
+  float: left;
+}
+
+#panel {
+  margin: 0px;
+  width: 20%;
+  height: 100vh;
+  /*position: absolute;*/
+  float: right;
+  background-color: yellow;
+}

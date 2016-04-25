@@ -99,7 +99,8 @@
 	//   </Provider>
 	//   , document.querySelector('.container'));
 
-	var container, stats;
+	var container = document.getElementById('container');
+	var stats;
 
 	var camera, controls, scene, renderer, light;
 
@@ -112,7 +113,7 @@
 
 	function init() {
 
-	  camera = new _three2.default.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 1000);
+	  camera = new _three2.default.PerspectiveCamera(60, container.offsetWidth / container.offsetHeight, 0.01, 1000);
 	  camera.position.x = 0.5;
 	  camera.position.y = 0.5;
 	  camera.position.z = 0.5;
@@ -168,10 +169,8 @@
 
 	  renderer = new _three2.default.WebGLRenderer({ antialias: false });
 	  renderer.setClearColor(scene.fog.color);
-	  renderer.setPixelRatio(window.devicePixelRatio);
-	  renderer.setSize(window.innerWidth, window.innerHeight);
+	  renderer.setSize(container.offsetWidth - 12, container.offsetHeight);
 
-	  container = document.getElementById('container');
 	  container.appendChild(renderer.domElement);
 
 	  stats = new _stats2.default();
@@ -264,10 +263,10 @@
 
 	function onWindowResize() {
 
-	  camera.aspect = window.innerWidth / window.innerHeight;
+	  camera.aspect = container.offsetWidth / container.offsetHeight;
 	  camera.updateProjectionMatrix();
 
-	  renderer.setSize(window.innerWidth, window.innerHeight);
+	  renderer.setSize(container.offsetWidth, container.offsetHeight);
 
 	  controls.handleResize();
 

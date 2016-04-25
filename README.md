@@ -32,6 +32,4 @@ npm start
 - Start camera at camera position where depth was taken
 
 ### Low priority
-- Handle window resize
 - Handle on mobile (touch input)
-- Resize handles on zoom
