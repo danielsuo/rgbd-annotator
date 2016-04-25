@@ -113,16 +113,6 @@ function resetControls(mode) {
 
   if (mode === 'camera') {
     controls = new TrackballControls( camera );
-
-    controls.rotateSpeed = 5.0;
-    controls.zoomSpeed = 1.2;
-    controls.panSpeed = 0.8;
-
-    controls.noZoom = false;
-    controls.noPan = false;
-
-    controls.keys = [ 65, 83, 68 ];
-
   } else if (mode === 'object') {
     controls = new TransformControls(camera, renderer.domElement);
     scene.add(controls);
@@ -152,6 +142,10 @@ function resetControls(mode) {
           controls.setMode( "scale" );
           break;
 
+        case 65: // 
+          controls.reset();
+          break;
+
         case 187:
         case 107: // +, =, num+
           controls.setSize( controls.size + 0.1 );
@@ -179,7 +173,7 @@ function resetControls(mode) {
 
     });
   }
-  
+  controls.rotateSpeed = 5.0;
   controls.rotateSpeed = 5.0;
   controls.panSpeed = 0.8;
 

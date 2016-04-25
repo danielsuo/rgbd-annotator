@@ -22,6 +22,15 @@ npm start
 
 ## TODO
 
+### High priority
+- Load depth / color data as point cloud
+- URL routing
+- Export to python script
+- Reproject model on color image
+
+### Medium priority
+- Start camera at camera position where depth was taken
+
 ### Low priority
 - Handle window resize
 - Handle on mobile (touch input)

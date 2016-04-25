@@ -689,6 +689,12 @@ var TransformControls = function ( camera, domElement ) {
   var EPS = 0.000001;
   var target = new THREE.Vector3();
 
+  // for reset
+  var target0 = target.clone();
+  var position0 = camera.position.clone();
+  var up0 = camera.up.clone();
+
+  this.screen = { left: 0, top: 0, width: 0, height: 0 };
   var STATE = { NONE: - 1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
   var currState = STATE.NONE;
   var prevState = STATE.NONE;
@@ -705,9 +711,15 @@ var TransformControls = function ( camera, domElement ) {
   var panStart = new THREE.Vector2();
   var panEnd = new THREE.Vector2();
 
-  this.screen = { left: 0, top: 0, width: 0, height: 0 };
-
   this.panSpeed = 0.3;
+
+  // Camera rotate
+  var rotatePrev = new THREE.Vector2();
+  var rotateCurr = new THREE.Vector2();
+  var lastAxis = new THREE.Vector3();
+  var lastAngle = 0;
+
+  this.rotateSpeed = 1.0;
 
   domElement.addEventListener( 'contextmenu', contextmenu, false );
   domElement.addEventListener( "mousedown", onPointerDown, false );
@@ -879,6 +891,7 @@ var TransformControls = function ( camera, domElement ) {
     _gizmo[ _mode ].highlight( scope.axis );
 
     eyeCamera.subVectors(camera.position, target);
+    scope.rotateCamera();
     scope.panCamera();
     scope.zoomCamera();
     zoomStart.copy( zoomEnd );
@@ -893,7 +906,46 @@ var TransformControls = function ( camera, domElement ) {
     var quaternion = new THREE.Quaternion();
     var eyeDirection = new THREE.Vector3();
     var cameraUp = new THREE.Vector3();
-    var cameraSidewaysDirection = new THREE.Vector3();
+    var cameraSideways = new THREE.Vector3();
+    var moveDirection = new THREE.Vector3();
+    var angle;
+
+    return function rotateCamera() {
+      moveDirection.set(rotateCurr.x - rotatePrev.x, rotateCurr.y - rotatePrev.y, 0);
+      angle = moveDirection.length();
+
+      if (angle) {
+        eyeCamera.copy(camera.position).sub(target);
+
+        eyeDirection.copy(eyeCamera).normalize();
+        cameraUp.copy(camera.up).normalize();
+        cameraSideways.crossVectors(cameraUp, eyeDirection).normalize();
+
+        cameraUp.setLength(rotateCurr.y - rotatePrev.y);
+        cameraSideways.setLength(rotateCurr.x - rotatePrev.x);
+
+        moveDirection.copy(cameraUp.add(cameraSideways));
+
+        axis.crossVectors(moveDirection, eyeCamera).normalize();
+
+        angle *= scope.rotateSpeed;
+        quaternion.setFromAxisAngle(axis, angle);
+
+        eyeCamera.applyQuaternion(quaternion);
+        camera.up.applyQuaternion(quaternion);
+
+        lastAxis.copy(axis);
+        lastAngle = angle;
+      } else if (!scope.staticMoving && lastAngle) {
+        lastAngle *= Math.sqrt(1.0 - scope.dynamicDampingFactor);
+        eyeCamera.copy(camera.position).sub(target);
+        quaternion.setFromAxisAngle(lastAxis, lastAngle);
+        eyeCamera.applyQuaternion(quaternion);
+        cameraUp.applyQuaternion(quaternion);
+      }
+
+      rotatePrev.copy(rotateCurr);
+    };
     
   }() );
 
@@ -907,17 +959,17 @@ var TransformControls = function ( camera, domElement ) {
       mouseChange.copy(panEnd).sub(panStart);
 
       if (mouseChange.lengthSq()) {
-        mouseChange.multiplyScalar(eyeCamera.length() * this.panSpeed);
+        mouseChange.multiplyScalar(eyeCamera.length() * scope.panSpeed);
         pan.copy(eyeCamera).cross(camera.up).setLength(mouseChange.x);
         pan.add(cameraUp.copy(camera.up).setLength(mouseChange.y));
 
         camera.position.add(pan);
         target.add(pan);
 
-        if (this.staticMoving) {
+        if (scope.staticMoving) {
           panStart.copy(panEnd);
         } else {
-          panStart.add(mouseChange.subVectors(panEnd, panStart).multiplyScalar(this.dynamicDampingFactor));
+          panStart.add(mouseChange.subVectors(panEnd, panStart).multiplyScalar(scope.dynamicDampingFactor));
         }
       }
     };
@@ -947,6 +999,20 @@ var TransformControls = function ( camera, domElement ) {
     }
 
   };
+
+  this.reset = function() {
+    currState = STATE.NONE;
+    prevState = STATE.NONE;
+
+    target.copy(target0);
+    camera.position.copy(position0);
+    camera.up.copy(up0);
+
+    eyeCamera.subVectors(camera.position, target);
+    camera.lookAt(target);
+
+    scope.dispatchEvent(changeEvent);
+  }
 
   function onPointerHover( event ) {
 
@@ -1030,7 +1096,8 @@ var TransformControls = function ( camera, domElement ) {
       }
 
       if (currState === STATE.ROTATE) {
-
+        rotateCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
+        rotatePrev.copy(rotateCurr);
       } else if (currState === STATE.ZOOM) {
 
       } else if (currState === STATE.PAN) {
@@ -1057,7 +1124,8 @@ var TransformControls = function ( camera, domElement ) {
     }
 
     if (currState === STATE.ROTATE) {
-
+      rotatePrev.copy(rotateCurr);
+      rotateCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
     } else if (currState === STATE.ZOOM) {
 
     } else if (currState === STATE.PAN) {
@@ -1383,6 +1451,19 @@ var TransformControls = function ( camera, domElement ) {
 
     };
 
+  }() );
+
+  var getMouseOnCircle = ( function() {
+    var vector = new THREE.Vector2();
+
+    return function getMouseOnCircle(pageX, pageY) {
+      vector.set(
+        ((pageX - scope.screen.width * 0.5 - scope.screen.left) / (scope.screen.width * 0.5)),
+        ((scope.screen.height + 2 * (scope.screen.top - pageY)) / scope.screen.width)
+        );
+
+      return vector;
+    };
   }() );
 
   function contextmenu( event ) {

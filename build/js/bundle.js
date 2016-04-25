@@ -186,15 +186,6 @@
 
 	  if (mode === 'camera') {
 	    controls = new _TrackballControls2.default(camera);
-
-	    controls.rotateSpeed = 5.0;
-	    controls.zoomSpeed = 1.2;
-	    controls.panSpeed = 0.8;
-
-	    controls.noZoom = false;
-	    controls.noPan = false;
-
-	    controls.keys = [65, 83, 68];
 	  } else if (mode === 'object') {
 	    controls = new _TransformControls2.default(camera, renderer.domElement);
 	    scene.add(controls);
@@ -229,6 +220,11 @@
 	          controls.setMode("scale");
 	          break;
 
+	        case 65:
+	          //
+	          controls.reset();
+	          break;
+
 	        case 187:
 	        case 107:
 	          // +, =, num+
@@ -257,7 +253,7 @@
 	      }
 	    });
 	  }
-
+	  controls.rotateSpeed = 5.0;
 	  controls.rotateSpeed = 5.0;
 	  controls.panSpeed = 0.8;
 
@@ -42487,6 +42483,12 @@
 	  var EPS = 0.000001;
 	  var target = new _three2.default.Vector3();
 
+	  // for reset
+	  var target0 = target.clone();
+	  var position0 = camera.position.clone();
+	  var up0 = camera.up.clone();
+
+	  this.screen = { left: 0, top: 0, width: 0, height: 0 };
 	  var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
 	  var currState = STATE.NONE;
 	  var prevState = STATE.NONE;
@@ -42503,9 +42505,15 @@
 	  var panStart = new _three2.default.Vector2();
 	  var panEnd = new _three2.default.Vector2();
 
-	  this.screen = { left: 0, top: 0, width: 0, height: 0 };
-
 	  this.panSpeed = 0.3;
+
+	  // Camera rotate
+	  var rotatePrev = new _three2.default.Vector2();
+	  var rotateCurr = new _three2.default.Vector2();
+	  var lastAxis = new _three2.default.Vector3();
+	  var lastAngle = 0;
+
+	  this.rotateSpeed = 1.0;
 
 	  domElement.addEventListener('contextmenu', contextmenu, false);
 	  domElement.addEventListener("mousedown", onPointerDown, false);
@@ -42661,6 +42669,7 @@
 	    _gizmo[_mode].highlight(scope.axis);
 
 	    eyeCamera.subVectors(camera.position, target);
+	    scope.rotateCamera();
 	    scope.panCamera();
 	    scope.zoomCamera();
 	    zoomStart.copy(zoomEnd);
@@ -42675,7 +42684,46 @@
 	    var quaternion = new _three2.default.Quaternion();
 	    var eyeDirection = new _three2.default.Vector3();
 	    var cameraUp = new _three2.default.Vector3();
-	    var cameraSidewaysDirection = new _three2.default.Vector3();
+	    var cameraSideways = new _three2.default.Vector3();
+	    var moveDirection = new _three2.default.Vector3();
+	    var angle;
+
+	    return function rotateCamera() {
+	      moveDirection.set(rotateCurr.x - rotatePrev.x, rotateCurr.y - rotatePrev.y, 0);
+	      angle = moveDirection.length();
+
+	      if (angle) {
+	        eyeCamera.copy(camera.position).sub(target);
+
+	        eyeDirection.copy(eyeCamera).normalize();
+	        cameraUp.copy(camera.up).normalize();
+	        cameraSideways.crossVectors(cameraUp, eyeDirection).normalize();
+
+	        cameraUp.setLength(rotateCurr.y - rotatePrev.y);
+	        cameraSideways.setLength(rotateCurr.x - rotatePrev.x);
+
+	        moveDirection.copy(cameraUp.add(cameraSideways));
+
+	        axis.crossVectors(moveDirection, eyeCamera).normalize();
+
+	        angle *= scope.rotateSpeed;
+	        quaternion.setFromAxisAngle(axis, angle);
+
+	        eyeCamera.applyQuaternion(quaternion);
+	        camera.up.applyQuaternion(quaternion);
+
+	        lastAxis.copy(axis);
+	        lastAngle = angle;
+	      } else if (!scope.staticMoving && lastAngle) {
+	        lastAngle *= Math.sqrt(1.0 - scope.dynamicDampingFactor);
+	        eyeCamera.copy(camera.position).sub(target);
+	        quaternion.setFromAxisAngle(lastAxis, lastAngle);
+	        eyeCamera.applyQuaternion(quaternion);
+	        cameraUp.applyQuaternion(quaternion);
+	      }
+
+	      rotatePrev.copy(rotateCurr);
+	    };
 	  }();
 
 	  this.panCamera = function () {
@@ -42688,17 +42736,17 @@
 	      mouseChange.copy(panEnd).sub(panStart);
 
 	      if (mouseChange.lengthSq()) {
-	        mouseChange.multiplyScalar(eyeCamera.length() * this.panSpeed);
+	        mouseChange.multiplyScalar(eyeCamera.length() * scope.panSpeed);
 	        pan.copy(eyeCamera).cross(camera.up).setLength(mouseChange.x);
 	        pan.add(cameraUp.copy(camera.up).setLength(mouseChange.y));
 
 	        camera.position.add(pan);
 	        target.add(pan);
 
-	        if (this.staticMoving) {
+	        if (scope.staticMoving) {
 	          panStart.copy(panEnd);
 	        } else {
-	          panStart.add(mouseChange.subVectors(panEnd, panStart).multiplyScalar(this.dynamicDampingFactor));
+	          panStart.add(mouseChange.subVectors(panEnd, panStart).multiplyScalar(scope.dynamicDampingFactor));
 	        }
 	      }
 	    };
@@ -42722,6 +42770,20 @@
 	        zoomStart.y += (zoomEnd.y - zoomStart.y) * this.dynamicDampingFactor;
 	      }
 	    }
+	  };
+
+	  this.reset = function () {
+	    currState = STATE.NONE;
+	    prevState = STATE.NONE;
+
+	    target.copy(target0);
+	    camera.position.copy(position0);
+	    camera.up.copy(up0);
+
+	    eyeCamera.subVectors(camera.position, target);
+	    camera.lookAt(target);
+
+	    scope.dispatchEvent(changeEvent);
 	  };
 
 	  function onPointerHover(event) {
@@ -42799,7 +42861,10 @@
 	        currState = pointer.button;
 	      }
 
-	      if (currState === STATE.ROTATE) {} else if (currState === STATE.ZOOM) {} else if (currState === STATE.PAN) {
+	      if (currState === STATE.ROTATE) {
+	        rotateCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
+	        rotatePrev.copy(rotateCurr);
+	      } else if (currState === STATE.ZOOM) {} else if (currState === STATE.PAN) {
 	        panStart.copy(getMouseOnScreen(event.pageX, event.pageY));
 	        panEnd.copy(panStart);
 	      }
@@ -42821,7 +42886,10 @@
 	      currState = pointer.button;
 	    }
 
-	    if (currState === STATE.ROTATE) {} else if (currState === STATE.ZOOM) {} else if (currState === STATE.PAN) {
+	    if (currState === STATE.ROTATE) {
+	      rotatePrev.copy(rotateCurr);
+	      rotateCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
+	    } else if (currState === STATE.ZOOM) {} else if (currState === STATE.PAN) {
 	      panEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
 	    }
 	  }
@@ -43107,6 +43175,16 @@
 	    return function getMouseOnScreen(pageX, pageY) {
 
 	      vector.set((pageX - scope.screen.left) / scope.screen.width, (pageY - scope.screen.top) / scope.screen.height);
+
+	      return vector;
+	    };
+	  }();
+
+	  var getMouseOnCircle = function () {
+	    var vector = new _three2.default.Vector2();
+
+	    return function getMouseOnCircle(pageX, pageY) {
+	      vector.set((pageX - scope.screen.width * 0.5 - scope.screen.left) / (scope.screen.width * 0.5), (scope.screen.height + 2 * (scope.screen.top - pageY)) / scope.screen.width);
 
 	      return vector;
 	    };
