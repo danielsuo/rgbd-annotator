@@ -36,6 +36,7 @@ npm start
 
 ### Medium priority
 - Start camera at camera position where depth was taken
+- Turn off mouse gesture if go out of domElement
 - Bring back measurement tools
 
 ### Low priority

@@ -21,7 +21,7 @@ import PLYLoader from './three/loaders/PLYLoader';
 import TransformControls from './three/controls/TransformControls';
 
 var sceneProperties = {
-  path: "../data/resources/pointclouds/frame-000000/cloud.js",
+  path: "./data/resources/pointclouds/frame-000000/cloud.js",
   cameraPosition: null,     // other options: cameraPosition: [10,10,10],
   cameraTarget: null,     // other options: cameraTarget: [0,0,0],
   fov: 60,          // field of view in degrees,
@@ -49,17 +49,17 @@ var model;
 // resetControls(viewer, 'object');
 
 loader.load('./test/data/glue.ply', function(geometry) {
-  var texture = new THREE.TextureLoader().load('./img/checkerboard.jpg');
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(4, 4);
-  var material = new THREE.MeshBasicMaterial({
-    map: texture,
-    // emissive: new THREE.Color(1, 1, 1),
-    // transparent: true,
-    // opacity: 1.0
-  });
-  material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
+  // var texture = new THREE.TextureLoader().load('./img/checkerboard.jpg');
+  // texture.wrapS = THREE.RepeatWrapping;
+  // texture.wrapT = THREE.RepeatWrapping;
+  // texture.repeat.set(4, 4);
+  // var material = new THREE.MeshBasicMaterial({
+  //   map: texture,
+  //   // emissive: new THREE.Color(1, 1, 1),
+  //   // transparent: true,
+  //   // opacity: 1.0
+  // });
+  var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
 
   model = new THREE.Mesh(geometry, material);
   // var ball = new ArcBallHelper(geometry);
@@ -73,7 +73,7 @@ loader.load('./test/data/glue.ply', function(geometry) {
   // }
   
   // viewer.renderer.render();
-  console.log(viewer.controls);
+  // console.log(viewer.controls);
 });
 
 var light = new THREE.DirectionalLight( 0xffffff );
