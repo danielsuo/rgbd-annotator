@@ -21,7 +21,7 @@ import PLYLoader from './three/loaders/PLYLoader';
 import TransformControls from './three/controls/TransformControls';
 
 var sceneProperties = {
-  path: "./data/resources/pointclouds/frame-000000/cloud.js",
+  path: './' + window.location.pathname.split('/')[1] + '/data/resources/pointclouds/frame-000000/cloud.js',
   cameraPosition: null,     // other options: cameraPosition: [10,10,10],
   cameraTarget: null,     // other options: cameraTarget: [0,0,0],
   fov: 60,          // field of view in degrees,
