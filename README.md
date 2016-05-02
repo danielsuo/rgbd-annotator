@@ -29,15 +29,15 @@ npm start
 ## TODO
 
 ### High priority
-- Load depth / color data as point cloud
-- URL routing
+- Get transformations right
+- Start camera at camera position where depth was taken
 - Export to python script
-- Reproject model on color image
 
 ### Medium priority
-- Start camera at camera position where depth was taken
 - Turn off mouse gesture if go out of domElement
 - Bring back measurement tools
+- Implement undo
+- Reproject model on color image
 
 ### Low priority
 - Handle on mobile (touch input)
