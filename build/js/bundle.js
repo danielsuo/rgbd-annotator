@@ -57,33 +57,21 @@
 
 	var _three2 = _interopRequireDefault(_three);
 
-	var _stats = __webpack_require__(3);
+	var _Viewer = __webpack_require__(3);
 
-	var _stats2 = _interopRequireDefault(_stats);
+	var _Viewer2 = _interopRequireDefault(_Viewer);
 
-	var _Detector = __webpack_require__(4);
-
-	var _Detector2 = _interopRequireDefault(_Detector);
-
-	var _TransformControls = __webpack_require__(5);
-
-	var _TransformControls2 = _interopRequireDefault(_TransformControls);
-
-	var _TrackballControls = __webpack_require__(6);
-
-	var _TrackballControls2 = _interopRequireDefault(_TrackballControls);
-
-	var _PLYLoader = __webpack_require__(7);
+	var _PLYLoader = __webpack_require__(14);
 
 	var _PLYLoader2 = _interopRequireDefault(_PLYLoader);
 
-	var _ArcBallHelper = __webpack_require__(8);
+	var _TransformControls = __webpack_require__(13);
 
-	var _ArcBallHelper2 = _interopRequireDefault(_ArcBallHelper);
+	var _TransformControls2 = _interopRequireDefault(_TransformControls);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	if (!_Detector2.default.webgl) _Detector2.default.addGetWebGLMessage(); // import React from 'react';
+	// import React from 'react';
 	// import ReactDOM from 'react-dom';
 	// import { Provider } from 'react-redux';
 	// import { createStore, applyMiddleware } from 'redux';
@@ -99,7 +87,190 @@
 	//   </Provider>
 	//   , document.querySelector('.container'));
 
-	var container = document.getElementById('container');
+	var sceneProperties = {
+	  path: "../data/resources/pointclouds/frame-000000/cloud.js",
+	  cameraPosition: null, // other options: cameraPosition: [10,10,10],
+	  cameraTarget: null, // other options: cameraTarget: [0,0,0],
+	  fov: 60, // field of view in degrees,
+	  sizeType: "Adaptive", // other options: "Fixed", "Attenuated"
+	  quality: null, // other options: "Circles", "Interpolation", "Splats"
+	  material: "RGB", // other options: "Height", "Intensity", "Classification"
+	  pointLimit: 1, // max number of points in millions
+	  pointSize: 1, //
+	  navigation: "Orbit", // other options: "Orbit", "Flight"
+	  useEDL: false
+	};
+
+	var onPointCloudLoaded = function onPointCloudLoaded(event) {
+	  // do stuff here that should be executed once the point cloud has been loaded.
+	  // event.pointcloud returns the point cloud object
+
+	};
+
+	var viewer = new _Viewer2.default(document.getElementById("container"), sceneProperties, {
+	  "onPointCloudLoaded": onPointCloudLoaded
+	});
+
+	var loader = new _PLYLoader2.default();
+	var model;
+	// resetControls(viewer, 'object');
+
+	loader.load('./test/data/glue.ply', function (geometry) {
+	  var texture = new _three2.default.TextureLoader().load('./img/checkerboard.jpg');
+	  texture.wrapS = _three2.default.RepeatWrapping;
+	  texture.wrapT = _three2.default.RepeatWrapping;
+	  texture.repeat.set(4, 4);
+	  var material = new _three2.default.MeshBasicMaterial({
+	    map: texture
+	  });
+	  // emissive: new THREE.Color(1, 1, 1),
+	  // transparent: true,
+	  // opacity: 1.0
+	  material = new _three2.default.MeshPhongMaterial({ color: 0xffffff, shading: _three2.default.FlatShading });
+
+	  model = new _three2.default.Mesh(geometry, material);
+	  // var ball = new ArcBallHelper(geometry);
+	  // model.add(ball);
+	  viewer.scene.add(model);
+
+	  // if (!test) {
+	  //   resetControls('object');
+	  configControls(viewer);
+	  viewer.controls.attach(model);
+	  // }
+
+	  // viewer.renderer.render();
+	  console.log(viewer.controls);
+	});
+
+	var light = new _three2.default.DirectionalLight(0xffffff);
+	light.position.set(1, 1, 1);
+	viewer.scene.add(light);
+
+	light = new _three2.default.DirectionalLight(0x002288);
+	light.position.set(-1, -1, -1);
+	viewer.scene.add(light);
+
+	light = new _three2.default.AmbientLight(0x222222);
+	viewer.scene.add(light);
+
+	function configControls(viewer) {
+
+	  // if (mode === 'camera') {
+	  //   viewer.controls = new TrackballControls( viewer.camera );
+	  // } else if (mode === 'object') {
+	  //   viewer.controls = new TransformControls(viewer.camera, viewer.renderer.domElement);
+	  // viewer.scene.add(viewer.controls);
+
+	  window.addEventListener('keydown', function (event) {
+
+	    switch (event.keyCode) {
+
+	      case 81:
+	        // Q
+	        viewer.controls.setSpace(viewer.controls.space === "local" ? "world" : "local");
+	        break;
+
+	      case 17:
+	        // Ctrl
+	        viewer.controls.setTranslationSnap(100);
+	        viewer.controls.setRotationSnap(_three2.default.Math.degToRad(15));
+	        break;
+
+	      case 87:
+	        // W
+	        viewer.controls.setMode("translate");
+	        break;
+
+	      case 69:
+	        // E
+	        viewer.controls.setMode("rotate");
+	        break;
+
+	      case 82:
+	        // R
+	        viewer.controls.setMode("scale");
+	        break;
+
+	      case 65:
+	        //
+	        viewer.controls.reset();
+	        break;
+
+	      case 187:
+	      case 107:
+	        // +, =, num+
+	        viewer.controls.setSize(viewer.controls.size + 0.1);
+	        break;
+
+	      case 189:
+	      case 109:
+	        // -, _, num-
+	        viewer.controls.setSize(Math.max(viewer.controls.size - 0.1, 0.1));
+	        break;
+
+	    }
+	  });
+
+	  window.addEventListener('keyup', function (event) {
+
+	    switch (event.keyCode) {
+
+	      case 17:
+	        // Ctrl
+	        viewer.controls.setTranslationSnap(null);
+	        viewer.controls.setRotationSnap(null);
+	        break;
+
+	    }
+	  });
+	  viewer.controls.rotateSpeed = 5.0;
+	  viewer.controls.rotateSpeed = 5.0;
+	  viewer.controls.panSpeed = 0.8;
+
+	  viewer.controls.staticMoving = true;
+	  viewer.controls.dynamicDampingFactor = 0.3;
+	  viewer.controls.addEventListener('change', viewer.render);
+	}
+	/*
+	function onWindowResize() {
+
+	  camera.aspect = container.offsetWidth / container.offsetHeight;
+	  camera.updateProjectionMatrix();
+
+	  renderer.setSize( container.offsetWidth, container.offsetHeight );
+
+	  controls.handleResize();
+
+	  render();
+
+	}
+
+	function animate() {
+
+	  requestAnimationFrame( animate );
+	  controls.update();
+
+	}
+
+	function render() {
+
+	  renderer.render( scene, camera );
+	  stats.update();
+
+	}
+
+	*/
+
+	/*
+	import Detector from './three/utils/Detector';
+	import TrackballControls from './three/controls/TrackballControls';
+
+	import RGBDLoader from './three/loaders/RGBDLoader';
+
+	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+	var container = document.getElementById( 'container' );
 	var stats;
 
 	var camera, controls, scene, renderer, light;
@@ -113,12 +284,12 @@
 
 	function init() {
 
-	  camera = new _three2.default.PerspectiveCamera(60, container.offsetWidth / container.offsetHeight, 0.01, 1000);
+	  camera = new THREE.PerspectiveCamera( 60, container.offsetWidth / container.offsetHeight, 0.01, 1000 );
 	  camera.position.x = 0.5;
 	  camera.position.y = 0.5;
 	  camera.position.z = 0.5;
 
-	  camera.lookAt(new _three2.default.Vector3(0, 0, 0));
+	  camera.lookAt(new THREE.Vector3(0, 0, 0));
 	  camera.up.set(0, 0, 1);
 
 	  var test = true;
@@ -128,15 +299,15 @@
 
 	  // world
 
-	  scene = new _three2.default.Scene();
-	  scene.fog = new _three2.default.FogExp2(0xcccccc, 0.002);
+	  scene = new THREE.Scene();
+	  scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
 
-	  var loader = new _PLYLoader2.default();
+	  var loader = new PLYLoader();
 
-	  loader.load('./test/data/glue.ply', function (geometry) {
-	    var material = new _three2.default.MeshPhongMaterial({ color: 0xffffff, shading: _three2.default.FlatShading });
+	  loader.load('./test/data/glue.ply', function(geometry) {
+	  var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
 
-	    model = new _three2.default.Mesh(geometry, material);
+	    model = new THREE.Mesh(geometry, material);
 	    // var ball = new ArcBallHelper(geometry);
 	    // model.add(ball);
 	    scene.add(model);
@@ -145,145 +316,48 @@
 	      resetControls('object');
 	      controls.attach(model);
 	    }
-
+	    
 	    render();
 	  });
 
-	  var axisHelper = new _three2.default.AxisHelper(5);
-	  scene.add(axisHelper);
+	  var axisHelper = new THREE.AxisHelper( 5 );
+	  scene.add( axisHelper );
 
 	  // lights
 
-	  light = new _three2.default.DirectionalLight(0xffffff);
-	  light.position.set(1, 1, 1);
-	  scene.add(light);
+	  light = new THREE.DirectionalLight( 0xffffff );
+	  light.position.set( 1, 1, 1 );
+	  scene.add( light );
 
-	  light = new _three2.default.DirectionalLight(0x002288);
-	  light.position.set(-1, -1, -1);
-	  scene.add(light);
+	  light = new THREE.DirectionalLight( 0x002288 );
+	  light.position.set( -1, -1, -1 );
+	  scene.add( light );
 
-	  light = new _three2.default.AmbientLight(0x222222);
-	  scene.add(light);
+	  light = new THREE.AmbientLight( 0x222222 );
+	  scene.add( light );
 
 	  // renderer
 
-	  renderer = new _three2.default.WebGLRenderer({ antialias: false });
-	  renderer.setClearColor(scene.fog.color);
-	  renderer.setSize(container.offsetWidth - 12, container.offsetHeight);
+	  renderer = new THREE.WebGLRenderer( { antialias: false } );
+	  renderer.setClearColor( scene.fog.color );
+	  renderer.setSize( container.offsetWidth, container.offsetHeight );
 
-	  container.appendChild(renderer.domElement);
+	  container.appendChild( renderer.domElement );
 
-	  stats = new _stats2.default();
-	  container.appendChild(stats.dom);
+	  stats = new Stats();
+	  container.appendChild( stats.dom );
 
-	  window.addEventListener('resize', onWindowResize, false);
-
-	  render();
-	}
-
-	function resetControls(mode) {
-
-	  if (mode === 'camera') {
-	    controls = new _TrackballControls2.default(camera);
-	  } else if (mode === 'object') {
-	    controls = new _TransformControls2.default(camera, renderer.domElement);
-	    scene.add(controls);
-
-	    window.addEventListener('keydown', function (event) {
-
-	      switch (event.keyCode) {
-
-	        case 81:
-	          // Q
-	          controls.setSpace(controls.space === "local" ? "world" : "local");
-	          break;
-
-	        case 17:
-	          // Ctrl
-	          controls.setTranslationSnap(100);
-	          controls.setRotationSnap(_three2.default.Math.degToRad(15));
-	          break;
-
-	        case 87:
-	          // W
-	          controls.setMode("translate");
-	          break;
-
-	        case 69:
-	          // E
-	          controls.setMode("rotate");
-	          break;
-
-	        case 82:
-	          // R
-	          controls.setMode("scale");
-	          break;
-
-	        case 65:
-	          //
-	          controls.reset();
-	          break;
-
-	        case 187:
-	        case 107:
-	          // +, =, num+
-	          controls.setSize(controls.size + 0.1);
-	          break;
-
-	        case 189:
-	        case 109:
-	          // -, _, num-
-	          controls.setSize(Math.max(controls.size - 0.1, 0.1));
-	          break;
-
-	      }
-	    });
-
-	    window.addEventListener('keyup', function (event) {
-
-	      switch (event.keyCode) {
-
-	        case 17:
-	          // Ctrl
-	          controls.setTranslationSnap(null);
-	          controls.setRotationSnap(null);
-	          break;
-
-	      }
-	    });
-	  }
-	  controls.rotateSpeed = 5.0;
-	  controls.rotateSpeed = 5.0;
-	  controls.panSpeed = 0.8;
-
-	  controls.staticMoving = true;
-	  controls.dynamicDampingFactor = 0.3;
-	  controls.addEventListener('change', render);
-	}
-
-	function onWindowResize() {
-
-	  camera.aspect = container.offsetWidth / container.offsetHeight;
-	  camera.updateProjectionMatrix();
-
-	  renderer.setSize(container.offsetWidth, container.offsetHeight);
-
-	  controls.handleResize();
+	  window.addEventListener( 'resize', onWindowResize, false );
 
 	  render();
+
+	  var rgbd = new RGBDLoader();
+	  rgbd.load(0, 'test/data', function(points) {
+	    console.log(points);
+	    // scene.add(points);
+	  });
 	}
-
-	function animate() {
-
-	  requestAnimationFrame(animate);
-	  controls.update();
-	}
-
-	function render() {
-
-	  renderer.render(scene, camera);
-	  stats.update();
-	}
+	*/
 
 /***/ },
 /* 2 */
@@ -26709,17 +26783,17 @@
 				// wire up the material to this renderer's lighting state
 
 				uniforms.ambientLightColor.value = _lights.ambient;
-				uniforms.directionalLights.value = _lights.directional;
-				uniforms.spotLights.value = _lights.spot;
-				uniforms.pointLights.value = _lights.point;
-				uniforms.hemisphereLights.value = _lights.hemi;
+				if (uniforms.directionalLights !== undefined) uniforms.directionalLights.value = _lights.directional;
+				if (uniforms.spotLights !== undefined) uniforms.spotLights.value = _lights.spot;
+				if (uniforms.pointLights !== undefined) uniforms.pointLights.value = _lights.point;
+				if (uniforms.hemisphereLights !== undefined) uniforms.hemisphereLights.value = _lights.hemi;
 
-				uniforms.directionalShadowMap.value = _lights.directionalShadowMap;
-				uniforms.directionalShadowMatrix.value = _lights.directionalShadowMatrix;
-				uniforms.spotShadowMap.value = _lights.spotShadowMap;
-				uniforms.spotShadowMatrix.value = _lights.spotShadowMatrix;
-				uniforms.pointShadowMap.value = _lights.pointShadowMap;
-				uniforms.pointShadowMatrix.value = _lights.pointShadowMatrix;
+				if (uniforms.directionalShadowMap !== undefined) uniforms.directionalShadowMap.value = _lights.directionalShadowMap;
+				if (uniforms.directionalShadowMatrix !== undefined) uniforms.directionalShadowMatrix.value = _lights.directionalShadowMatrix;
+				if (uniforms.spotShadowMap !== undefined) uniforms.spotShadowMap.value = _lights.spotShadowMap;
+				if (uniforms.spotShadowMatrix !== undefined) uniforms.spotShadowMatrix.value = _lights.spotShadowMatrix;
+				if (uniforms.pointShadowMap !== undefined) uniforms.pointShadowMap.value = _lights.pointShadowMap;
+				if (uniforms.pointShadowMatrix !== undefined) uniforms.pointShadowMatrix.value = _lights.pointShadowMatrix;
 
 			}
 
@@ -27325,10 +27399,10 @@
 
 			uniforms.ambientLightColor.needsUpdate = value;
 
-			uniforms.directionalLights.needsUpdate = value;
-			uniforms.pointLights.needsUpdate = value;
-			uniforms.spotLights.needsUpdate = value;
-			uniforms.hemisphereLights.needsUpdate = value;
+			if (uniforms.directionalLights !== undefined) uniforms.directionalLights.needsUpdate = value;
+			if (uniforms.pointLights !== undefined) uniforms.pointLights.needsUpdate = value;
+			if (uniforms.spotLights !== undefined) uniforms.spotLights.needsUpdate = value;
+			if (uniforms.hemisphereLights !== undefined) uniforms.hemisphereLights.needsUpdate = value;
 
 		}
 
@@ -41813,6 +41887,7867 @@
 
 /***/ },
 /* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _three = __webpack_require__(2);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	var _datGui = __webpack_require__(4);
+
+	var _datGui2 = _interopRequireDefault(_datGui);
+
+	var _tween = __webpack_require__(7);
+
+	var _tween2 = _interopRequireDefault(_tween);
+
+	var _potree = __webpack_require__(8);
+
+	var _potree2 = _interopRequireDefault(_potree);
+
+	var _stats = __webpack_require__(11);
+
+	var _stats2 = _interopRequireDefault(_stats);
+
+	var _ProgressBar = __webpack_require__(12);
+
+	var _ProgressBar2 = _interopRequireDefault(_ProgressBar);
+
+	var _TransformControls = __webpack_require__(13);
+
+	var _TransformControls2 = _interopRequireDefault(_TransformControls);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var Viewer = function Viewer(domElement, settings, args) {
+	  var scope = this;
+	  var defaultSettings = settings;
+	  var args = args || {};
+
+	  this.renderArea = domElement;
+
+	  {
+	    // create stats fields
+	    var createField = function createField(id, top) {
+	      var field = document.createElement("div");
+	      field.id = id;
+	      field.classList.add("info");
+	      field.style.position = "absolute";
+	      field.style.left = "10px";
+	      field.style.top = top + "px";
+	      field.style.width = "400px";
+	      field.style.color = "white";
+
+	      return field;
+	    };
+
+	    var elNumVisibleNodes = createField("lblNumVisibleNodes", 80);
+	    var elNumVisiblePoints = createField("lblNumVisiblePoints", 100);
+
+	    scope.renderArea.appendChild(elNumVisibleNodes);
+	    scope.renderArea.appendChild(elNumVisiblePoints);
+	  }
+
+	  {
+	    // infos
+	    scope.infos = new function () {
+
+	      var _this = this;
+
+	      this.elements = {};
+
+	      this.domElement = document.createElement("div");
+	      this.domElement.id = "infos";
+	      this.domElement.classList.add("info");
+	      this.domElement.style.position = "fixed";
+	      this.domElement.style.left = "10px";
+	      this.domElement.style.top = "120px";
+	      this.domElement.style.pointerEvents = "none";
+
+	      scope.renderArea.appendChild(this.domElement);
+
+	      this.set = function (key, value) {
+	        var element = this.elements[key];
+	        if (typeof element === "undefined") {
+	          element = document.createElement("div");
+	          _this.domElement.appendChild(element);
+	          this.elements[key] = element;
+	        }
+
+	        element.innerHTML = value;
+	      };
+	    }();
+	  }
+
+	  // { // create toolbar
+	  //   var elToolbar = document.createElement("div");
+	  //   elToolbar.style.position = "absolute";
+	  //   elToolbar.style.width = "400px";
+	  //   elToolbar.style.bottom = "10px";
+	  //   elToolbar.style.right = "10px";
+	  //   this.renderArea.appendChild(elToolbar);
+
+	  //   var createToolIcon = function(icon, title, callback){
+	  //     var tool = document.createElement("img");
+	  //     tool.src = icon;
+	  //     tool.title = title;
+	  //     tool.onclick = callback;
+
+	  //     return tool;
+	  //   };
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/earth_controls_1.png",
+	  //     "Earth Controls",
+	  //     function(){scope.useEarthControls()}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/fps_controls.png",
+	  //     "Flight Controls",
+	  //     function(){scope.useFPSControls()}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/orbit_controls.png",
+	  //     "Orbit Controls",
+	  //     function(){scope.useOrbitControls()}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/focus.png",
+	  //     "focus on pointcloud",
+	  //     function(){scope.zoomTo(viewer.pointcloud)}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/flip_y_z.png",
+	  //     "flip y and z coordinates",
+	  //     function(){scope.flipYZ()}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/angle.png",
+	  //     "angle measurements",
+	  //     function(){scope.measuringTool.startInsertion({showDistances: false, showAngles: true, showArea: false, closed: true, maxMarkers: 3})}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/distance.png",
+	  //     "distance measurements",
+	  //     function(){scope.measuringTool.startInsertion({showDistances: true, showArea: false, closed: false})}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/area.png",
+	  //     "area measurements",
+	  //     function(){scope.measuringTool.startInsertion({showDistances: true, showArea: true, closed: true})}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/volume.png",
+	  //     "volume measurements",
+	  //     function(){scope.volumeTool.startInsertion()}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/profile.png",
+	  //     "height profiles",
+	  //     function(){scope.profileTool.startInsertion({width: viewer.pointcloud.boundingSphere.radius / 100})}
+	  //   ));
+
+	  //   elToolbar.appendChild(createToolIcon(
+	  //     "../resources/icons/clip_volume.png",
+	  //     "clipping volumes",
+	  //     function(){scope.volumeTool.startInsertion({clip: true})}
+	  //   ));
+
+	  // }
+
+	  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+	    defaultSettings.navigation = "Orbit";
+	  }
+
+	  if (defaultSettings.useEDL && !_potree2.default.Features.SHADER_EDL.isSupported()) {
+	    defaultSettings.useEDL = false;
+	  }
+
+	  if (typeof args.onPointCloudLoaded !== "undefined") {
+	    this.addEventListener("pointcloud_loaded", args.onPointCloudLoaded);
+	  }
+
+	  this.annotations = [];
+	  this.fov = defaultSettings.fov || 60;
+	  this.pointSize = defaultSettings.pointSize || 1;
+	  this.pointCountTarget = defaultSettings.pointLimit || 1;
+	  this.opacity = 1;
+	  this.pointSizeType = null;
+	  this.pointColorType = null;
+	  this.clipMode = _potree2.default.ClipMode.HIGHLIGHT_INSIDE;
+	  this.quality = defaultSettings.quality || "Squares";
+	  this.isFlipYZ = false;
+	  this.useDEMCollisions = false;
+	  this.minNodeSize = 100;
+	  this.directionalLight;
+	  this.edlScale = defaultSettings.edlScale || 1;
+	  this.edlRadius = defaultSettings.edlRadius || 3;
+	  this.useEDL = defaultSettings.useEDL || false;
+
+	  this.showDebugInfos = false;
+	  this.showStats = false;
+	  this.showBoundingBox = false;
+	  this.freeze = false;
+
+	  this.fpControls;
+	  this.orbitControls;
+	  this.earthControls;
+	  this.transformControls;
+	  this.controls;
+
+	  var progressBar = new _ProgressBar2.default();
+
+	  var pointcloudPath = defaultSettings.path;
+
+	  var gui;
+
+	  this.renderer;
+	  this.camera;
+	  this.scene;
+	  this.scenePointCloud;
+	  this.sceneBG;
+	  this.cameraBG;
+	  this.pointcloud = null;
+	  this.measuringTool;
+	  this.volumeTool;
+	  this.transformationTool;
+
+	  var skybox;
+	  var stats;
+	  var clock = new _three2.default.Clock();
+	  var showSkybox = false;
+	  var referenceFrame;
+
+	  this.setPointSizeType = function (value) {
+	    if (value === "Fixed") {
+	      scope.pointSizeType = _potree2.default.PointSizeType.FIXED;
+	    } else if (value === "Attenuated") {
+	      scope.pointSizeType = _potree2.default.PointSizeType.ATTENUATED;
+	    } else if (value === "Adaptive") {
+	      scope.pointSizeType = _potree2.default.PointSizeType.ADAPTIVE;
+	    }
+	  };
+
+	  this.setQuality = function (value) {
+	    if (value == "Interpolation" && !_potree2.default.Features.SHADER_INTERPOLATION.isSupported()) {
+	      scope.quality = "Squares";
+	    } else if (value == "Splats" && !_potree2.default.Features.SHADER_SPLATS.isSupported()) {
+	      scope.quality = "Squares";
+	    } else {
+	      scope.quality = value;
+	    }
+	  };
+
+	  this.setMaterial = function (value) {
+	    if (value === "RGB") {
+	      scope.pointColorType = _potree2.default.PointColorType.RGB;
+	    } else if (value === "Color") {
+	      scope.pointColorType = _potree2.default.PointColorType.COLOR;
+	    } else if (value === "Elevation") {
+	      scope.pointColorType = _potree2.default.PointColorType.HEIGHT;
+	    } else if (value === "Intensity") {
+	      scope.pointColorType = _potree2.default.PointColorType.INTENSITY;
+	    } else if (value === "Intensity Gradient") {
+	      scope.pointColorType = _potree2.default.PointColorType.INTENSITY_GRADIENT;
+	    } else if (value === "Classification") {
+	      scope.pointColorType = _potree2.default.PointColorType.CLASSIFICATION;
+	    } else if (value === "Return Number") {
+	      scope.pointColorType = _potree2.default.PointColorType.RETURN_NUMBER;
+	    } else if (value === "Source") {
+	      scope.pointColorType = _potree2.default.PointColorType.SOURCE;
+	    } else if (value === "Tree Depth") {
+	      scope.pointColorType = _potree2.default.PointColorType.TREE_DEPTH;
+	    } else if (value === "Point Index") {
+	      scope.pointColorType = _potree2.default.PointColorType.POINT_INDEX;
+	    } else if (value === "Normal") {
+	      scope.pointColorType = _potree2.default.PointColorType.NORMAL;
+	    } else if (value === "Phong") {
+	      scope.pointColorType = _potree2.default.PointColorType.PHONG;
+	    }
+	  };
+
+	  this.zoomTo = function (node, factor) {
+	    scope.camera.zoomTo(node, factor);
+
+	    var bs;
+	    if (node.boundingSphere) {
+	      bs = node.boundingSphere;
+	    } else if (node.geometry && node.geometry.boundingSphere) {
+	      bs = node.geometry.boundingSphere;
+	    } else {
+	      bs = node.boundingBox.getBoundingSphere();
+	    }
+
+	    bs = bs.clone().applyMatrix4(node.matrixWorld);
+
+	    scope.orbitControls.target.copy(bs.center);
+	  };
+
+	  this.initGUI = function () {
+
+	    scope.setPointSizeType(defaultSettings.sizeType);
+	    scope.setQuality(defaultSettings.quality);
+	    scope.setMaterial(defaultSettings.material);
+
+	    // dat.gui
+	    var gui = new _datGui2.default.GUI({
+	      autoPlace: false
+	      //height : 5 * 32 - 1
+	    });
+	    gui.domElement.style.position = "absolute";
+	    gui.domElement.style.top = "5px";
+	    gui.domElement.style.right = "5px";
+	    this.renderArea.appendChild(gui.domElement);
+
+	    var params = {
+	      "max. points(m)": scope.pointCountTarget,
+	      PointSize: scope.pointSize,
+	      "FOV": scope.fov,
+	      "opacity": scope.opacity,
+	      "SizeType": defaultSettings.sizeType,
+	      "show octree": false,
+	      "Materials": defaultSettings.material,
+	      "Clip Mode": "Highlight Inside",
+	      "quality": defaultSettings.quality,
+	      "EDL": defaultSettings.useEDL,
+	      "EDLScale": scope.edlScale,
+	      "skybox": false,
+	      "stats": scope.showStats,
+	      "debugInfos": scope.showDebugInfos,
+	      "BoundingBox": scope.showBoundingBox,
+	      "DEM Collisions": scope.useDEMCollisions,
+	      "MinNodeSize": scope.minNodeSize,
+	      "freeze": scope.freeze
+	    };
+
+	    var pPoints = gui.add(params, 'max. points(m)', 0, 4);
+	    pPoints.onChange(function (value) {
+	      scope.pointCountTarget = value;
+	    });
+
+	    var fAppearance = gui.addFolder('Appearance');
+
+	    var pPointSize = fAppearance.add(params, 'PointSize', 0, 3);
+	    pPointSize.onChange(function (value) {
+	      scope.pointSize = value;
+	    });
+
+	    var fFOV = fAppearance.add(params, 'FOV', 20, 100);
+	    fFOV.onChange(function (value) {
+	      scope.fov = value;
+	    });
+
+	    var pOpacity = fAppearance.add(params, 'opacity', 0, 1);
+	    pOpacity.onChange(function (value) {
+	      scope.opacity = value;
+	    });
+
+	    var pSizeType = fAppearance.add(params, 'SizeType', ["Fixed", "Attenuated", "Adaptive"]);
+	    pSizeType.onChange(function (value) {
+	      scope.setPointSizeType(value);
+	    });
+
+	    var options = [];
+	    var attributes = scope.pointcloud.pcoGeometry.pointAttributes;
+	    if (attributes === "LAS" || attributes === "LAZ") {
+	      options = ["RGB", "Color", "Elevation", "Intensity", "Intensity Gradient", "Classification", "Return Number", "Source", "Tree Depth"];
+	    } else {
+	      for (var i = 0; i < attributes.attributes.length; i++) {
+	        var attribute = attributes.attributes[i];
+
+	        if (attribute === _potree2.default.PointAttribute.COLOR_PACKED) {
+	          options.push("RGB");
+	        } else if (attribute === _potree2.default.PointAttribute.INTENSITY) {
+	          options.push("Intensity");
+	          options.push("Intensity Gradient");
+	        } else if (attribute === _potree2.default.PointAttribute.CLASSIFICATION) {
+	          options.push("Classification");
+	        }
+	      }
+	      if (attributes.hasNormals()) {
+	        options.push("Phong");
+	        options.push("Normal");
+	      }
+
+	      options.push("Elevation");
+	      options.push("Color");
+	      options.push("Tree Depth");
+	    }
+
+	    // default material is not available. set material to Elevation
+	    if (options.indexOf(params.Materials) < 0) {
+	      console.error("Default Material '" + params.Material + "' is not available. Using Elevation instead");
+	      scope.setMaterial("Elevation");
+	      params.Materials = "Elevation";
+	    }
+
+	    var pMaterial = fAppearance.add(params, 'Materials', options);
+	    pMaterial.onChange(function (value) {
+	      scope.setMaterial(value);
+	    });
+
+	    var qualityOptions = ["Squares", "Circles"];
+	    if (_potree2.default.Features.SHADER_INTERPOLATION.isSupported()) {
+	      qualityOptions.push("Interpolation");
+	    }
+	    if (_potree2.default.Features.SHADER_SPLATS.isSupported()) {
+	      qualityOptions.push("Splats");
+	    }
+	    var pQuality = fAppearance.add(params, 'quality', qualityOptions);
+	    pQuality.onChange(function (value) {
+	      scope.quality = value;
+	    });
+
+	    {
+	      // Eye-Dome-Lighting
+	      if (_potree2.default.Features.SHADER_EDL.isSupported()) {
+
+	        var edlParams = {
+	          "enable": scope.useEDL,
+	          "strength": scope.edlScale,
+	          "radius": scope.edlRadius
+	        };
+
+	        var fEDL = fAppearance.addFolder('Eye-Dome-Lighting');
+	        var pEDL = fEDL.add(edlParams, 'enable');
+	        pEDL.onChange(function (value) {
+	          scope.useEDL = value;
+	        });
+
+	        var pEDLScale = fEDL.add(edlParams, 'strength', 0, 3, 0.01);
+	        pEDLScale.onChange(function (value) {
+	          scope.edlScale = value;
+	        });
+
+	        var pRadius = fEDL.add(edlParams, 'radius', 1, 5);
+	        pRadius.onChange(function (value) {
+	          scope.edlRadius = value;
+	        });
+	      }
+	    }
+
+	    {
+	      // Classification
+	      var classificationParams = {
+	        "never classified": true,
+	        "unclassified": true,
+	        "ground": true,
+	        "low vegetation": true,
+	        "medium vegetation": true,
+	        "high vegetation": true,
+	        "building": true,
+	        "low point(noise)": true,
+	        "key-point": true,
+	        "water": true,
+	        "overlap": true
+	      };
+
+	      var setClassificationVisibility = function setClassificationVisibility(key, value) {
+	        if (!scope.pointcloud) {
+	          return;
+	        }
+	        var newClass = scope.pointcloud.material.classification;
+	        newClass[key].w = value ? 1 : 0;
+
+	        scope.pointcloud.material.classification = newClass;
+	      };
+
+	      var fClassification = fAppearance.addFolder('Classification');
+
+	      var pNeverClassified = fClassification.add(classificationParams, 'never classified');
+	      pNeverClassified.onChange(function (value) {
+	        setClassificationVisibility(0, value);
+	      });
+
+	      var pUnclassified = fClassification.add(classificationParams, 'unclassified');
+	      pUnclassified.onChange(function (value) {
+	        setClassificationVisibility(1, value);
+	      });
+
+	      var pGround = fClassification.add(classificationParams, 'ground');
+	      pGround.onChange(function (value) {
+	        setClassificationVisibility(2, value);
+	      });
+
+	      var pLowVeg = fClassification.add(classificationParams, 'low vegetation');
+	      pLowVeg.onChange(function (value) {
+	        setClassificationVisibility(3, value);
+	      });
+
+	      var pMedVeg = fClassification.add(classificationParams, 'medium vegetation');
+	      pMedVeg.onChange(function (value) {
+	        setClassificationVisibility(4, value);
+	      });
+
+	      var pHighVeg = fClassification.add(classificationParams, 'high vegetation');
+	      pHighVeg.onChange(function (value) {
+	        setClassificationVisibility(5, value);
+	      });
+
+	      var pBuilding = fClassification.add(classificationParams, 'building');
+	      pBuilding.onChange(function (value) {
+	        setClassificationVisibility(6, value);
+	      });
+
+	      var pNoise = fClassification.add(classificationParams, 'low point(noise)');
+	      pNoise.onChange(function (value) {
+	        setClassificationVisibility(7, value);
+	      });
+
+	      var pKeyPoint = fClassification.add(classificationParams, 'key-point');
+	      pKeyPoint.onChange(function (value) {
+	        setClassificationVisibility(8, value);
+	      });
+
+	      var pWater = fClassification.add(classificationParams, 'water');
+	      pWater.onChange(function (value) {
+	        setClassificationVisibility(9, value);
+	      });
+
+	      var pOverlap = fClassification.add(classificationParams, 'overlap');
+	      pOverlap.onChange(function (value) {
+	        setClassificationVisibility(12, value);
+	      });
+	    }
+
+	    var pSykbox = fAppearance.add(params, 'skybox');
+	    pSykbox.onChange(function (value) {
+	      showSkybox = value;
+	    });
+
+	    var fSettings = gui.addFolder('Settings');
+
+	    var pClipMode = fSettings.add(params, 'Clip Mode', ["No Clipping", "Clip Outside", "Highlight Inside"]);
+	    pClipMode.onChange(function (value) {
+	      if (value === "No Clipping") {
+	        scope.clipMode = _potree2.default.ClipMode.DISABLED;
+	      } else if (value === "Clip Outside") {
+	        scope.clipMode = _potree2.default.ClipMode.CLIP_OUTSIDE;
+	      } else if (value === "Highlight Inside") {
+	        scope.clipMode = _potree2.default.ClipMode.HIGHLIGHT_INSIDE;
+	      }
+	    });
+
+	    var pDEMCollisions = fSettings.add(params, 'DEM Collisions');
+	    pDEMCollisions.onChange(function (value) {
+	      scope.useDEMCollisions = value;
+	    });
+
+	    var pMinNodeSize = fSettings.add(params, 'MinNodeSize', 0, 1500);
+	    pMinNodeSize.onChange(function (value) {
+	      scope.minNodeSize = value;
+	    });
+
+	    var fDebug = gui.addFolder('Debug');
+
+	    var pStats = fDebug.add(params, 'stats');
+	    pStats.onChange(function (value) {
+	      scope.showStats = value;
+	    });
+
+	    var pShowDebugInfos = fDebug.add(params, "debugInfos");
+	    pShowDebugInfos.onChange(function (value) {
+	      scope.showDebugInfos = value;
+	      scope.infos.domElement.style.display = scope.showDebugInfos ? "block" : "none";
+	    });
+
+	    var pBoundingBox = fDebug.add(params, 'BoundingBox');
+	    pBoundingBox.onChange(function (value) {
+	      scope.showBoundingBox = value;
+	    });
+
+	    var pFreeze = fDebug.add(params, 'freeze');
+	    pFreeze.onChange(function (value) {
+	      scope.freeze = value;
+	    });
+
+	    // stats
+	    stats = new _stats2.default();
+	    stats.domElement.style.position = 'absolute';
+	    stats.domElement.style.top = '0px';
+	    stats.domElement.style.margin = '5px';
+	    document.body.appendChild(stats.domElement);
+	  };
+
+	  this.createControls = function () {
+	    {
+	      // create FIRST PERSON CONTROLS
+	      scope.fpControls = new _three2.default.FirstPersonControls(scope.camera, scope.renderer.domElement);
+	      scope.fpControls.addEventListener("proposeTransform", function (event) {
+	        if (!scope.pointcloud || !scope.useDEMCollisions) {
+	          return;
+	        }
+
+	        var demHeight = scope.pointcloud.getDEMHeight(event.newPosition);
+	        if (event.newPosition.y < demHeight) {
+	          event.objections++;
+
+	          var counterProposal = event.newPosition.clone();
+	          counterProposal.y = demHeight;
+
+	          event.counterProposals.push(counterProposal);
+	        }
+	      });
+	    }
+
+	    {
+	      // create ORBIT CONTROLS
+	      scope.orbitControls = new _potree2.default.OrbitControls(scope.camera, scope.renderer.domElement);
+	      scope.orbitControls.addEventListener("proposeTransform", function (event) {
+	        if (!scope.pointcloud || !scope.useDEMCollisions) {
+	          return;
+	        }
+
+	        var demHeight = scope.pointcloud.getDEMHeight(event.newPosition);
+	        if (event.newPosition.y < demHeight) {
+	          event.objections++;
+
+	          var counterProposal = event.newPosition.clone();
+	          counterProposal.y = demHeight;
+
+	          event.counterProposals.push(counterProposal);
+	        }
+	      });
+	      scope.renderArea.addEventListener("dblclick", function (event) {
+	        if (!scope.pointcloud) {
+	          return;
+	        }
+
+	        event.preventDefault();
+
+	        var rect = scope.renderArea.getBoundingClientRect();
+
+	        var mouse = {
+	          x: (event.clientX - rect.left) / scope.renderArea.clientWidth * 2 - 1,
+	          y: -((event.clientY - rect.top) / scope.renderArea.clientHeight) * 2 + 1
+	        };
+
+	        var I = getMousePointCloudIntersection(mouse, scope.camera, scope.renderer, [scope.pointcloud]);
+	        if (I != null) {
+
+	          var camTargetDistance = scope.camera.position.distanceTo(scope.orbitControls.target);
+
+	          var vector = new _three2.default.Vector3(mouse.x, mouse.y, 0.5);
+	          vector.unproject(scope.camera);
+
+	          var direction = vector.sub(scope.camera.position).normalize();
+	          var ray = new _three2.default.Ray(scope.camera.position, direction);
+
+	          var nodes = scope.pointcloud.nodesOnRay(scope.pointcloud.visibleNodes, ray);
+	          var lastNode = nodes[nodes.length - 1];
+	          var radius = lastNode.boundingSphere.radius;
+	          var targetRadius = Math.min(camTargetDistance, radius);
+
+	          var d = scope.camera.getWorldDirection().multiplyScalar(-1);
+	          var cameraTargetPosition = new _three2.default.Vector3().addVectors(I, d.multiplyScalar(targetRadius));
+	          var controlsTargetPosition = I;
+
+	          var animationDuration = 600;
+
+	          var easing = _tween2.default.Easing.Quartic.Out;
+
+	          scope.controls.enabled = false;
+
+	          // animate position
+	          var tween = new _tween2.default.Tween(scope.camera.position).to(cameraTargetPosition, animationDuration);
+	          tween.easing(easing);
+	          tween.start();
+
+	          // animate target
+	          var tween = new _tween2.default.Tween(scope.orbitControls.target).to(I, animationDuration);
+	          tween.easing(easing);
+	          tween.onComplete(function () {
+	            scope.controls.enabled = true;
+	            scope.fpControls.moveSpeed = radius / 2;
+	          });
+	          tween.start();
+	        }
+	      });
+	    }
+
+	    {
+	      // create EARTH CONTROLS
+	      scope.earthControls = new _three2.default.EarthControls(scope.camera, scope.renderer, scope.scenePointCloud);
+	      scope.earthControls.addEventListener("proposeTransform", function (event) {
+	        if (!scope.pointcloud || !scope.useDEMCollisions) {
+	          return;
+	        }
+
+	        var demHeight = scope.pointcloud.getDEMHeight(event.newPosition);
+	        if (event.newPosition.y < demHeight) {
+	          event.objections++;
+	        }
+	      });
+	    }
+
+	    {
+	      // create TRANSFORM CONTROLS
+	      scope.transformControls = new _TransformControls2.default(scope.camera, scope.renderer.domElement);
+	      scope.transformControls.rotateSpeed = 5.0;
+	      scope.transformControls.rotateSpeed = 5.0;
+	      scope.transformControls.panSpeed = 0.8;
+
+	      scope.transformControls.staticMoving = true;
+	      scope.transformControls.dynamicDampingFactor = 0.3;
+	      scope.transformControls.addEventListener('change', scope.render);
+	    }
+	  };
+
+	  this.initThree = function () {
+	    var width = scope.renderArea.clientWidth;
+	    var height = scope.renderArea.clientHeight;
+	    var aspect = width / height;
+	    var near = 0.1;
+	    var far = 1000 * 1000;
+
+	    scope.scene = new _three2.default.Scene();
+	    scope.scenePointCloud = new _three2.default.Scene();
+	    scope.sceneBG = new _three2.default.Scene();
+
+	    scope.camera = new _three2.default.PerspectiveCamera(scope.fov, aspect, near, far);
+	    //camera = new THREE.OrthographicCamera(-50, 50, 50, -50, 1, 100000);
+	    scope.cameraBG = new _three2.default.Camera();
+	    scope.camera.rotation.order = 'ZYX';
+
+	    referenceFrame = new _three2.default.Object3D();
+	    scope.scenePointCloud.add(referenceFrame);
+
+	    scope.renderer = new _three2.default.WebGLRenderer();
+	    scope.renderer.setSize(width, height);
+	    scope.renderer.autoClear = false;
+	    scope.renderArea.appendChild(scope.renderer.domElement);
+
+	    // skybox = Potree.utils.loadSkybox("../resources/textures/skybox/");
+
+	    // camera and controls
+	    scope.camera.position.set(-304, 372, 318);
+	    scope.camera.rotation.y = -Math.PI / 4;
+	    scope.camera.rotation.x = -Math.PI / 6;
+
+	    this.createControls();
+
+	    scope.useTransformControls();
+
+	    // enable frag_depth extension for the interpolation shader, if available
+	    scope.renderer.context.getExtension("EXT_frag_depth");
+
+	    // load pointcloud
+	    if (!pointcloudPath) {} else if (pointcloudPath.indexOf("cloud.js") > 0) {
+	      _potree2.default.POCLoader.load(pointcloudPath, function (geometry) {
+	        scope.pointcloud = new _potree2.default.PointCloudOctree(geometry);
+
+	        scope.pointcloud.material.pointSizeType = _potree2.default.PointSizeType.ADAPTIVE;
+	        scope.pointcloud.material.size = scope.pointSize;
+	        scope.pointcloud.visiblePointsTarget = scope.pointCountTarget * 1000 * 1000;
+
+	        referenceFrame.add(scope.pointcloud);
+
+	        referenceFrame.updateMatrixWorld(true);
+	        var sg = scope.pointcloud.boundingSphere.clone().applyMatrix4(scope.pointcloud.matrixWorld);
+
+	        referenceFrame.position.copy(sg.center).multiplyScalar(-1);
+	        referenceFrame.updateMatrixWorld(true);
+
+	        if (sg.radius > 50 * 1000) {
+	          scope.camera.near = 10;
+	        } else if (sg.radius > 10 * 1000) {
+	          scope.camera.near = 2;
+	        } else if (sg.radius > 1000) {
+	          scope.camera.near = 1;
+	        } else if (sg.radius > 100) {
+	          scope.camera.near = 0.5;
+	        } else {
+	          scope.camera.near = 0.1;
+	        }
+
+	        scope.flipYZ();
+	        scope.zoomTo(scope.pointcloud, 1);
+
+	        scope.initGUI();
+
+	        scope.earthControls.pointclouds.push(scope.pointcloud);
+
+	        // if(defaultSettings.navigation === "Earth"){
+	        //   scope.useEarthControls();
+	        // }else if(defaultSettings.navigation === "Orbit"){
+	        //   scope.useOrbitControls();
+	        // }else if(defaultSettings.navigation === "Flight"){
+	        //   scope.useFPSControls();
+	        // }else{
+	        //   console.warning("No navigation mode specified. Using OrbitControls");
+	        //   scope.useTransformControls();
+	        // }
+
+	        if (defaultSettings.cameraPosition != null) {
+	          var cp = new _three2.default.Vector3(defaultSettings.cameraPosition[0], defaultSettings.cameraPosition[1], defaultSettings.cameraPosition[2]);
+	          scope.camera.position.copy(cp);
+	        }
+
+	        if (defaultSettings.cameraTarget != null) {
+	          var ct = new _three2.default.Vector3(defaultSettings.cameraTarget[0], defaultSettings.cameraTarget[1], defaultSettings.cameraTarget[2]);
+	          scope.camera.lookAt(ct);
+
+	          if (defaultSettings.navigation === "Orbit") {
+	            scope.controls.target.copy(ct);
+	          }
+	        }
+
+	        scope.dispatchEvent({
+	          "type": "pointcloud_loaded",
+	          "pointcloud": scope.pointcloud
+	        });
+	      });
+	    } else if (pointcloudPath.indexOf(".vpc") > 0) {
+	      _potree2.default.PointCloudArena4DGeometry.load(pointcloudPath, function (geometry) {
+	        scope.pointcloud = new _potree2.default.PointCloudArena4D(geometry);
+	        scope.pointcloud.visiblePointsTarget = 500 * 1000;
+
+	        //scope.pointcloud.applyMatrix(new THREE.Matrix4().set(
+	        //  1,0,0,0,
+	        //  0,0,1,0,
+	        //  0,-1,0,0,
+	        //  0,0,0,1
+	        //));
+
+	        referenceFrame.add(scope.pointcloud);
+
+	        flipYZ();
+
+	        referenceFrame.updateMatrixWorld(true);
+	        var sg = scope.pointcloud.boundingSphere.clone().applyMatrix4(scope.pointcloud.matrixWorld);
+
+	        referenceFrame.position.sub(sg.center);
+	        referenceFrame.position.y += sg.radius / 2;
+	        referenceFrame.updateMatrixWorld(true);
+
+	        scope.zoomTo(scope.pointcloud, 1);
+
+	        initGUI();
+	        scope.pointcloud.material.interpolation = false;
+	        scope.pointcloud.material.pointSizeType = _potree2.default.PointSizeType.ATTENUATED;
+	        scope.earthControls.pointclouds.push(scope.pointcloud);
+
+	        if (defaultSettings.navigation === "Earth") {
+	          scope.useEarthControls();
+	        } else if (defaultSettings.navigation === "Orbit") {
+	          scope.useOrbitControls();
+	        } else if (defaultSettings.navigation === "Flight") {
+	          scope.useFPSControls();
+	        } else {
+	          console.warning("No navigation mode specivied. Using OrbitControls");
+	          scope.useOrbitControls();
+	        }
+
+	        if (defaultSettings.cameraPosition != null) {
+	          var cp = new _three2.default.Vector3(defaultSettings.cameraPosition[0], defaultSettings.cameraPosition[1], defaultSettings.cameraPosition[2]);
+	          scope.camera.position.copy(cp);
+	        }
+
+	        if (defaultSettings.cameraTarget != null) {
+	          var ct = new _three2.default.Vector3(defaultSettings.cameraTarget[0], defaultSettings.cameraTarget[1], defaultSettings.cameraTarget[2]);
+	          scope.camera.lookAt(ct);
+	        }
+	      });
+	    }
+
+	    var grid = _potree2.default.utils.createGrid(5, 5, 2);
+	    scope.scene.add(grid);
+
+	    scope.measuringTool = new _potree2.default.MeasuringTool(scope.scenePointCloud, scope.camera, scope.renderer);
+	    scope.profileTool = new _potree2.default.ProfileTool(scope.scenePointCloud, scope.camera, scope.renderer);
+	    scope.transformationTool = new _potree2.default.TransformationTool(scope.scenePointCloud, scope.camera, scope.renderer);
+	    scope.volumeTool = new _potree2.default.VolumeTool(scope.scenePointCloud, scope.camera, scope.renderer, scope.transformationTool);
+
+	    // background
+	    // var texture = THREE.ImageUtils.loadTexture( '../resources/textures/background.gif' );
+	    var texture = _potree2.default.utils.createBackgroundTexture(512, 512);
+
+	    texture.minFilter = texture.magFilter = _three2.default.NearestFilter;
+	    texture.minFilter = texture.magFilter = _three2.default.LinearFilter;
+
+	    var bg = new _three2.default.Mesh(new _three2.default.PlaneBufferGeometry(2, 2, 0), new _three2.default.MeshBasicMaterial({
+	      map: texture
+	    }));
+	    //bg.position.z = -1;
+	    bg.material.depthTest = false;
+	    bg.material.depthWrite = false;
+	    scope.sceneBG.add(bg);
+
+	    window.addEventListener('keydown', onKeyDown, false);
+
+	    scope.directionalLight = new _three2.default.DirectionalLight(0xffffff, 0.5);
+	    scope.directionalLight.position.set(10, 10, 10);
+	    scope.directionalLight.lookAt(new _three2.default.Vector3(0, 0, 0));
+	    scope.scenePointCloud.add(scope.directionalLight);
+
+	    var light = new _three2.default.AmbientLight(0x555555); // soft white light
+	    scope.scenePointCloud.add(light);
+	  };
+
+	  this.flipYZ = function () {
+	    scope.isFlipYZ = !scope.isFlipYZ;
+
+	    if (scope.isFlipYZ) {
+	      referenceFrame.matrix.copy(new _three2.default.Matrix4());
+	      referenceFrame.applyMatrix(new _three2.default.Matrix4().set(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1));
+	    } else {
+	      referenceFrame.matrix.copy(new _three2.default.Matrix4());
+	      referenceFrame.applyMatrix(new _three2.default.Matrix4().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
+	    }
+
+	    referenceFrame.updateMatrixWorld(true);
+	    scope.pointcloud.updateMatrixWorld();
+	    var sg = scope.pointcloud.boundingSphere.clone().applyMatrix4(scope.pointcloud.matrixWorld);
+	    referenceFrame.position.copy(sg.center).multiplyScalar(-1);
+	    referenceFrame.updateMatrixWorld(true);
+	    referenceFrame.position.y -= scope.pointcloud.getWorldPosition().y;
+	    referenceFrame.updateMatrixWorld(true);
+	  };
+
+	  function onKeyDown(event) {
+	    //console.log(event.keyCode);
+
+	    if (event.keyCode === 69) {
+	      // e pressed
+
+	      scope.transformationTool.translate();
+	    } else if (event.keyCode === 82) {
+	      // r pressed
+
+	      scope.transformationTool.scale();
+	    } else if (event.keyCode === 84) {
+	      // r pressed
+
+	      scope.transformationTool.rotate();
+	    }
+	  };
+
+	  var intensityMax = null;
+	  var heightMin = null;
+	  var heightMax = null;
+
+	  this.update = function (delta, timestamp) {
+	    _potree2.default.pointLoadLimit = scope.pointCountTarget * 2 * 1000 * 1000;
+
+	    scope.directionalLight.position.copy(scope.camera.position);
+	    scope.directionalLight.lookAt(new _three2.default.Vector3().addVectors(scope.camera.position, scope.camera.getWorldDirection()));
+
+	    if (scope.pointcloud) {
+
+	      var bbWorld = _potree2.default.utils.computeTransformedBoundingBox(scope.pointcloud.boundingBox, scope.pointcloud.matrixWorld);
+
+	      if (!intensityMax) {
+	        var root = scope.pointcloud.pcoGeometry.root;
+	        if (root != null && root.loaded) {
+	          var attributes = scope.pointcloud.pcoGeometry.root.geometry.attributes;
+	          if (attributes.intensity) {
+	            var array = attributes.intensity.array;
+	            var max = 0;
+	            for (var i = 0; i < array.length; i++) {
+	              max = Math.max(array[i]);
+	            }
+
+	            if (max <= 1) {
+	              intensityMax = 1;
+	            } else if (max <= 256) {
+	              intensityMax = 255;
+	            } else {
+	              intensityMax = max;
+	            }
+	          }
+	        }
+	      }
+
+	      if (heightMin === null) {
+	        heightMin = bbWorld.min.y;
+	        heightMax = bbWorld.max.y;
+	      }
+
+	      scope.pointcloud.material.clipMode = scope.clipMode;
+	      scope.pointcloud.material.heightMin = heightMin;
+	      scope.pointcloud.material.heightMax = heightMax;
+	      scope.pointcloud.material.intensityMin = 0;
+	      scope.pointcloud.material.intensityMax = intensityMax;
+	      scope.pointcloud.showBoundingBox = scope.showBoundingBox;
+	      scope.pointcloud.generateDEM = scope.useDEMCollisions;
+	      scope.pointcloud.minimumNodePixelSize = scope.minNodeSize;
+
+	      if (!scope.freeze) {
+	        scope.pointcloud.update(scope.camera, scope.renderer);
+	      }
+	    }
+
+	    if (stats && scope.showStats) {
+	      document.getElementById("lblNumVisibleNodes").style.display = "";
+	      document.getElementById("lblNumVisiblePoints").style.display = "";
+	      stats.domElement.style.display = "";
+
+	      stats.update();
+
+	      if (scope.pointcloud) {
+	        document.getElementById("lblNumVisibleNodes").innerHTML = "visible nodes: " + scope.pointcloud.numVisibleNodes;
+	        document.getElementById("lblNumVisiblePoints").innerHTML = "visible points: " + _potree2.default.utils.addCommas(scope.pointcloud.numVisiblePoints);
+	      }
+	    } else if (stats) {
+	      document.getElementById("lblNumVisibleNodes").style.display = "none";
+	      document.getElementById("lblNumVisiblePoints").style.display = "none";
+	      stats.domElement.style.display = "none";
+	    }
+
+	    scope.camera.fov = scope.fov;
+
+	    if (scope.controls) {
+	      scope.controls.update(delta);
+	    }
+
+	    // update progress bar
+	    if (scope.pointcloud) {
+	      var progress = scope.pointcloud.progress;
+
+	      progressBar.progress = progress;
+
+	      var message;
+	      if (progress === 0 || scope.pointcloud instanceof _potree2.default.PointCloudArena4D) {
+	        message = "loading";
+	      } else {
+	        message = "loading: " + parseInt(progress * 100) + "%";
+	      }
+	      progressBar.message = message;
+
+	      if (progress === 1) {
+	        progressBar.hide();
+	      } else if (progress < 1) {
+	        progressBar.show();
+	      }
+	    }
+
+	    scope.volumeTool.update();
+	    scope.transformationTool.update();
+	    scope.profileTool.update();
+
+	    var clipBoxes = [];
+
+	    for (var i = 0; i < scope.profileTool.profiles.length; i++) {
+	      var profile = scope.profileTool.profiles[i];
+
+	      for (var j = 0; j < profile.boxes.length; j++) {
+	        var box = profile.boxes[j];
+	        box.updateMatrixWorld();
+	        var boxInverse = new _three2.default.Matrix4().getInverse(box.matrixWorld);
+	        clipBoxes.push(boxInverse);
+	      }
+	    }
+
+	    for (var i = 0; i < scope.volumeTool.volumes.length; i++) {
+	      var volume = scope.volumeTool.volumes[i];
+
+	      if (volume.clip) {
+	        volume.updateMatrixWorld();
+	        var boxInverse = new _three2.default.Matrix4().getInverse(volume.matrixWorld);
+
+	        clipBoxes.push(boxInverse);
+	      }
+	    }
+
+	    if (scope.pointcloud) {
+	      scope.pointcloud.material.setClipBoxes(clipBoxes);
+	    }
+
+	    {
+	      // update annotations
+	      var distances = [];
+	      for (var i = 0; i < scope.annotations.length; i++) {
+	        var ann = scope.annotations[i];
+	        var screenPos = ann.position.clone().project(scope.camera);
+
+	        screenPos.x = scope.renderArea.clientWidth * (screenPos.x + 1) / 2;
+	        screenPos.y = scope.renderArea.clientHeight * (1 - (screenPos.y + 1) / 2);
+
+	        ann.domElement.style.left = screenPos.x - ann.domElement.clientWidth / 2;
+	        ann.domElement.style.top = screenPos.y;
+
+	        distances.push({ annotation: ann, distance: screenPos.z });
+
+	        if (-1 > screenPos.z || screenPos.z > 1) {
+	          ann.domElement.style.display = "none";
+	        } else {
+	          ann.domElement.style.display = "initial";
+	        }
+	      }
+	      distances.sort(function (a, b) {
+	        return b.distance - a.distance;
+	      });
+	      for (var i = 0; i < distances.length; i++) {
+	        var ann = distances[i].annotation;
+	        ann.domElement.style.zIndex = "" + i;
+	      }
+	    }
+
+	    if (scope.showDebugInfos) {
+	      scope.infos.set("camera.position", "camera.position: " + viewer.camera.position.x.toFixed(2) + ", " + viewer.camera.position.y.toFixed(2) + ", " + viewer.camera.position.z.toFixed(2));
+	    }
+
+	    _tween2.default.update(timestamp);
+	  };
+
+	  this.useEarthControls = function () {
+	    if (scope.controls) {
+	      scope.controls.enabled = false;
+	    }
+
+	    scope.controls = scope.earthControls;
+	    scope.controls.enabled = true;
+	  };
+
+	  this.useFPSControls = function () {
+	    if (scope.controls) {
+	      scope.controls.enabled = false;
+	    }
+
+	    scope.controls = scope.fpControls;
+	    scope.controls.enabled = true;
+
+	    scope.controls.moveSpeed = scope.pointcloud.boundingSphere.radius / 6;
+	  };
+
+	  this.useOrbitControls = function () {
+	    if (scope.controls) {
+	      scope.controls.enabled = false;
+	    }
+
+	    scope.controls = scope.orbitControls;
+	    scope.controls.enabled = true;
+
+	    if (scope.pointcloud) {
+	      scope.controls.target.copy(scope.pointcloud.boundingSphere.center.clone().applyMatrix4(scope.pointcloud.matrixWorld));
+	    }
+	  };
+
+	  this.useTransformControls = function () {
+	    if (scope.controls) {
+	      scope.controls.enabled = false;
+	    }
+
+	    scope.controls = scope.transformControls;
+	    scope.controls.enabled = true;
+	    console.log(scope);
+	    scope.controls.addEventListener('change', scope.render);
+	    scope.scene.add(scope.controls);
+	  };
+
+	  this.addAnnotation = function (position, args) {
+	    var cameraPosition = args.cameraPosition;
+	    var cameraTarget = args.cameraTarget || position;
+
+	    var annotation = new _potree2.default.Annotation(scope, {
+	      "position": position,
+	      "cameraPosition": cameraPosition,
+	      "cameraTarget": cameraTarget
+	    });
+
+	    scope.annotations.push(annotation);
+	    scope.renderArea.appendChild(annotation.domElement);
+	  };
+
+	  var PotreeRenderer = function PotreeRenderer() {
+
+	    this.render = function () {
+	      {
+	        // resize
+	        var width = scope.renderArea.clientWidth;
+	        var height = scope.renderArea.clientHeight;
+	        var aspect = width / height;
+
+	        scope.camera.aspect = aspect;
+	        scope.camera.updateProjectionMatrix();
+
+	        scope.renderer.setSize(width, height);
+	      }
+
+	      // render skybox
+	      if (showSkybox) {
+	        scope.camera.rotation.copy(scope.camera.rotation);
+	        scope.renderer.render(skybox.scene, skybox.camera);
+	      } else {
+	        scope.renderer.render(scope.sceneBG, scope.cameraBG);
+	      }
+
+	      if (scope.pointcloud) {
+	        if (scope.pointcloud.originalMaterial) {
+	          scope.pointcloud.material = scope.pointcloud.originalMaterial;
+	        }
+
+	        var bbWorld = _potree2.default.utils.computeTransformedBoundingBox(scope.pointcloud.boundingBox, scope.pointcloud.matrixWorld);
+
+	        scope.pointcloud.visiblePointsTarget = scope.pointCountTarget * 1000 * 1000;
+	        scope.pointcloud.material.size = scope.pointSize;
+	        scope.pointcloud.material.opacity = scope.opacity;
+	        scope.pointcloud.material.pointColorType = scope.pointColorType;
+	        scope.pointcloud.material.pointSizeType = scope.pointSizeType;
+	        scope.pointcloud.material.pointShape = scope.quality === "Circles" ? _potree2.default.PointShape.CIRCLE : _potree2.default.PointShape.SQUARE;
+	        scope.pointcloud.material.interpolate = scope.quality === "Interpolation";
+	        scope.pointcloud.material.weighted = false;
+	      }
+
+	      // render scene
+	      scope.renderer.render(scope.scene, scope.camera);
+	      scope.renderer.render(scope.scenePointCloud, scope.camera);
+
+	      scope.profileTool.render();
+	      scope.volumeTool.render();
+
+	      scope.renderer.clearDepth();
+	      scope.measuringTool.render();
+	      scope.transformationTool.render();
+	    };
+	  };
+	  var potreeRenderer = new PotreeRenderer();
+	  this.render = potreeRenderer.render;
+
+	  // high quality rendering using splats
+	  var highQualityRenderer = null;
+	  var HighQualityRenderer = function HighQualityRenderer() {
+
+	    var depthMaterial = null;
+	    var attributeMaterial = null;
+	    var normalizationMaterial = null;
+
+	    var rtDepth;
+	    var rtNormalize;
+
+	    var initHQSPlats = function initHQSPlats() {
+	      if (depthMaterial != null) {
+	        return;
+	      }
+
+	      depthMaterial = new _potree2.default.PointCloudMaterial();
+	      attributeMaterial = new _potree2.default.PointCloudMaterial();
+
+	      depthMaterial.pointColorType = _potree2.default.PointColorType.DEPTH;
+	      depthMaterial.pointShape = _potree2.default.PointShape.CIRCLE;
+	      depthMaterial.interpolate = false;
+	      depthMaterial.weighted = false;
+	      depthMaterial.minSize = 2;
+
+	      attributeMaterial.pointShape = _potree2.default.PointShape.CIRCLE;
+	      attributeMaterial.interpolate = false;
+	      attributeMaterial.weighted = true;
+	      attributeMaterial.minSize = 2;
+
+	      rtDepth = new _three2.default.WebGLRenderTarget(1024, 1024, {
+	        minFilter: _three2.default.NearestFilter,
+	        magFilter: _three2.default.NearestFilter,
+	        format: _three2.default.RGBAFormat,
+	        type: _three2.default.FloatType
+	      });
+
+	      rtNormalize = new _three2.default.WebGLRenderTarget(1024, 1024, {
+	        minFilter: _three2.default.LinearFilter,
+	        magFilter: _three2.default.NearestFilter,
+	        format: _three2.default.RGBAFormat,
+	        type: _three2.default.FloatType
+	      });
+
+	      var uniformsNormalize = {
+	        depthMap: { type: "t", value: rtDepth },
+	        texture: { type: "t", value: rtNormalize }
+	      };
+
+	      normalizationMaterial = new _three2.default.ShaderMaterial({
+	        uniforms: uniformsNormalize,
+	        vertexShader: _potree2.default.Shaders["normalize.vs"],
+	        fragmentShader: _potree2.default.Shaders["normalize.fs"]
+	      });
+	    };
+
+	    var resize = function resize(width, height) {
+	      if (rtDepth.width == width && rtDepth.height == height) {
+	        return;
+	      }
+
+	      rtDepth.dispose();
+	      rtNormalize.dispose();
+
+	      scope.camera.aspect = width / height;
+	      scope.camera.updateProjectionMatrix();
+
+	      scope.renderer.setSize(width, height);
+	      rtDepth.setSize(width, height);
+	      rtNormalize.setSize(width, height);
+	    };
+
+	    // render with splats
+	    this.render = function (renderer) {
+
+	      var width = scope.renderArea.clientWidth;
+	      var height = scope.renderArea.clientHeight;
+
+	      initHQSPlats();
+
+	      resize(width, height);
+
+	      scope.renderer.clear();
+	      if (showSkybox) {
+	        skybox.camera.rotation.copy(scope.camera.rotation);
+	        scope.renderer.render(skybox.scene, skybox.camera);
+	      } else {
+	        scope.renderer.render(scope.sceneBG, scope.cameraBG);
+	      }
+	      scope.renderer.render(scope.scene, scope.camera);
+
+	      if (scope.pointcloud) {
+
+	        depthMaterial.uniforms.octreeSize.value = scope.pointcloud.pcoGeometry.boundingBox.size().x;
+	        attributeMaterial.uniforms.octreeSize.value = scope.pointcloud.pcoGeometry.boundingBox.size().x;
+
+	        scope.pointcloud.visiblePointsTarget = scope.pointCountTarget * 1000 * 1000;
+	        var originalMaterial = scope.pointcloud.material;
+
+	        {
+	          // DEPTH PASS
+	          depthMaterial.size = scope.pointSize;
+	          depthMaterial.pointSizeType = scope.pointSizeType;
+	          depthMaterial.screenWidth = width;
+	          depthMaterial.screenHeight = height;
+	          depthMaterial.uniforms.visibleNodes.value = scope.pointcloud.material.visibleNodesTexture;
+	          depthMaterial.uniforms.octreeSize.value = scope.pointcloud.pcoGeometry.boundingBox.size().x;
+	          depthMaterial.fov = scope.camera.fov * (Math.PI / 180);
+	          depthMaterial.spacing = scope.pointcloud.pcoGeometry.spacing;
+	          depthMaterial.near = scope.camera.near;
+	          depthMaterial.far = scope.camera.far;
+	          depthMaterial.heightMin = heightMin;
+	          depthMaterial.heightMax = heightMax;
+	          depthMaterial.uniforms.visibleNodes.value = scope.pointcloud.material.visibleNodesTexture;
+	          depthMaterial.uniforms.octreeSize.value = scope.pointcloud.pcoGeometry.boundingBox.size().x;
+	          depthMaterial.bbSize = scope.pointcloud.material.bbSize;
+	          depthMaterial.treeType = scope.pointcloud.material.treeType;
+	          depthMaterial.uniforms.classificationLUT.value = scope.pointcloud.material.uniforms.classificationLUT.value;
+
+	          scope.scenePointCloud.overrideMaterial = depthMaterial;
+	          scope.renderer.clearTarget(rtDepth, true, true, true);
+	          scope.renderer.render(scope.scenePointCloud, scope.camera, rtDepth);
+	          scope.scenePointCloud.overrideMaterial = null;
+	        }
+
+	        {
+	          // ATTRIBUTE PASS
+	          attributeMaterial.size = scope.pointSize;
+	          attributeMaterial.pointSizeType = scope.pointSizeType;
+	          attributeMaterial.screenWidth = width;
+	          attributeMaterial.screenHeight = height;
+	          attributeMaterial.pointColorType = scope.pointColorType;
+	          attributeMaterial.depthMap = rtDepth;
+	          attributeMaterial.uniforms.visibleNodes.value = scope.pointcloud.material.visibleNodesTexture;
+	          attributeMaterial.uniforms.octreeSize.value = scope.pointcloud.pcoGeometry.boundingBox.size().x;
+	          attributeMaterial.fov = scope.camera.fov * (Math.PI / 180);
+	          attributeMaterial.spacing = scope.pointcloud.pcoGeometry.spacing;
+	          attributeMaterial.near = scope.camera.near;
+	          attributeMaterial.far = scope.camera.far;
+	          attributeMaterial.heightMin = heightMin;
+	          attributeMaterial.heightMax = heightMax;
+	          attributeMaterial.intensityMin = scope.pointcloud.material.intensityMin;
+	          attributeMaterial.intensityMax = scope.pointcloud.material.intensityMax;
+	          attributeMaterial.setClipBoxes(scope.pointcloud.material.clipBoxes);
+	          attributeMaterial.clipMode = scope.pointcloud.material.clipMode;
+	          attributeMaterial.bbSize = scope.pointcloud.material.bbSize;
+	          attributeMaterial.treeType = scope.pointcloud.material.treeType;
+	          attributeMaterial.uniforms.classificationLUT.value = scope.pointcloud.material.uniforms.classificationLUT.value;
+
+	          scope.scenePointCloud.overrideMaterial = attributeMaterial;
+	          scope.renderer.clearTarget(rtNormalize, true, true, true);
+	          scope.renderer.render(scope.scenePointCloud, scope.camera, rtNormalize);
+	          scope.scenePointCloud.overrideMaterial = null;
+	        }
+
+	        {
+	          // NORMALIZATION PASS
+	          normalizationMaterial.uniforms.depthMap.value = rtDepth;
+	          normalizationMaterial.uniforms.texture.value = rtNormalize;
+	          _potree2.default.utils.screenPass.render(scope.renderer, normalizationMaterial);
+	        }
+
+	        scope.pointcloud.material = originalMaterial;
+
+	        scope.volumeTool.render();
+	        scope.renderer.clearDepth();
+	        scope.profileTool.render();
+	        scope.measuringTool.render();
+	        scope.transformationTool.render();
+	      }
+	    };
+	  };
+
+	  var edlRenderer = null;
+	  var EDLRenderer = function EDLRenderer() {
+
+	    var edlMaterial = null;
+	    var attributeMaterial = null;
+
+	    //var depthTexture = null;
+
+	    var rtColor = null;
+	    var gl = scope.renderer.context;
+
+	    var initEDL = function initEDL() {
+	      if (edlMaterial != null) {
+	        return;
+	      }
+
+	      //var depthTextureExt = gl.getExtension("WEBGL_depth_texture");
+
+	      edlMaterial = new _potree2.default.EyeDomeLightingMaterial();
+	      attributeMaterial = new _potree2.default.PointCloudMaterial();
+
+	      attributeMaterial.pointShape = _potree2.default.PointShape.CIRCLE;
+	      attributeMaterial.interpolate = false;
+	      attributeMaterial.weighted = false;
+	      attributeMaterial.minSize = 2;
+	      attributeMaterial.useLogarithmicDepthBuffer = false;
+	      attributeMaterial.useEDL = true;
+
+	      rtColor = new _three2.default.WebGLRenderTarget(1024, 1024, {
+	        minFilter: _three2.default.LinearFilter,
+	        magFilter: _three2.default.NearestFilter,
+	        format: _three2.default.RGBAFormat,
+	        type: _three2.default.FloatType
+	      });
+	    };
+
+	    //type: THREE.UnsignedByteType,
+	    //depthBuffer: false,
+	    //stencilBuffer: false
+	    var resize = function resize() {
+	      var width = scope.renderArea.clientWidth;
+	      var height = scope.renderArea.clientHeight;
+	      var aspect = width / height;
+
+	      var needsResize = rtColor.width != width || rtColor.height != height;
+
+	      // disposal will be unnecessary once this fix made it into three.js master:
+	      // https://github.com/mrdoob/three.js/pull/6355
+	      if (needsResize) {
+	        rtColor.dispose();
+	      }
+
+	      scope.camera.aspect = aspect;
+	      scope.camera.updateProjectionMatrix();
+
+	      scope.renderer.setSize(width, height);
+	      rtColor.setSize(width, height);
+	    };
+
+	    this.render = function () {
+
+	      initEDL();
+
+	      resize();
+
+	      scope.renderer.clear();
+	      if (showSkybox) {
+	        scope.camera.rotation.copy(scope.camera.rotation);
+	        scope.renderer.render(skybox.scene, skybox.camera);
+	      } else {
+	        scope.renderer.render(scope.sceneBG, scope.cameraBG);
+	      }
+	      scope.renderer.render(scope.scene, scope.camera);
+
+	      if (scope.pointcloud) {
+	        var width = scope.renderArea.clientWidth;
+	        var height = scope.renderArea.clientHeight;
+
+	        var octreeSize = scope.pointcloud.pcoGeometry.boundingBox.size().x;
+
+	        scope.pointcloud.visiblePointsTarget = scope.pointCountTarget * 1000 * 1000;
+	        var originalMaterial = scope.pointcloud.material;
+
+	        {
+	          // COLOR & DEPTH PASS
+	          attributeMaterial = scope.pointcloud.material;
+	          attributeMaterial.pointShape = _potree2.default.PointShape.CIRCLE;
+	          attributeMaterial.interpolate = false;
+	          attributeMaterial.weighted = false;
+	          attributeMaterial.minSize = 2;
+	          attributeMaterial.useLogarithmicDepthBuffer = false;
+	          attributeMaterial.useEDL = true;
+
+	          attributeMaterial.size = scope.pointSize;
+	          attributeMaterial.pointSizeType = scope.pointSizeType;
+	          attributeMaterial.screenWidth = width;
+	          attributeMaterial.screenHeight = height;
+	          attributeMaterial.pointColorType = scope.pointColorType;
+	          attributeMaterial.uniforms.visibleNodes.value = scope.pointcloud.material.visibleNodesTexture;
+	          attributeMaterial.uniforms.octreeSize.value = octreeSize;
+	          attributeMaterial.fov = scope.camera.fov * (Math.PI / 180);
+	          attributeMaterial.spacing = scope.pointcloud.pcoGeometry.spacing;
+	          attributeMaterial.near = scope.camera.near;
+	          attributeMaterial.far = scope.camera.far;
+	          attributeMaterial.heightMin = heightMin;
+	          attributeMaterial.heightMax = heightMax;
+	          attributeMaterial.intensityMin = scope.pointcloud.material.intensityMin;
+	          attributeMaterial.intensityMax = scope.pointcloud.material.intensityMax;
+	          attributeMaterial.setClipBoxes(scope.pointcloud.material.clipBoxes);
+	          attributeMaterial.clipMode = scope.pointcloud.material.clipMode;
+	          attributeMaterial.bbSize = scope.pointcloud.material.bbSize;
+	          attributeMaterial.treeType = scope.pointcloud.material.treeType;
+	          attributeMaterial.uniforms.classificationLUT.value = scope.pointcloud.material.uniforms.classificationLUT.value;
+
+	          scope.pointcloud.material = attributeMaterial;
+	          for (var i = 0; i < scope.pointcloud.visibleNodes.length; i++) {
+	            var node = scope.pointcloud.visibleNodes[i];
+	            node.sceneNode.material = attributeMaterial;
+	          }
+
+	          scope.renderer.clearTarget(rtColor, true, true, true);
+	          scope.renderer.render(scope.scenePointCloud, scope.camera, rtColor);
+
+	          scope.pointcloud.material = originalMaterial;
+	          for (var i = 0; i < scope.pointcloud.visibleNodes.length; i++) {
+	            var node = scope.pointcloud.visibleNodes[i];
+	            node.sceneNode.material = originalMaterial;
+	          }
+	        }
+
+	        // bit of a hack here. The EDL pass will mess up the text of the volume tool
+	        // so volume tool is rendered again afterwards
+	        scope.volumeTool.render(rtColor);
+
+	        {
+	          // EDL OCCLUSION PASS
+	          edlMaterial.uniforms.screenWidth.value = width;
+	          edlMaterial.uniforms.screenHeight.value = height;
+	          edlMaterial.uniforms.near.value = scope.camera.near;
+	          edlMaterial.uniforms.far.value = scope.camera.far;
+	          edlMaterial.uniforms.colorMap.value = rtColor;
+	          edlMaterial.uniforms.expScale.value = scope.camera.far;
+	          edlMaterial.uniforms.edlScale.value = scope.edlScale;
+	          edlMaterial.uniforms.radius.value = scope.edlRadius;
+	          edlMaterial.uniforms.opacity.value = scope.opacity;
+	          edlMaterial.depthTest = true;
+	          edlMaterial.depthWrite = true;
+	          edlMaterial.transparent = true;
+
+	          _potree2.default.utils.screenPass.render(scope.renderer, edlMaterial);
+	        }
+
+	        scope.renderer.render(scope.scene, scope.camera);
+
+	        scope.profileTool.render();
+	        scope.volumeTool.render();
+	        scope.renderer.clearDepth();
+	        scope.measuringTool.render();
+	        scope.transformationTool.render();
+	      }
+	    };
+	  };
+
+	  //var toggleMessage = 0;
+
+	  function loop(timestamp) {
+	    requestAnimationFrame(loop);
+
+	    //var start = new Date().getTime();
+	    scope.update(clock.getDelta(), timestamp);
+	    //var end = new Date().getTime();
+	    //var duration = end - start;
+	    //toggleMessage++;
+	    //if(toggleMessage > 30){
+	    //  document.getElementById("lblMessage").innerHTML = "update: " + duration + "ms";
+	    //  toggleMessage = 0;
+	    //}
+
+	    if (scope.useEDL) {
+	      if (!edlRenderer) {
+	        edlRenderer = new EDLRenderer();
+	      }
+	      edlRenderer.render(scope.renderer);
+	    } else if (scope.quality === "Splats") {
+	      if (!highQualityRenderer) {
+	        highQualityRenderer = new HighQualityRenderer();
+	      }
+	      highQualityRenderer.render(scope.renderer);
+	    } else {
+	      potreeRenderer.render();
+	    }
+	  };
+
+	  scope.initThree();
+
+	  requestAnimationFrame(loop);
+	};
+
+	Viewer.prototype = Object.create(_three2.default.EventDispatcher.prototype);
+
+	exports.default = Viewer;
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(5)
+	module.exports.color = __webpack_require__(6)
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	/**
+	 * dat-gui JavaScript Controller Library
+	 * http://code.google.com/p/dat-gui
+	 *
+	 * Copyright 2011 Data Arts Team, Google Creative Lab
+	 *
+	 * Licensed under the Apache License, Version 2.0 (the "License");
+	 * you may not use this file except in compliance with the License.
+	 * You may obtain a copy of the License at
+	 *
+	 * http://www.apache.org/licenses/LICENSE-2.0
+	 */
+
+	/** @namespace */
+	var dat = module.exports = dat || {};
+
+	/** @namespace */
+	dat.gui = dat.gui || {};
+
+	/** @namespace */
+	dat.utils = dat.utils || {};
+
+	/** @namespace */
+	dat.controllers = dat.controllers || {};
+
+	/** @namespace */
+	dat.dom = dat.dom || {};
+
+	/** @namespace */
+	dat.color = dat.color || {};
+
+	dat.utils.css = (function () {
+	  return {
+	    load: function (url, doc) {
+	      doc = doc || document;
+	      var link = doc.createElement('link');
+	      link.type = 'text/css';
+	      link.rel = 'stylesheet';
+	      link.href = url;
+	      doc.getElementsByTagName('head')[0].appendChild(link);
+	    },
+	    inject: function(css, doc) {
+	      doc = doc || document;
+	      var injected = document.createElement('style');
+	      injected.type = 'text/css';
+	      injected.innerHTML = css;
+	      doc.getElementsByTagName('head')[0].appendChild(injected);
+	    }
+	  }
+	})();
+
+
+	dat.utils.common = (function () {
+	  
+	  var ARR_EACH = Array.prototype.forEach;
+	  var ARR_SLICE = Array.prototype.slice;
+
+	  /**
+	   * Band-aid methods for things that should be a lot easier in JavaScript.
+	   * Implementation and structure inspired by underscore.js
+	   * http://documentcloud.github.com/underscore/
+	   */
+
+	  return { 
+	    
+	    BREAK: {},
+	  
+	    extend: function(target) {
+	      
+	      this.each(ARR_SLICE.call(arguments, 1), function(obj) {
+	        
+	        for (var key in obj)
+	          if (!this.isUndefined(obj[key])) 
+	            target[key] = obj[key];
+	        
+	      }, this);
+	      
+	      return target;
+	      
+	    },
+	    
+	    defaults: function(target) {
+	      
+	      this.each(ARR_SLICE.call(arguments, 1), function(obj) {
+	        
+	        for (var key in obj)
+	          if (this.isUndefined(target[key])) 
+	            target[key] = obj[key];
+	        
+	      }, this);
+	      
+	      return target;
+	    
+	    },
+	    
+	    compose: function() {
+	      var toCall = ARR_SLICE.call(arguments);
+	            return function() {
+	              var args = ARR_SLICE.call(arguments);
+	              for (var i = toCall.length -1; i >= 0; i--) {
+	                args = [toCall[i].apply(this, args)];
+	              }
+	              return args[0];
+	            }
+	    },
+	    
+	    each: function(obj, itr, scope) {
+
+	      
+	      if (ARR_EACH && obj.forEach === ARR_EACH) { 
+	        
+	        obj.forEach(itr, scope);
+	        
+	      } else if (obj.length === obj.length + 0) { // Is number but not NaN
+	        
+	        for (var key = 0, l = obj.length; key < l; key++)
+	          if (key in obj && itr.call(scope, obj[key], key) === this.BREAK) 
+	            return;
+	            
+	      } else {
+
+	        for (var key in obj) 
+	          if (itr.call(scope, obj[key], key) === this.BREAK)
+	            return;
+	            
+	      }
+	            
+	    },
+	    
+	    defer: function(fnc) {
+	      setTimeout(fnc, 0);
+	    },
+	    
+	    toArray: function(obj) {
+	      if (obj.toArray) return obj.toArray();
+	      return ARR_SLICE.call(obj);
+	    },
+
+	    isUndefined: function(obj) {
+	      return obj === undefined;
+	    },
+	    
+	    isNull: function(obj) {
+	      return obj === null;
+	    },
+	    
+	    isNaN: function(obj) {
+	      return obj !== obj;
+	    },
+	    
+	    isArray: Array.isArray || function(obj) {
+	      return obj.constructor === Array;
+	    },
+	    
+	    isObject: function(obj) {
+	      return obj === Object(obj);
+	    },
+	    
+	    isNumber: function(obj) {
+	      return obj === obj+0;
+	    },
+	    
+	    isString: function(obj) {
+	      return obj === obj+'';
+	    },
+	    
+	    isBoolean: function(obj) {
+	      return obj === false || obj === true;
+	    },
+	    
+	    isFunction: function(obj) {
+	      return Object.prototype.toString.call(obj) === '[object Function]';
+	    }
+	  
+	  };
+	    
+	})();
+
+
+	dat.controllers.Controller = (function (common) {
+
+	  /**
+	   * @class An "abstract" class that represents a given property of an object.
+	   *
+	   * @param {Object} object The object to be manipulated
+	   * @param {string} property The name of the property to be manipulated
+	   *
+	   * @member dat.controllers
+	   */
+	  var Controller = function(object, property) {
+
+	    this.initialValue = object[property];
+
+	    /**
+	     * Those who extend this class will put their DOM elements in here.
+	     * @type {DOMElement}
+	     */
+	    this.domElement = document.createElement('div');
+
+	    /**
+	     * The object to manipulate
+	     * @type {Object}
+	     */
+	    this.object = object;
+
+	    /**
+	     * The name of the property to manipulate
+	     * @type {String}
+	     */
+	    this.property = property;
+
+	    /**
+	     * The function to be called on change.
+	     * @type {Function}
+	     * @ignore
+	     */
+	    this.__onChange = undefined;
+
+	    /**
+	     * The function to be called on finishing change.
+	     * @type {Function}
+	     * @ignore
+	     */
+	    this.__onFinishChange = undefined;
+
+	  };
+
+	  common.extend(
+
+	      Controller.prototype,
+
+	      /** @lends dat.controllers.Controller.prototype */
+	      {
+
+	        /**
+	         * Specify that a function fire every time someone changes the value with
+	         * this Controller.
+	         *
+	         * @param {Function} fnc This function will be called whenever the value
+	         * is modified via this Controller.
+	         * @returns {dat.controllers.Controller} this
+	         */
+	        onChange: function(fnc) {
+	          this.__onChange = fnc;
+	          return this;
+	        },
+
+	        /**
+	         * Specify that a function fire every time someone "finishes" changing
+	         * the value wih this Controller. Useful for values that change
+	         * incrementally like numbers or strings.
+	         *
+	         * @param {Function} fnc This function will be called whenever
+	         * someone "finishes" changing the value via this Controller.
+	         * @returns {dat.controllers.Controller} this
+	         */
+	        onFinishChange: function(fnc) {
+	          this.__onFinishChange = fnc;
+	          return this;
+	        },
+
+	        /**
+	         * Change the value of <code>object[property]</code>
+	         *
+	         * @param {Object} newValue The new value of <code>object[property]</code>
+	         */
+	        setValue: function(newValue) {
+	          this.object[this.property] = newValue;
+	          if (this.__onChange) {
+	            this.__onChange.call(this, newValue);
+	          }
+	          this.updateDisplay();
+	          return this;
+	        },
+
+	        /**
+	         * Gets the value of <code>object[property]</code>
+	         *
+	         * @returns {Object} The current value of <code>object[property]</code>
+	         */
+	        getValue: function() {
+	          return this.object[this.property];
+	        },
+
+	        /**
+	         * Refreshes the visual display of a Controller in order to keep sync
+	         * with the object's current value.
+	         * @returns {dat.controllers.Controller} this
+	         */
+	        updateDisplay: function() {
+	          return this;
+	        },
+
+	        /**
+	         * @returns {Boolean} true if the value has deviated from initialValue
+	         */
+	        isModified: function() {
+	          return this.initialValue !== this.getValue()
+	        }
+
+	      }
+
+	  );
+
+	  return Controller;
+
+
+	})(dat.utils.common);
+
+
+	dat.dom.dom = (function (common) {
+
+	  var EVENT_MAP = {
+	    'HTMLEvents': ['change'],
+	    'MouseEvents': ['click','mousemove','mousedown','mouseup', 'mouseover'],
+	    'KeyboardEvents': ['keydown']
+	  };
+
+	  var EVENT_MAP_INV = {};
+	  common.each(EVENT_MAP, function(v, k) {
+	    common.each(v, function(e) {
+	      EVENT_MAP_INV[e] = k;
+	    });
+	  });
+
+	  var CSS_VALUE_PIXELS = /(\d+(\.\d+)?)px/;
+
+	  function cssValueToPixels(val) {
+
+	    if (val === '0' || common.isUndefined(val)) return 0;
+
+	    var match = val.match(CSS_VALUE_PIXELS);
+
+	    if (!common.isNull(match)) {
+	      return parseFloat(match[1]);
+	    }
+
+	    // TODO ...ems? %?
+
+	    return 0;
+
+	  }
+
+	  /**
+	   * @namespace
+	   * @member dat.dom
+	   */
+	  var dom = {
+
+	    /**
+	     * 
+	     * @param elem
+	     * @param selectable
+	     */
+	    makeSelectable: function(elem, selectable) {
+
+	      if (elem === undefined || elem.style === undefined) return;
+
+	      elem.onselectstart = selectable ? function() {
+	        return false;
+	      } : function() {
+	      };
+
+	      elem.style.MozUserSelect = selectable ? 'auto' : 'none';
+	      elem.style.KhtmlUserSelect = selectable ? 'auto' : 'none';
+	      elem.unselectable = selectable ? 'on' : 'off';
+
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     * @param horizontal
+	     * @param vertical
+	     */
+	    makeFullscreen: function(elem, horizontal, vertical) {
+
+	      if (common.isUndefined(horizontal)) horizontal = true;
+	      if (common.isUndefined(vertical)) vertical = true;
+
+	      elem.style.position = 'absolute';
+
+	      if (horizontal) {
+	        elem.style.left = 0;
+	        elem.style.right = 0;
+	      }
+	      if (vertical) {
+	        elem.style.top = 0;
+	        elem.style.bottom = 0;
+	      }
+
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     * @param eventType
+	     * @param params
+	     */
+	    fakeEvent: function(elem, eventType, params, aux) {
+	      params = params || {};
+	      var className = EVENT_MAP_INV[eventType];
+	      if (!className) {
+	        throw new Error('Event type ' + eventType + ' not supported.');
+	      }
+	      var evt = document.createEvent(className);
+	      switch (className) {
+	        case 'MouseEvents':
+	          var clientX = params.x || params.clientX || 0;
+	          var clientY = params.y || params.clientY || 0;
+	          evt.initMouseEvent(eventType, params.bubbles || false,
+	              params.cancelable || true, window, params.clickCount || 1,
+	              0, //screen X
+	              0, //screen Y
+	              clientX, //client X
+	              clientY, //client Y
+	              false, false, false, false, 0, null);
+	          break;
+	        case 'KeyboardEvents':
+	          var init = evt.initKeyboardEvent || evt.initKeyEvent; // webkit || moz
+	          common.defaults(params, {
+	            cancelable: true,
+	            ctrlKey: false,
+	            altKey: false,
+	            shiftKey: false,
+	            metaKey: false,
+	            keyCode: undefined,
+	            charCode: undefined
+	          });
+	          init(eventType, params.bubbles || false,
+	              params.cancelable, window,
+	              params.ctrlKey, params.altKey,
+	              params.shiftKey, params.metaKey,
+	              params.keyCode, params.charCode);
+	          break;
+	        default:
+	          evt.initEvent(eventType, params.bubbles || false,
+	              params.cancelable || true);
+	          break;
+	      }
+	      common.defaults(evt, aux);
+	      elem.dispatchEvent(evt);
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     * @param event
+	     * @param func
+	     * @param bool
+	     */
+	    bind: function(elem, event, func, bool) {
+	      bool = bool || false;
+	      if (elem.addEventListener)
+	        elem.addEventListener(event, func, bool);
+	      else if (elem.attachEvent)
+	        elem.attachEvent('on' + event, func);
+	      return dom;
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     * @param event
+	     * @param func
+	     * @param bool
+	     */
+	    unbind: function(elem, event, func, bool) {
+	      bool = bool || false;
+	      if (elem.removeEventListener)
+	        elem.removeEventListener(event, func, bool);
+	      else if (elem.detachEvent)
+	        elem.detachEvent('on' + event, func);
+	      return dom;
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     * @param className
+	     */
+	    addClass: function(elem, className) {
+	      if (elem.className === undefined) {
+	        elem.className = className;
+	      } else if (elem.className !== className) {
+	        var classes = elem.className.split(/ +/);
+	        if (classes.indexOf(className) == -1) {
+	          classes.push(className);
+	          elem.className = classes.join(' ').replace(/^\s+/, '').replace(/\s+$/, '');
+	        }
+	      }
+	      return dom;
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     * @param className
+	     */
+	    removeClass: function(elem, className) {
+	      if (className) {
+	        if (elem.className === undefined) {
+	          // elem.className = className;
+	        } else if (elem.className === className) {
+	          elem.removeAttribute('class');
+	        } else {
+	          var classes = elem.className.split(/ +/);
+	          var index = classes.indexOf(className);
+	          if (index != -1) {
+	            classes.splice(index, 1);
+	            elem.className = classes.join(' ');
+	          }
+	        }
+	      } else {
+	        elem.className = undefined;
+	      }
+	      return dom;
+	    },
+
+	    hasClass: function(elem, className) {
+	      return new RegExp('(?:^|\\s+)' + className + '(?:\\s+|$)').test(elem.className) || false;
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     */
+	    getWidth: function(elem) {
+
+	      var style = getComputedStyle(elem);
+
+	      return cssValueToPixels(style['border-left-width']) +
+	          cssValueToPixels(style['border-right-width']) +
+	          cssValueToPixels(style['padding-left']) +
+	          cssValueToPixels(style['padding-right']) +
+	          cssValueToPixels(style['width']);
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     */
+	    getHeight: function(elem) {
+
+	      var style = getComputedStyle(elem);
+
+	      return cssValueToPixels(style['border-top-width']) +
+	          cssValueToPixels(style['border-bottom-width']) +
+	          cssValueToPixels(style['padding-top']) +
+	          cssValueToPixels(style['padding-bottom']) +
+	          cssValueToPixels(style['height']);
+	    },
+
+	    /**
+	     *
+	     * @param elem
+	     */
+	    getOffset: function(elem) {
+	      var offset = {left: 0, top:0};
+	      if (elem.offsetParent) {
+	        do {
+	          offset.left += elem.offsetLeft;
+	          offset.top += elem.offsetTop;
+	        } while (elem = elem.offsetParent);
+	      }
+	      return offset;
+	    },
+
+	    // http://stackoverflow.com/posts/2684561/revisions
+	    /**
+	     * 
+	     * @param elem
+	     */
+	    isActive: function(elem) {
+	      return elem === document.activeElement && ( elem.type || elem.href );
+	    }
+
+	  };
+
+	  return dom;
+
+	})(dat.utils.common);
+
+
+	dat.controllers.OptionController = (function (Controller, dom, common) {
+
+	  /**
+	   * @class Provides a select input to alter the property of an object, using a
+	   * list of accepted values.
+	   *
+	   * @extends dat.controllers.Controller
+	   *
+	   * @param {Object} object The object to be manipulated
+	   * @param {string} property The name of the property to be manipulated
+	   * @param {Object|string[]} options A map of labels to acceptable values, or
+	   * a list of acceptable string values.
+	   *
+	   * @member dat.controllers
+	   */
+	  var OptionController = function(object, property, options) {
+
+	    OptionController.superclass.call(this, object, property);
+
+	    var _this = this;
+
+	    /**
+	     * The drop down menu
+	     * @ignore
+	     */
+	    this.__select = document.createElement('select');
+
+	    if (common.isArray(options)) {
+	      var map = {};
+	      common.each(options, function(element) {
+	        map[element] = element;
+	      });
+	      options = map;
+	    }
+
+	    common.each(options, function(value, key) {
+
+	      var opt = document.createElement('option');
+	      opt.innerHTML = key;
+	      opt.setAttribute('value', value);
+	      _this.__select.appendChild(opt);
+
+	    });
+
+	    // Acknowledge original value
+	    this.updateDisplay();
+
+	    dom.bind(this.__select, 'change', function() {
+	      var desiredValue = this.options[this.selectedIndex].value;
+	      _this.setValue(desiredValue);
+	    });
+
+	    this.domElement.appendChild(this.__select);
+
+	  };
+
+	  OptionController.superclass = Controller;
+
+	  common.extend(
+
+	      OptionController.prototype,
+	      Controller.prototype,
+
+	      {
+
+	        setValue: function(v) {
+	          var toReturn = OptionController.superclass.prototype.setValue.call(this, v);
+	          if (this.__onFinishChange) {
+	            this.__onFinishChange.call(this, this.getValue());
+	          }
+	          return toReturn;
+	        },
+
+	        updateDisplay: function() {
+	          this.__select.value = this.getValue();
+	          return OptionController.superclass.prototype.updateDisplay.call(this);
+	        }
+
+	      }
+
+	  );
+
+	  return OptionController;
+
+	})(dat.controllers.Controller,
+	dat.dom.dom,
+	dat.utils.common);
+
+
+	dat.controllers.NumberController = (function (Controller, common) {
+
+	  /**
+	   * @class Represents a given property of an object that is a number.
+	   *
+	   * @extends dat.controllers.Controller
+	   *
+	   * @param {Object} object The object to be manipulated
+	   * @param {string} property The name of the property to be manipulated
+	   * @param {Object} [params] Optional parameters
+	   * @param {Number} [params.min] Minimum allowed value
+	   * @param {Number} [params.max] Maximum allowed value
+	   * @param {Number} [params.step] Increment by which to change value
+	   *
+	   * @member dat.controllers
+	   */
+	  var NumberController = function(object, property, params) {
+
+	    NumberController.superclass.call(this, object, property);
+
+	    params = params || {};
+
+	    this.__min = params.min;
+	    this.__max = params.max;
+	    this.__step = params.step;
+
+	    if (common.isUndefined(this.__step)) {
+
+	      if (this.initialValue == 0) {
+	        this.__impliedStep = 1; // What are we, psychics?
+	      } else {
+	        // Hey Doug, check this out.
+	        this.__impliedStep = Math.pow(10, Math.floor(Math.log(this.initialValue)/Math.LN10))/10;
+	      }
+
+	    } else {
+
+	      this.__impliedStep = this.__step;
+
+	    }
+
+	    this.__precision = numDecimals(this.__impliedStep);
+
+
+	  };
+
+	  NumberController.superclass = Controller;
+
+	  common.extend(
+
+	      NumberController.prototype,
+	      Controller.prototype,
+
+	      /** @lends dat.controllers.NumberController.prototype */
+	      {
+
+	        setValue: function(v) {
+
+	          if (this.__min !== undefined && v < this.__min) {
+	            v = this.__min;
+	          } else if (this.__max !== undefined && v > this.__max) {
+	            v = this.__max;
+	          }
+
+	          if (this.__step !== undefined && v % this.__step != 0) {
+	            v = Math.round(v / this.__step) * this.__step;
+	          }
+
+	          return NumberController.superclass.prototype.setValue.call(this, v);
+
+	        },
+
+	        /**
+	         * Specify a minimum value for <code>object[property]</code>.
+	         *
+	         * @param {Number} minValue The minimum value for
+	         * <code>object[property]</code>
+	         * @returns {dat.controllers.NumberController} this
+	         */
+	        min: function(v) {
+	          this.__min = v;
+	          return this;
+	        },
+
+	        /**
+	         * Specify a maximum value for <code>object[property]</code>.
+	         *
+	         * @param {Number} maxValue The maximum value for
+	         * <code>object[property]</code>
+	         * @returns {dat.controllers.NumberController} this
+	         */
+	        max: function(v) {
+	          this.__max = v;
+	          return this;
+	        },
+
+	        /**
+	         * Specify a step value that dat.controllers.NumberController
+	         * increments by.
+	         *
+	         * @param {Number} stepValue The step value for
+	         * dat.controllers.NumberController
+	         * @default if minimum and maximum specified increment is 1% of the
+	         * difference otherwise stepValue is 1
+	         * @returns {dat.controllers.NumberController} this
+	         */
+	        step: function(v) {
+	          this.__step = v;
+	          return this;
+	        }
+
+	      }
+
+	  );
+
+	  function numDecimals(x) {
+	    x = x.toString();
+	    if (x.indexOf('.') > -1) {
+	      return x.length - x.indexOf('.') - 1;
+	    } else {
+	      return 0;
+	    }
+	  }
+
+	  return NumberController;
+
+	})(dat.controllers.Controller,
+	dat.utils.common);
+
+
+	dat.controllers.NumberControllerBox = (function (NumberController, dom, common) {
+
+	  /**
+	   * @class Represents a given property of an object that is a number and
+	   * provides an input element with which to manipulate it.
+	   *
+	   * @extends dat.controllers.Controller
+	   * @extends dat.controllers.NumberController
+	   *
+	   * @param {Object} object The object to be manipulated
+	   * @param {string} property The name of the property to be manipulated
+	   * @param {Object} [params] Optional parameters
+	   * @param {Number} [params.min] Minimum allowed value
+	   * @param {Number} [params.max] Maximum allowed value
+	   * @param {Number} [params.step] Increment by which to change value
+	   *
+	   * @member dat.controllers
+	   */
+	  var NumberControllerBox = function(object, property, params) {
+
+	    this.__truncationSuspended = false;
+
+	    NumberControllerBox.superclass.call(this, object, property, params);
+
+	    var _this = this;
+
+	    /**
+	     * {Number} Previous mouse y position
+	     * @ignore
+	     */
+	    var prev_y;
+
+	    this.__input = document.createElement('input');
+	    this.__input.setAttribute('type', 'text');
+
+	    // Makes it so manually specified values are not truncated.
+
+	    dom.bind(this.__input, 'change', onChange);
+	    dom.bind(this.__input, 'blur', onBlur);
+	    dom.bind(this.__input, 'mousedown', onMouseDown);
+	    dom.bind(this.__input, 'keydown', function(e) {
+
+	      // When pressing entire, you can be as precise as you want.
+	      if (e.keyCode === 13) {
+	        _this.__truncationSuspended = true;
+	        this.blur();
+	        _this.__truncationSuspended = false;
+	      }
+
+	    });
+
+	    function onChange() {
+	      var attempted = parseFloat(_this.__input.value);
+	      if (!common.isNaN(attempted)) _this.setValue(attempted);
+	    }
+
+	    function onBlur() {
+	      onChange();
+	      if (_this.__onFinishChange) {
+	        _this.__onFinishChange.call(_this, _this.getValue());
+	      }
+	    }
+
+	    function onMouseDown(e) {
+	      dom.bind(window, 'mousemove', onMouseDrag);
+	      dom.bind(window, 'mouseup', onMouseUp);
+	      prev_y = e.clientY;
+	    }
+
+	    function onMouseDrag(e) {
+
+	      var diff = prev_y - e.clientY;
+	      _this.setValue(_this.getValue() + diff * _this.__impliedStep);
+
+	      prev_y = e.clientY;
+
+	    }
+
+	    function onMouseUp() {
+	      dom.unbind(window, 'mousemove', onMouseDrag);
+	      dom.unbind(window, 'mouseup', onMouseUp);
+	    }
+
+	    this.updateDisplay();
+
+	    this.domElement.appendChild(this.__input);
+
+	  };
+
+	  NumberControllerBox.superclass = NumberController;
+
+	  common.extend(
+
+	      NumberControllerBox.prototype,
+	      NumberController.prototype,
+
+	      {
+
+	        updateDisplay: function() {
+
+	          this.__input.value = this.__truncationSuspended ? this.getValue() : roundToDecimal(this.getValue(), this.__precision);
+	          return NumberControllerBox.superclass.prototype.updateDisplay.call(this);
+	        }
+
+	      }
+
+	  );
+
+	  function roundToDecimal(value, decimals) {
+	    var tenTo = Math.pow(10, decimals);
+	    return Math.round(value * tenTo) / tenTo;
+	  }
+
+	  return NumberControllerBox;
+
+	})(dat.controllers.NumberController,
+	dat.dom.dom,
+	dat.utils.common);
+
+
+	dat.controllers.NumberControllerSlider = (function (NumberController, dom, css, common, styleSheet) {
+
+	  /**
+	   * @class Represents a given property of an object that is a number, contains
+	   * a minimum and maximum, and provides a slider element with which to
+	   * manipulate it. It should be noted that the slider element is made up of
+	   * <code>&lt;div&gt;</code> tags, <strong>not</strong> the html5
+	   * <code>&lt;slider&gt;</code> element.
+	   *
+	   * @extends dat.controllers.Controller
+	   * @extends dat.controllers.NumberController
+	   * 
+	   * @param {Object} object The object to be manipulated
+	   * @param {string} property The name of the property to be manipulated
+	   * @param {Number} minValue Minimum allowed value
+	   * @param {Number} maxValue Maximum allowed value
+	   * @param {Number} stepValue Increment by which to change value
+	   *
+	   * @member dat.controllers
+	   */
+	  var NumberControllerSlider = function(object, property, min, max, step) {
+
+	    NumberControllerSlider.superclass.call(this, object, property, { min: min, max: max, step: step });
+
+	    var _this = this;
+
+	    this.__background = document.createElement('div');
+	    this.__foreground = document.createElement('div');
+	    
+
+
+	    dom.bind(this.__background, 'mousedown', onMouseDown);
+	    
+	    dom.addClass(this.__background, 'slider');
+	    dom.addClass(this.__foreground, 'slider-fg');
+
+	    function onMouseDown(e) {
+
+	      dom.bind(window, 'mousemove', onMouseDrag);
+	      dom.bind(window, 'mouseup', onMouseUp);
+
+	      onMouseDrag(e);
+	    }
+
+	    function onMouseDrag(e) {
+
+	      e.preventDefault();
+
+	      var offset = dom.getOffset(_this.__background);
+	      var width = dom.getWidth(_this.__background);
+	      
+	      _this.setValue(
+	        map(e.clientX, offset.left, offset.left + width, _this.__min, _this.__max)
+	      );
+
+	      return false;
+
+	    }
+
+	    function onMouseUp() {
+	      dom.unbind(window, 'mousemove', onMouseDrag);
+	      dom.unbind(window, 'mouseup', onMouseUp);
+	      if (_this.__onFinishChange) {
+	        _this.__onFinishChange.call(_this, _this.getValue());
+	      }
+	    }
+
+	    this.updateDisplay();
+
+	    this.__background.appendChild(this.__foreground);
+	    this.domElement.appendChild(this.__background);
+
+	  };
+
+	  NumberControllerSlider.superclass = NumberController;
+
+	  /**
+	   * Injects default stylesheet for slider elements.
+	   */
+	  NumberControllerSlider.useDefaultStyles = function() {
+	    css.inject(styleSheet);
+	  };
+
+	  common.extend(
+
+	      NumberControllerSlider.prototype,
+	      NumberController.prototype,
+
+	      {
+
+	        updateDisplay: function() {
+	          var pct = (this.getValue() - this.__min)/(this.__max - this.__min);
+	          this.__foreground.style.width = pct*100+'%';
+	          return NumberControllerSlider.superclass.prototype.updateDisplay.call(this);
+	        }
+
+	      }
+
+
+
+	  );
+
+	  function map(v, i1, i2, o1, o2) {
+	    return o1 + (o2 - o1) * ((v - i1) / (i2 - i1));
+	  }
+
+	  return NumberControllerSlider;
+	  
+	})(dat.controllers.NumberController,
+	dat.dom.dom,
+	dat.utils.css,
+	dat.utils.common,
+	".slider {\n  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);\n  height: 1em;\n  border-radius: 1em;\n  background-color: #eee;\n  padding: 0 0.5em;\n  overflow: hidden;\n}\n\n.slider-fg {\n  padding: 1px 0 2px 0;\n  background-color: #aaa;\n  height: 1em;\n  margin-left: -0.5em;\n  padding-right: 0.5em;\n  border-radius: 1em 0 0 1em;\n}\n\n.slider-fg:after {\n  display: inline-block;\n  border-radius: 1em;\n  background-color: #fff;\n  border:  1px solid #aaa;\n  content: '';\n  float: right;\n  margin-right: -1em;\n  margin-top: -1px;\n  height: 0.9em;\n  width: 0.9em;\n}");
+
+
+	dat.controllers.FunctionController = (function (Controller, dom, common) {
+
+	  /**
+	   * @class Provides a GUI interface to fire a specified method, a property of an object.
+	   *
+	   * @extends dat.controllers.Controller
+	   *
+	   * @param {Object} object The object to be manipulated
+	   * @param {string} property The name of the property to be manipulated
+	   *
+	   * @member dat.controllers
+	   */
+	  var FunctionController = function(object, property, text) {
+
+	    FunctionController.superclass.call(this, object, property);
+
+	    var _this = this;
+
+	    this.__button = document.createElement('div');
+	    this.__button.innerHTML = text === undefined ? 'Fire' : text;
+	    dom.bind(this.__button, 'click', function(e) {
+	      e.preventDefault();
+	      _this.fire();
+	      return false;
+	    });
+
+	    dom.addClass(this.__button, 'button');
+
+	    this.domElement.appendChild(this.__button);
+
+
+	  };
+
+	  FunctionController.superclass = Controller;
+
+	  common.extend(
+
+	      FunctionController.prototype,
+	      Controller.prototype,
+	      {
+	        
+	        fire: function() {
+	          if (this.__onChange) {
+	            this.__onChange.call(this);
+	          }
+	          if (this.__onFinishChange) {
+	            this.__onFinishChange.call(this, this.getValue());
+	          }
+	          this.getValue().call(this.object);
+	        }
+	      }
+
+	  );
+
+	  return FunctionController;
+
+	})(dat.controllers.Controller,
+	dat.dom.dom,
+	dat.utils.common);
+
+
+	dat.controllers.BooleanController = (function (Controller, dom, common) {
+
+	  /**
+	   * @class Provides a checkbox input to alter the boolean property of an object.
+	   * @extends dat.controllers.Controller
+	   *
+	   * @param {Object} object The object to be manipulated
+	   * @param {string} property The name of the property to be manipulated
+	   *
+	   * @member dat.controllers
+	   */
+	  var BooleanController = function(object, property) {
+
+	    BooleanController.superclass.call(this, object, property);
+
+	    var _this = this;
+	    this.__prev = this.getValue();
+
+	    this.__checkbox = document.createElement('input');
+	    this.__checkbox.setAttribute('type', 'checkbox');
+
+
+	    dom.bind(this.__checkbox, 'change', onChange, false);
+
+	    this.domElement.appendChild(this.__checkbox);
+
+	    // Match original value
+	    this.updateDisplay();
+
+	    function onChange() {
+	      _this.setValue(!_this.__prev);
+	    }
+
+	  };
+
+	  BooleanController.superclass = Controller;
+
+	  common.extend(
+
+	      BooleanController.prototype,
+	      Controller.prototype,
+
+	      {
+
+	        setValue: function(v) {
+	          var toReturn = BooleanController.superclass.prototype.setValue.call(this, v);
+	          if (this.__onFinishChange) {
+	            this.__onFinishChange.call(this, this.getValue());
+	          }
+	          this.__prev = this.getValue();
+	          return toReturn;
+	        },
+
+	        updateDisplay: function() {
+	          
+	          if (this.getValue() === true) {
+	            this.__checkbox.setAttribute('checked', 'checked');
+	            this.__checkbox.checked = true;    
+	          } else {
+	              this.__checkbox.checked = false;
+	          }
+
+	          return BooleanController.superclass.prototype.updateDisplay.call(this);
+
+	        }
+
+
+	      }
+
+	  );
+
+	  return BooleanController;
+
+	})(dat.controllers.Controller,
+	dat.dom.dom,
+	dat.utils.common);
+
+
+	dat.color.toString = (function (common) {
+
+	  return function(color) {
+
+	    if (color.a == 1 || common.isUndefined(color.a)) {
+
+	      var s = color.hex.toString(16);
+	      while (s.length < 6) {
+	        s = '0' + s;
+	      }
+
+	      return '#' + s;
+
+	    } else {
+
+	      return 'rgba(' + Math.round(color.r) + ',' + Math.round(color.g) + ',' + Math.round(color.b) + ',' + color.a + ')';
+
+	    }
+
+	  }
+
+	})(dat.utils.common);
+
+
+	dat.color.interpret = (function (toString, common) {
+
+	  var result, toReturn;
+
+	  var interpret = function() {
+
+	    toReturn = false;
+
+	    var original = arguments.length > 1 ? common.toArray(arguments) : arguments[0];
+
+	    common.each(INTERPRETATIONS, function(family) {
+
+	      if (family.litmus(original)) {
+
+	        common.each(family.conversions, function(conversion, conversionName) {
+
+	          result = conversion.read(original);
+
+	          if (toReturn === false && result !== false) {
+	            toReturn = result;
+	            result.conversionName = conversionName;
+	            result.conversion = conversion;
+	            return common.BREAK;
+
+	          }
+
+	        });
+
+	        return common.BREAK;
+
+	      }
+
+	    });
+
+	    return toReturn;
+
+	  };
+
+	  var INTERPRETATIONS = [
+
+	    // Strings
+	    {
+
+	      litmus: common.isString,
+
+	      conversions: {
+
+	        THREE_CHAR_HEX: {
+
+	          read: function(original) {
+
+	            var test = original.match(/^#([A-F0-9])([A-F0-9])([A-F0-9])$/i);
+	            if (test === null) return false;
+
+	            return {
+	              space: 'HEX',
+	              hex: parseInt(
+	                  '0x' +
+	                      test[1].toString() + test[1].toString() +
+	                      test[2].toString() + test[2].toString() +
+	                      test[3].toString() + test[3].toString())
+	            };
+
+	          },
+
+	          write: toString
+
+	        },
+
+	        SIX_CHAR_HEX: {
+
+	          read: function(original) {
+
+	            var test = original.match(/^#([A-F0-9]{6})$/i);
+	            if (test === null) return false;
+
+	            return {
+	              space: 'HEX',
+	              hex: parseInt('0x' + test[1].toString())
+	            };
+
+	          },
+
+	          write: toString
+
+	        },
+
+	        CSS_RGB: {
+
+	          read: function(original) {
+
+	            var test = original.match(/^rgb\(\s*(.+)\s*,\s*(.+)\s*,\s*(.+)\s*\)/);
+	            if (test === null) return false;
+
+	            return {
+	              space: 'RGB',
+	              r: parseFloat(test[1]),
+	              g: parseFloat(test[2]),
+	              b: parseFloat(test[3])
+	            };
+
+	          },
+
+	          write: toString
+
+	        },
+
+	        CSS_RGBA: {
+
+	          read: function(original) {
+
+	            var test = original.match(/^rgba\(\s*(.+)\s*,\s*(.+)\s*,\s*(.+)\s*\,\s*(.+)\s*\)/);
+	            if (test === null) return false;
+
+	            return {
+	              space: 'RGB',
+	              r: parseFloat(test[1]),
+	              g: parseFloat(test[2]),
+	              b: parseFloat(test[3]),
+	              a: parseFloat(test[4])
+	            };
+
+	          },
+
+	          write: toString
+
+	        }
+
+	      }
+
+	    },
+
+	    // Numbers
+	    {
+
+	      litmus: common.isNumber,
+
+	      conversions: {
+
+	        HEX: {
+	          read: function(original) {
+	            return {
+	              space: 'HEX',
+	              hex: original,
+	              conversionName: 'HEX'
+	            }
+	          },
+
+	          write: function(color) {
+	            return color.hex;
+	          }
+	        }
+
+	      }
+
+	    },
+
+	    // Arrays
+	    {
+
+	      litmus: common.isArray,
+
+	      conversions: {
+
+	        RGB_ARRAY: {
+	          read: function(original) {
+	            if (original.length != 3) return false;
+	            return {
+	              space: 'RGB',
+	              r: original[0],
+	              g: original[1],
+	              b: original[2]
+	            };
+	          },
+
+	          write: function(color) {
+	            return [color.r, color.g, color.b];
+	          }
+
+	        },
+
+	        RGBA_ARRAY: {
+	          read: function(original) {
+	            if (original.length != 4) return false;
+	            return {
+	              space: 'RGB',
+	              r: original[0],
+	              g: original[1],
+	              b: original[2],
+	              a: original[3]
+	            };
+	          },
+
+	          write: function(color) {
+	            return [color.r, color.g, color.b, color.a];
+	          }
+
+	        }
+
+	      }
+
+	    },
+
+	    // Objects
+	    {
+
+	      litmus: common.isObject,
+
+	      conversions: {
+
+	        RGBA_OBJ: {
+	          read: function(original) {
+	            if (common.isNumber(original.r) &&
+	                common.isNumber(original.g) &&
+	                common.isNumber(original.b) &&
+	                common.isNumber(original.a)) {
+	              return {
+	                space: 'RGB',
+	                r: original.r,
+	                g: original.g,
+	                b: original.b,
+	                a: original.a
+	              }
+	            }
+	            return false;
+	          },
+
+	          write: function(color) {
+	            return {
+	              r: color.r,
+	              g: color.g,
+	              b: color.b,
+	              a: color.a
+	            }
+	          }
+	        },
+
+	        RGB_OBJ: {
+	          read: function(original) {
+	            if (common.isNumber(original.r) &&
+	                common.isNumber(original.g) &&
+	                common.isNumber(original.b)) {
+	              return {
+	                space: 'RGB',
+	                r: original.r,
+	                g: original.g,
+	                b: original.b
+	              }
+	            }
+	            return false;
+	          },
+
+	          write: function(color) {
+	            return {
+	              r: color.r,
+	              g: color.g,
+	              b: color.b
+	            }
+	          }
+	        },
+
+	        HSVA_OBJ: {
+	          read: function(original) {
+	            if (common.isNumber(original.h) &&
+	                common.isNumber(original.s) &&
+	                common.isNumber(original.v) &&
+	                common.isNumber(original.a)) {
+	              return {
+	                space: 'HSV',
+	                h: original.h,
+	                s: original.s,
+	                v: original.v,
+	                a: original.a
+	              }
+	            }
+	            return false;
+	          },
+
+	          write: function(color) {
+	            return {
+	              h: color.h,
+	              s: color.s,
+	              v: color.v,
+	              a: color.a
+	            }
+	          }
+	        },
+
+	        HSV_OBJ: {
+	          read: function(original) {
+	            if (common.isNumber(original.h) &&
+	                common.isNumber(original.s) &&
+	                common.isNumber(original.v)) {
+	              return {
+	                space: 'HSV',
+	                h: original.h,
+	                s: original.s,
+	                v: original.v
+	              }
+	            }
+	            return false;
+	          },
+
+	          write: function(color) {
+	            return {
+	              h: color.h,
+	              s: color.s,
+	              v: color.v
+	            }
+	          }
+
+	        }
+
+	      }
+
+	    }
+
+
+	  ];
+
+	  return interpret;
+
+
+	})(dat.color.toString,
+	dat.utils.common);
+
+
+	dat.GUI = dat.gui.GUI = (function (css, saveDialogueContents, styleSheet, controllerFactory, Controller, BooleanController, FunctionController, NumberControllerBox, NumberControllerSlider, OptionController, ColorController, requestAnimationFrame, CenteredDiv, dom, common) {
+
+	  css.inject(styleSheet);
+
+	  /** Outer-most className for GUI's */
+	  var CSS_NAMESPACE = 'dg';
+
+	  var HIDE_KEY_CODE = 72;
+
+	  /** The only value shared between the JS and SCSS. Use caution. */
+	  var CLOSE_BUTTON_HEIGHT = 20;
+
+	  var DEFAULT_DEFAULT_PRESET_NAME = 'Default';
+
+	  var SUPPORTS_LOCAL_STORAGE = (function() {
+	    try {
+	      return 'localStorage' in window && window['localStorage'] !== null;
+	    } catch (e) {
+	      return false;
+	    }
+	  })();
+
+	  var SAVE_DIALOGUE;
+
+	  /** Have we yet to create an autoPlace GUI? */
+	  var auto_place_virgin = true;
+
+	  /** Fixed position div that auto place GUI's go inside */
+	  var auto_place_container;
+
+	  /** Are we hiding the GUI's ? */
+	  var hide = false;
+
+	  /** GUI's which should be hidden */
+	  var hideable_guis = [];
+
+	  /**
+	   * A lightweight controller library for JavaScript. It allows you to easily
+	   * manipulate variables and fire functions on the fly.
+	   * @class
+	   *
+	   * @member dat.gui
+	   *
+	   * @param {Object} [params]
+	   * @param {String} [params.name] The name of this GUI.
+	   * @param {Object} [params.load] JSON object representing the saved state of
+	   * this GUI.
+	   * @param {Boolean} [params.auto=true]
+	   * @param {dat.gui.GUI} [params.parent] The GUI I'm nested in.
+	   * @param {Boolean} [params.closed] If true, starts closed
+	   */
+	  var GUI = function(params) {
+
+	    var _this = this;
+
+	    /**
+	     * Outermost DOM Element
+	     * @type DOMElement
+	     */
+	    this.domElement = document.createElement('div');
+	    this.__ul = document.createElement('ul');
+	    this.domElement.appendChild(this.__ul);
+
+	    dom.addClass(this.domElement, CSS_NAMESPACE);
+
+	    /**
+	     * Nested GUI's by name
+	     * @ignore
+	     */
+	    this.__folders = {};
+
+	    this.__controllers = [];
+
+	    /**
+	     * List of objects I'm remembering for save, only used in top level GUI
+	     * @ignore
+	     */
+	    this.__rememberedObjects = [];
+
+	    /**
+	     * Maps the index of remembered objects to a map of controllers, only used
+	     * in top level GUI.
+	     *
+	     * @private
+	     * @ignore
+	     *
+	     * @example
+	     * [
+	     *  {
+	     *    propertyName: Controller,
+	     *    anotherPropertyName: Controller
+	     *  },
+	     *  {
+	     *    propertyName: Controller
+	     *  }
+	     * ]
+	     */
+	    this.__rememberedObjectIndecesToControllers = [];
+
+	    this.__listening = [];
+
+	    params = params || {};
+
+	    // Default parameters
+	    params = common.defaults(params, {
+	      autoPlace: true,
+	      width: GUI.DEFAULT_WIDTH
+	    });
+
+	    params = common.defaults(params, {
+	      resizable: params.autoPlace,
+	      hideable: params.autoPlace
+	    });
+
+
+	    if (!common.isUndefined(params.load)) {
+
+	      // Explicit preset
+	      if (params.preset) params.load.preset = params.preset;
+
+	    } else {
+
+	      params.load = { preset: DEFAULT_DEFAULT_PRESET_NAME };
+
+	    }
+
+	    if (common.isUndefined(params.parent) && params.hideable) {
+	      hideable_guis.push(this);
+	    }
+
+	    // Only root level GUI's are resizable.
+	    params.resizable = common.isUndefined(params.parent) && params.resizable;
+
+
+	    if (params.autoPlace && common.isUndefined(params.scrollable)) {
+	      params.scrollable = true;
+	    }
+	//    params.scrollable = common.isUndefined(params.parent) && params.scrollable === true;
+
+	    // Not part of params because I don't want people passing this in via
+	    // constructor. Should be a 'remembered' value.
+	    var use_local_storage =
+	        SUPPORTS_LOCAL_STORAGE &&
+	            localStorage.getItem(getLocalStorageHash(this, 'isLocal')) === 'true';
+
+	    Object.defineProperties(this,
+
+	        /** @lends dat.gui.GUI.prototype */
+	        {
+
+	          /**
+	           * The parent <code>GUI</code>
+	           * @type dat.gui.GUI
+	           */
+	          parent: {
+	            get: function() {
+	              return params.parent;
+	            }
+	          },
+
+	          scrollable: {
+	            get: function() {
+	              return params.scrollable;
+	            }
+	          },
+
+	          /**
+	           * Handles <code>GUI</code>'s element placement for you
+	           * @type Boolean
+	           */
+	          autoPlace: {
+	            get: function() {
+	              return params.autoPlace;
+	            }
+	          },
+
+	          /**
+	           * The identifier for a set of saved values
+	           * @type String
+	           */
+	          preset: {
+
+	            get: function() {
+	              if (_this.parent) {
+	                return _this.getRoot().preset;
+	              } else {
+	                return params.load.preset;
+	              }
+	            },
+
+	            set: function(v) {
+	              if (_this.parent) {
+	                _this.getRoot().preset = v;
+	              } else {
+	                params.load.preset = v;
+	              }
+	              setPresetSelectIndex(this);
+	              _this.revert();
+	            }
+
+	          },
+
+	          /**
+	           * The width of <code>GUI</code> element
+	           * @type Number
+	           */
+	          width: {
+	            get: function() {
+	              return params.width;
+	            },
+	            set: function(v) {
+	              params.width = v;
+	              setWidth(_this, v);
+	            }
+	          },
+
+	          /**
+	           * The name of <code>GUI</code>. Used for folders. i.e
+	           * a folder's name
+	           * @type String
+	           */
+	          name: {
+	            get: function() {
+	              return params.name;
+	            },
+	            set: function(v) {
+	              // TODO Check for collisions among sibling folders
+	              params.name = v;
+	              if (title_row_name) {
+	                title_row_name.innerHTML = params.name;
+	              }
+	            }
+	          },
+
+	          /**
+	           * Whether the <code>GUI</code> is collapsed or not
+	           * @type Boolean
+	           */
+	          closed: {
+	            get: function() {
+	              return params.closed;
+	            },
+	            set: function(v) {
+	              params.closed = v;
+	              if (params.closed) {
+	                dom.addClass(_this.__ul, GUI.CLASS_CLOSED);
+	              } else {
+	                dom.removeClass(_this.__ul, GUI.CLASS_CLOSED);
+	              }
+	              // For browsers that aren't going to respect the CSS transition,
+	              // Lets just check our height against the window height right off
+	              // the bat.
+	              this.onResize();
+
+	              if (_this.__closeButton) {
+	                _this.__closeButton.innerHTML = v ? GUI.TEXT_OPEN : GUI.TEXT_CLOSED;
+	              }
+	            }
+	          },
+
+	          /**
+	           * Contains all presets
+	           * @type Object
+	           */
+	          load: {
+	            get: function() {
+	              return params.load;
+	            }
+	          },
+
+	          /**
+	           * Determines whether or not to use <a href="https://developer.mozilla.org/en/DOM/Storage#localStorage">localStorage</a> as the means for
+	           * <code>remember</code>ing
+	           * @type Boolean
+	           */
+	          useLocalStorage: {
+
+	            get: function() {
+	              return use_local_storage;
+	            },
+	            set: function(bool) {
+	              if (SUPPORTS_LOCAL_STORAGE) {
+	                use_local_storage = bool;
+	                if (bool) {
+	                  dom.bind(window, 'unload', saveToLocalStorage);
+	                } else {
+	                  dom.unbind(window, 'unload', saveToLocalStorage);
+	                }
+	                localStorage.setItem(getLocalStorageHash(_this, 'isLocal'), bool);
+	              }
+	            }
+
+	          }
+
+	        });
+
+	    // Are we a root level GUI?
+	    if (common.isUndefined(params.parent)) {
+
+	      params.closed = false;
+
+	      dom.addClass(this.domElement, GUI.CLASS_MAIN);
+	      dom.makeSelectable(this.domElement, false);
+
+	      // Are we supposed to be loading locally?
+	      if (SUPPORTS_LOCAL_STORAGE) {
+
+	        if (use_local_storage) {
+
+	          _this.useLocalStorage = true;
+
+	          var saved_gui = localStorage.getItem(getLocalStorageHash(this, 'gui'));
+
+	          if (saved_gui) {
+	            params.load = JSON.parse(saved_gui);
+	          }
+
+	        }
+
+	      }
+
+	      this.__closeButton = document.createElement('div');
+	      this.__closeButton.innerHTML = GUI.TEXT_CLOSED;
+	      dom.addClass(this.__closeButton, GUI.CLASS_CLOSE_BUTTON);
+	      this.domElement.appendChild(this.__closeButton);
+
+	      dom.bind(this.__closeButton, 'click', function() {
+
+	        _this.closed = !_this.closed;
+
+
+	      });
+
+
+	      // Oh, you're a nested GUI!
+	    } else {
+
+	      if (params.closed === undefined) {
+	        params.closed = true;
+	      }
+
+	      var title_row_name = document.createTextNode(params.name);
+	      dom.addClass(title_row_name, 'controller-name');
+
+	      var title_row = addRow(_this, title_row_name);
+
+	      var on_click_title = function(e) {
+	        e.preventDefault();
+	        _this.closed = !_this.closed;
+	        return false;
+	      };
+
+	      dom.addClass(this.__ul, GUI.CLASS_CLOSED);
+
+	      dom.addClass(title_row, 'title');
+	      dom.bind(title_row, 'click', on_click_title);
+
+	      if (!params.closed) {
+	        this.closed = false;
+	      }
+
+	    }
+
+	    if (params.autoPlace) {
+
+	      if (common.isUndefined(params.parent)) {
+
+	        if (auto_place_virgin) {
+	          auto_place_container = document.createElement('div');
+	          dom.addClass(auto_place_container, CSS_NAMESPACE);
+	          dom.addClass(auto_place_container, GUI.CLASS_AUTO_PLACE_CONTAINER);
+	          document.body.appendChild(auto_place_container);
+	          auto_place_virgin = false;
+	        }
+
+	        // Put it in the dom for you.
+	        auto_place_container.appendChild(this.domElement);
+
+	        // Apply the auto styles
+	        dom.addClass(this.domElement, GUI.CLASS_AUTO_PLACE);
+
+	      }
+
+
+	      // Make it not elastic.
+	      if (!this.parent) setWidth(_this, params.width);
+
+	    }
+
+	    dom.bind(window, 'resize', function() { _this.onResize() });
+	    dom.bind(this.__ul, 'webkitTransitionEnd', function() { _this.onResize(); });
+	    dom.bind(this.__ul, 'transitionend', function() { _this.onResize() });
+	    dom.bind(this.__ul, 'oTransitionEnd', function() { _this.onResize() });
+	    this.onResize();
+
+
+	    if (params.resizable) {
+	      addResizeHandle(this);
+	    }
+
+	    function saveToLocalStorage() {
+	      localStorage.setItem(getLocalStorageHash(_this, 'gui'), JSON.stringify(_this.getSaveObject()));
+	    }
+
+	    var root = _this.getRoot();
+	    function resetWidth() {
+	        var root = _this.getRoot();
+	        root.width += 1;
+	        common.defer(function() {
+	          root.width -= 1;
+	        });
+	      }
+
+	      if (!params.parent) {
+	        resetWidth();
+	      }
+
+	  };
+
+	  GUI.toggleHide = function() {
+
+	    hide = !hide;
+	    common.each(hideable_guis, function(gui) {
+	      gui.domElement.style.zIndex = hide ? -999 : 999;
+	      gui.domElement.style.opacity = hide ? 0 : 1;
+	    });
+	  };
+
+	  GUI.CLASS_AUTO_PLACE = 'a';
+	  GUI.CLASS_AUTO_PLACE_CONTAINER = 'ac';
+	  GUI.CLASS_MAIN = 'main';
+	  GUI.CLASS_CONTROLLER_ROW = 'cr';
+	  GUI.CLASS_TOO_TALL = 'taller-than-window';
+	  GUI.CLASS_CLOSED = 'closed';
+	  GUI.CLASS_CLOSE_BUTTON = 'close-button';
+	  GUI.CLASS_DRAG = 'drag';
+
+	  GUI.DEFAULT_WIDTH = 245;
+	  GUI.TEXT_CLOSED = 'Close Controls';
+	  GUI.TEXT_OPEN = 'Open Controls';
+
+	  dom.bind(window, 'keydown', function(e) {
+
+	    if (document.activeElement.type !== 'text' &&
+	        (e.which === HIDE_KEY_CODE || e.keyCode == HIDE_KEY_CODE)) {
+	      GUI.toggleHide();
+	    }
+
+	  }, false);
+
+	  common.extend(
+
+	      GUI.prototype,
+
+	      /** @lends dat.gui.GUI */
+	      {
+
+	        /**
+	         * @param object
+	         * @param property
+	         * @returns {dat.controllers.Controller} The new controller that was added.
+	         * @instance
+	         */
+	        add: function(object, property) {
+
+	          return add(
+	              this,
+	              object,
+	              property,
+	              {
+	                factoryArgs: Array.prototype.slice.call(arguments, 2)
+	              }
+	          );
+
+	        },
+
+	        /**
+	         * @param object
+	         * @param property
+	         * @returns {dat.controllers.ColorController} The new controller that was added.
+	         * @instance
+	         */
+	        addColor: function(object, property) {
+
+	          return add(
+	              this,
+	              object,
+	              property,
+	              {
+	                color: true
+	              }
+	          );
+
+	        },
+
+	        /**
+	         * @param controller
+	         * @instance
+	         */
+	        remove: function(controller) {
+
+	          // TODO listening?
+	          this.__ul.removeChild(controller.__li);
+	          this.__controllers.slice(this.__controllers.indexOf(controller), 1);
+	          var _this = this;
+	          common.defer(function() {
+	            _this.onResize();
+	          });
+
+	        },
+
+	        destroy: function() {
+
+	          if (this.autoPlace) {
+	            auto_place_container.removeChild(this.domElement);
+	          }
+
+	        },
+
+	        /**
+	         * @param name
+	         * @returns {dat.gui.GUI} The new folder.
+	         * @throws {Error} if this GUI already has a folder by the specified
+	         * name
+	         * @instance
+	         */
+	        addFolder: function(name) {
+
+	          // We have to prevent collisions on names in order to have a key
+	          // by which to remember saved values
+	          if (this.__folders[name] !== undefined) {
+	            throw new Error('You already have a folder in this GUI by the' +
+	                ' name "' + name + '"');
+	          }
+
+	          var new_gui_params = { name: name, parent: this };
+
+	          // We need to pass down the autoPlace trait so that we can
+	          // attach event listeners to open/close folder actions to
+	          // ensure that a scrollbar appears if the window is too short.
+	          new_gui_params.autoPlace = this.autoPlace;
+
+	          // Do we have saved appearance data for this folder?
+
+	          if (this.load && // Anything loaded?
+	              this.load.folders && // Was my parent a dead-end?
+	              this.load.folders[name]) { // Did daddy remember me?
+
+	            // Start me closed if I was closed
+	            new_gui_params.closed = this.load.folders[name].closed;
+
+	            // Pass down the loaded data
+	            new_gui_params.load = this.load.folders[name];
+
+	          }
+
+	          var gui = new GUI(new_gui_params);
+	          this.__folders[name] = gui;
+
+	          var li = addRow(this, gui.domElement);
+	          dom.addClass(li, 'folder');
+	          return gui;
+
+	        },
+
+	        open: function() {
+	          this.closed = false;
+	        },
+
+	        close: function() {
+	          this.closed = true;
+	        },
+
+	        onResize: function() {
+
+	          var root = this.getRoot();
+
+	          if (root.scrollable) {
+
+	            var top = dom.getOffset(root.__ul).top;
+	            var h = 0;
+
+	            common.each(root.__ul.childNodes, function(node) {
+	              if (! (root.autoPlace && node === root.__save_row))
+	                h += dom.getHeight(node);
+	            });
+
+	            if (window.innerHeight - top - CLOSE_BUTTON_HEIGHT < h) {
+	              dom.addClass(root.domElement, GUI.CLASS_TOO_TALL);
+	              root.__ul.style.height = window.innerHeight - top - CLOSE_BUTTON_HEIGHT + 'px';
+	            } else {
+	              dom.removeClass(root.domElement, GUI.CLASS_TOO_TALL);
+	              root.__ul.style.height = 'auto';
+	            }
+
+	          }
+
+	          if (root.__resize_handle) {
+	            common.defer(function() {
+	              root.__resize_handle.style.height = root.__ul.offsetHeight + 'px';
+	            });
+	          }
+
+	          if (root.__closeButton) {
+	            root.__closeButton.style.width = root.width + 'px';
+	          }
+
+	        },
+
+	        /**
+	         * Mark objects for saving. The order of these objects cannot change as
+	         * the GUI grows. When remembering new objects, append them to the end
+	         * of the list.
+	         *
+	         * @param {Object...} objects
+	         * @throws {Error} if not called on a top level GUI.
+	         * @instance
+	         */
+	        remember: function() {
+
+	          if (common.isUndefined(SAVE_DIALOGUE)) {
+	            SAVE_DIALOGUE = new CenteredDiv();
+	            SAVE_DIALOGUE.domElement.innerHTML = saveDialogueContents;
+	          }
+
+	          if (this.parent) {
+	            throw new Error("You can only call remember on a top level GUI.");
+	          }
+
+	          var _this = this;
+
+	          common.each(Array.prototype.slice.call(arguments), function(object) {
+	            if (_this.__rememberedObjects.length == 0) {
+	              addSaveMenu(_this);
+	            }
+	            if (_this.__rememberedObjects.indexOf(object) == -1) {
+	              _this.__rememberedObjects.push(object);
+	            }
+	          });
+
+	          if (this.autoPlace) {
+	            // Set save row width
+	            setWidth(this, this.width);
+	          }
+
+	        },
+
+	        /**
+	         * @returns {dat.gui.GUI} the topmost parent GUI of a nested GUI.
+	         * @instance
+	         */
+	        getRoot: function() {
+	          var gui = this;
+	          while (gui.parent) {
+	            gui = gui.parent;
+	          }
+	          return gui;
+	        },
+
+	        /**
+	         * @returns {Object} a JSON object representing the current state of
+	         * this GUI as well as its remembered properties.
+	         * @instance
+	         */
+	        getSaveObject: function() {
+
+	          var toReturn = this.load;
+
+	          toReturn.closed = this.closed;
+
+	          // Am I remembering any values?
+	          if (this.__rememberedObjects.length > 0) {
+
+	            toReturn.preset = this.preset;
+
+	            if (!toReturn.remembered) {
+	              toReturn.remembered = {};
+	            }
+
+	            toReturn.remembered[this.preset] = getCurrentPreset(this);
+
+	          }
+
+	          toReturn.folders = {};
+	          common.each(this.__folders, function(element, key) {
+	            toReturn.folders[key] = element.getSaveObject();
+	          });
+
+	          return toReturn;
+
+	        },
+
+	        save: function() {
+
+	          if (!this.load.remembered) {
+	            this.load.remembered = {};
+	          }
+
+	          this.load.remembered[this.preset] = getCurrentPreset(this);
+	          markPresetModified(this, false);
+
+	        },
+
+	        saveAs: function(presetName) {
+
+	          if (!this.load.remembered) {
+
+	            // Retain default values upon first save
+	            this.load.remembered = {};
+	            this.load.remembered[DEFAULT_DEFAULT_PRESET_NAME] = getCurrentPreset(this, true);
+
+	          }
+
+	          this.load.remembered[presetName] = getCurrentPreset(this);
+	          this.preset = presetName;
+	          addPresetOption(this, presetName, true);
+
+	        },
+
+	        revert: function(gui) {
+
+	          common.each(this.__controllers, function(controller) {
+	            // Make revert work on Default.
+	            if (!this.getRoot().load.remembered) {
+	              controller.setValue(controller.initialValue);
+	            } else {
+	              recallSavedValue(gui || this.getRoot(), controller);
+	            }
+	          }, this);
+
+	          common.each(this.__folders, function(folder) {
+	            folder.revert(folder);
+	          });
+
+	          if (!gui) {
+	            markPresetModified(this.getRoot(), false);
+	          }
+
+
+	        },
+
+	        listen: function(controller) {
+
+	          var init = this.__listening.length == 0;
+	          this.__listening.push(controller);
+	          if (init) updateDisplays(this.__listening);
+
+	        }
+
+	      }
+
+	  );
+
+	  function add(gui, object, property, params) {
+
+	    if (object[property] === undefined) {
+	      throw new Error("Object " + object + " has no property \"" + property + "\"");
+	    }
+
+	    var controller;
+
+	    if (params.color) {
+
+	      controller = new ColorController(object, property);
+
+	    } else {
+
+	      var factoryArgs = [object,property].concat(params.factoryArgs);
+	      controller = controllerFactory.apply(gui, factoryArgs);
+
+	    }
+
+	    if (params.before instanceof Controller) {
+	      params.before = params.before.__li;
+	    }
+
+	    recallSavedValue(gui, controller);
+
+	    dom.addClass(controller.domElement, 'c');
+
+	    var name = document.createElement('span');
+	    dom.addClass(name, 'property-name');
+	    name.innerHTML = controller.property;
+
+	    var container = document.createElement('div');
+	    container.appendChild(name);
+	    container.appendChild(controller.domElement);
+
+	    var li = addRow(gui, container, params.before);
+
+	    dom.addClass(li, GUI.CLASS_CONTROLLER_ROW);
+	    dom.addClass(li, typeof controller.getValue());
+
+	    augmentController(gui, li, controller);
+
+	    gui.__controllers.push(controller);
+
+	    return controller;
+
+	  }
+
+	  /**
+	   * Add a row to the end of the GUI or before another row.
+	   *
+	   * @param gui
+	   * @param [dom] If specified, inserts the dom content in the new row
+	   * @param [liBefore] If specified, places the new row before another row
+	   */
+	  function addRow(gui, dom, liBefore) {
+	    var li = document.createElement('li');
+	    if (dom) li.appendChild(dom);
+	    if (liBefore) {
+	      gui.__ul.insertBefore(li, params.before);
+	    } else {
+	      gui.__ul.appendChild(li);
+	    }
+	    gui.onResize();
+	    return li;
+	  }
+
+	  function augmentController(gui, li, controller) {
+
+	    controller.__li = li;
+	    controller.__gui = gui;
+
+	    common.extend(controller, {
+
+	      options: function(options) {
+
+	        if (arguments.length > 1) {
+	          controller.remove();
+
+	          return add(
+	              gui,
+	              controller.object,
+	              controller.property,
+	              {
+	                before: controller.__li.nextElementSibling,
+	                factoryArgs: [common.toArray(arguments)]
+	              }
+	          );
+
+	        }
+
+	        if (common.isArray(options) || common.isObject(options)) {
+	          controller.remove();
+
+	          return add(
+	              gui,
+	              controller.object,
+	              controller.property,
+	              {
+	                before: controller.__li.nextElementSibling,
+	                factoryArgs: [options]
+	              }
+	          );
+
+	        }
+
+	      },
+
+	      name: function(v) {
+	        controller.__li.firstElementChild.firstElementChild.innerHTML = v;
+	        return controller;
+	      },
+
+	      listen: function() {
+	        controller.__gui.listen(controller);
+	        return controller;
+	      },
+
+	      remove: function() {
+	        controller.__gui.remove(controller);
+	        return controller;
+	      }
+
+	    });
+
+	    // All sliders should be accompanied by a box.
+	    if (controller instanceof NumberControllerSlider) {
+
+	      var box = new NumberControllerBox(controller.object, controller.property,
+	          { min: controller.__min, max: controller.__max, step: controller.__step });
+
+	      common.each(['updateDisplay', 'onChange', 'onFinishChange'], function(method) {
+	        var pc = controller[method];
+	        var pb = box[method];
+	        controller[method] = box[method] = function() {
+	          var args = Array.prototype.slice.call(arguments);
+	          pc.apply(controller, args);
+	          return pb.apply(box, args);
+	        }
+	      });
+
+	      dom.addClass(li, 'has-slider');
+	      controller.domElement.insertBefore(box.domElement, controller.domElement.firstElementChild);
+
+	    }
+	    else if (controller instanceof NumberControllerBox) {
+
+	      var r = function(returned) {
+
+	        // Have we defined both boundaries?
+	        if (common.isNumber(controller.__min) && common.isNumber(controller.__max)) {
+
+	          // Well, then lets just replace this with a slider.
+	          controller.remove();
+	          return add(
+	              gui,
+	              controller.object,
+	              controller.property,
+	              {
+	                before: controller.__li.nextElementSibling,
+	                factoryArgs: [controller.__min, controller.__max, controller.__step]
+	              });
+
+	        }
+
+	        return returned;
+
+	      };
+
+	      controller.min = common.compose(r, controller.min);
+	      controller.max = common.compose(r, controller.max);
+
+	    }
+	    else if (controller instanceof BooleanController) {
+
+	      dom.bind(li, 'click', function() {
+	        dom.fakeEvent(controller.__checkbox, 'click');
+	      });
+
+	      dom.bind(controller.__checkbox, 'click', function(e) {
+	        e.stopPropagation(); // Prevents double-toggle
+	      })
+
+	    }
+	    else if (controller instanceof FunctionController) {
+
+	      dom.bind(li, 'click', function() {
+	        dom.fakeEvent(controller.__button, 'click');
+	      });
+
+	      dom.bind(li, 'mouseover', function() {
+	        dom.addClass(controller.__button, 'hover');
+	      });
+
+	      dom.bind(li, 'mouseout', function() {
+	        dom.removeClass(controller.__button, 'hover');
+	      });
+
+	    }
+	    else if (controller instanceof ColorController) {
+
+	      dom.addClass(li, 'color');
+	      controller.updateDisplay = common.compose(function(r) {
+	        li.style.borderLeftColor = controller.__color.toString();
+	        return r;
+	      }, controller.updateDisplay);
+
+	      controller.updateDisplay();
+
+	    }
+
+	    controller.setValue = common.compose(function(r) {
+	      if (gui.getRoot().__preset_select && controller.isModified()) {
+	        markPresetModified(gui.getRoot(), true);
+	      }
+	      return r;
+	    }, controller.setValue);
+
+	  }
+
+	  function recallSavedValue(gui, controller) {
+
+	    // Find the topmost GUI, that's where remembered objects live.
+	    var root = gui.getRoot();
+
+	    // Does the object we're controlling match anything we've been told to
+	    // remember?
+	    var matched_index = root.__rememberedObjects.indexOf(controller.object);
+
+	    // Why yes, it does!
+	    if (matched_index != -1) {
+
+	      // Let me fetch a map of controllers for thcommon.isObject.
+	      var controller_map =
+	          root.__rememberedObjectIndecesToControllers[matched_index];
+
+	      // Ohp, I believe this is the first controller we've created for this
+	      // object. Lets make the map fresh.
+	      if (controller_map === undefined) {
+	        controller_map = {};
+	        root.__rememberedObjectIndecesToControllers[matched_index] =
+	            controller_map;
+	      }
+
+	      // Keep track of this controller
+	      controller_map[controller.property] = controller;
+
+	      // Okay, now have we saved any values for this controller?
+	      if (root.load && root.load.remembered) {
+
+	        var preset_map = root.load.remembered;
+
+	        // Which preset are we trying to load?
+	        var preset;
+
+	        if (preset_map[gui.preset]) {
+
+	          preset = preset_map[gui.preset];
+
+	        } else if (preset_map[DEFAULT_DEFAULT_PRESET_NAME]) {
+
+	          // Uhh, you can have the default instead?
+	          preset = preset_map[DEFAULT_DEFAULT_PRESET_NAME];
+
+	        } else {
+
+	          // Nada.
+
+	          return;
+
+	        }
+
+
+	        // Did the loaded object remember thcommon.isObject?
+	        if (preset[matched_index] &&
+
+	          // Did we remember this particular property?
+	            preset[matched_index][controller.property] !== undefined) {
+
+	          // We did remember something for this guy ...
+	          var value = preset[matched_index][controller.property];
+
+	          // And that's what it is.
+	          controller.initialValue = value;
+	          controller.setValue(value);
+
+	        }
+
+	      }
+
+	    }
+
+	  }
+
+	  function getLocalStorageHash(gui, key) {
+	    // TODO how does this deal with multiple GUI's?
+	    return document.location.href + '.' + key;
+
+	  }
+
+	  function addSaveMenu(gui) {
+
+	    var div = gui.__save_row = document.createElement('li');
+
+	    dom.addClass(gui.domElement, 'has-save');
+
+	    gui.__ul.insertBefore(div, gui.__ul.firstChild);
+
+	    dom.addClass(div, 'save-row');
+
+	    var gears = document.createElement('span');
+	    gears.innerHTML = '&nbsp;';
+	    dom.addClass(gears, 'button gears');
+
+	    // TODO replace with FunctionController
+	    var button = document.createElement('span');
+	    button.innerHTML = 'Save';
+	    dom.addClass(button, 'button');
+	    dom.addClass(button, 'save');
+
+	    var button2 = document.createElement('span');
+	    button2.innerHTML = 'New';
+	    dom.addClass(button2, 'button');
+	    dom.addClass(button2, 'save-as');
+
+	    var button3 = document.createElement('span');
+	    button3.innerHTML = 'Revert';
+	    dom.addClass(button3, 'button');
+	    dom.addClass(button3, 'revert');
+
+	    var select = gui.__preset_select = document.createElement('select');
+
+	    if (gui.load && gui.load.remembered) {
+
+	      common.each(gui.load.remembered, function(value, key) {
+	        addPresetOption(gui, key, key == gui.preset);
+	      });
+
+	    } else {
+	      addPresetOption(gui, DEFAULT_DEFAULT_PRESET_NAME, false);
+	    }
+
+	    dom.bind(select, 'change', function() {
+
+
+	      for (var index = 0; index < gui.__preset_select.length; index++) {
+	        gui.__preset_select[index].innerHTML = gui.__preset_select[index].value;
+	      }
+
+	      gui.preset = this.value;
+
+	    });
+
+	    div.appendChild(select);
+	    div.appendChild(gears);
+	    div.appendChild(button);
+	    div.appendChild(button2);
+	    div.appendChild(button3);
+
+	    if (SUPPORTS_LOCAL_STORAGE) {
+
+	      var saveLocally = document.getElementById('dg-save-locally');
+	      var explain = document.getElementById('dg-local-explain');
+
+	      saveLocally.style.display = 'block';
+
+	      var localStorageCheckBox = document.getElementById('dg-local-storage');
+
+	      if (localStorage.getItem(getLocalStorageHash(gui, 'isLocal')) === 'true') {
+	        localStorageCheckBox.setAttribute('checked', 'checked');
+	      }
+
+	      function showHideExplain() {
+	        explain.style.display = gui.useLocalStorage ? 'block' : 'none';
+	      }
+
+	      showHideExplain();
+
+	      // TODO: Use a boolean controller, fool!
+	      dom.bind(localStorageCheckBox, 'change', function() {
+	        gui.useLocalStorage = !gui.useLocalStorage;
+	        showHideExplain();
+	      });
+
+	    }
+
+	    var newConstructorTextArea = document.getElementById('dg-new-constructor');
+
+	    dom.bind(newConstructorTextArea, 'keydown', function(e) {
+	      if (e.metaKey && (e.which === 67 || e.keyCode == 67)) {
+	        SAVE_DIALOGUE.hide();
+	      }
+	    });
+
+	    dom.bind(gears, 'click', function() {
+	      newConstructorTextArea.innerHTML = JSON.stringify(gui.getSaveObject(), undefined, 2);
+	      SAVE_DIALOGUE.show();
+	      newConstructorTextArea.focus();
+	      newConstructorTextArea.select();
+	    });
+
+	    dom.bind(button, 'click', function() {
+	      gui.save();
+	    });
+
+	    dom.bind(button2, 'click', function() {
+	      var presetName = prompt('Enter a new preset name.');
+	      if (presetName) gui.saveAs(presetName);
+	    });
+
+	    dom.bind(button3, 'click', function() {
+	      gui.revert();
+	    });
+
+	//    div.appendChild(button2);
+
+	  }
+
+	  function addResizeHandle(gui) {
+
+	    gui.__resize_handle = document.createElement('div');
+
+	    common.extend(gui.__resize_handle.style, {
+
+	      width: '6px',
+	      marginLeft: '-3px',
+	      height: '200px',
+	      cursor: 'ew-resize',
+	      position: 'absolute'
+	//      border: '1px solid blue'
+
+	    });
+
+	    var pmouseX;
+
+	    dom.bind(gui.__resize_handle, 'mousedown', dragStart);
+	    dom.bind(gui.__closeButton, 'mousedown', dragStart);
+
+	    gui.domElement.insertBefore(gui.__resize_handle, gui.domElement.firstElementChild);
+
+	    function dragStart(e) {
+
+	      e.preventDefault();
+
+	      pmouseX = e.clientX;
+
+	      dom.addClass(gui.__closeButton, GUI.CLASS_DRAG);
+	      dom.bind(window, 'mousemove', drag);
+	      dom.bind(window, 'mouseup', dragStop);
+
+	      return false;
+
+	    }
+
+	    function drag(e) {
+
+	      e.preventDefault();
+
+	      gui.width += pmouseX - e.clientX;
+	      gui.onResize();
+	      pmouseX = e.clientX;
+
+	      return false;
+
+	    }
+
+	    function dragStop() {
+
+	      dom.removeClass(gui.__closeButton, GUI.CLASS_DRAG);
+	      dom.unbind(window, 'mousemove', drag);
+	      dom.unbind(window, 'mouseup', dragStop);
+
+	    }
+
+	  }
+
+	  function setWidth(gui, w) {
+	    gui.domElement.style.width = w + 'px';
+	    // Auto placed save-rows are position fixed, so we have to
+	    // set the width manually if we want it to bleed to the edge
+	    if (gui.__save_row && gui.autoPlace) {
+	      gui.__save_row.style.width = w + 'px';
+	    }if (gui.__closeButton) {
+	      gui.__closeButton.style.width = w + 'px';
+	    }
+	  }
+
+	  function getCurrentPreset(gui, useInitialValues) {
+
+	    var toReturn = {};
+
+	    // For each object I'm remembering
+	    common.each(gui.__rememberedObjects, function(val, index) {
+
+	      var saved_values = {};
+
+	      // The controllers I've made for thcommon.isObject by property
+	      var controller_map =
+	          gui.__rememberedObjectIndecesToControllers[index];
+
+	      // Remember each value for each property
+	      common.each(controller_map, function(controller, property) {
+	        saved_values[property] = useInitialValues ? controller.initialValue : controller.getValue();
+	      });
+
+	      // Save the values for thcommon.isObject
+	      toReturn[index] = saved_values;
+
+	    });
+
+	    return toReturn;
+
+	  }
+
+	  function addPresetOption(gui, name, setSelected) {
+	    var opt = document.createElement('option');
+	    opt.innerHTML = name;
+	    opt.value = name;
+	    gui.__preset_select.appendChild(opt);
+	    if (setSelected) {
+	      gui.__preset_select.selectedIndex = gui.__preset_select.length - 1;
+	    }
+	  }
+
+	  function setPresetSelectIndex(gui) {
+	    for (var index = 0; index < gui.__preset_select.length; index++) {
+	      if (gui.__preset_select[index].value == gui.preset) {
+	        gui.__preset_select.selectedIndex = index;
+	      }
+	    }
+	  }
+
+	  function markPresetModified(gui, modified) {
+	    var opt = gui.__preset_select[gui.__preset_select.selectedIndex];
+	//    console.log('mark', modified, opt);
+	    if (modified) {
+	      opt.innerHTML = opt.value + "*";
+	    } else {
+	      opt.innerHTML = opt.value;
+	    }
+	  }
+
+	  function updateDisplays(controllerArray) {
+
+
+	    if (controllerArray.length != 0) {
+
+	      requestAnimationFrame(function() {
+	        updateDisplays(controllerArray);
+	      });
+
+	    }
+
+	    common.each(controllerArray, function(c) {
+	      c.updateDisplay();
+	    });
+
+	  }
+
+	  return GUI;
+
+	})(dat.utils.css,
+	"<div id=\"dg-save\" class=\"dg dialogue\">\n\n  Here's the new load parameter for your <code>GUI</code>'s constructor:\n\n  <textarea id=\"dg-new-constructor\"></textarea>\n\n  <div id=\"dg-save-locally\">\n\n    <input id=\"dg-local-storage\" type=\"checkbox\"/> Automatically save\n    values to <code>localStorage</code> on exit.\n\n    <div id=\"dg-local-explain\">The values saved to <code>localStorage</code> will\n      override those passed to <code>dat.GUI</code>'s constructor. This makes it\n      easier to work incrementally, but <code>localStorage</code> is fragile,\n      and your friends may not see the same values you do.\n      \n    </div>\n    \n  </div>\n\n</div>",
+	".dg ul{list-style:none;margin:0;padding:0;width:100%;clear:both}.dg.ac{position:fixed;top:0;left:0;right:0;height:0;z-index:0}.dg:not(.ac) .main{overflow:hidden}.dg.main{-webkit-transition:opacity 0.1s linear;-o-transition:opacity 0.1s linear;-moz-transition:opacity 0.1s linear;transition:opacity 0.1s linear}.dg.main.taller-than-window{overflow-y:auto}.dg.main.taller-than-window .close-button{opacity:1;margin-top:-1px;border-top:1px solid #2c2c2c}.dg.main ul.closed .close-button{opacity:1 !important}.dg.main:hover .close-button,.dg.main .close-button.drag{opacity:1}.dg.main .close-button{-webkit-transition:opacity 0.1s linear;-o-transition:opacity 0.1s linear;-moz-transition:opacity 0.1s linear;transition:opacity 0.1s linear;border:0;position:absolute;line-height:19px;height:20px;cursor:pointer;text-align:center;background-color:#000}.dg.main .close-button:hover{background-color:#111}.dg.a{float:right;margin-right:15px;overflow-x:hidden}.dg.a.has-save ul{margin-top:27px}.dg.a.has-save ul.closed{margin-top:0}.dg.a .save-row{position:fixed;top:0;z-index:1002}.dg li{-webkit-transition:height 0.1s ease-out;-o-transition:height 0.1s ease-out;-moz-transition:height 0.1s ease-out;transition:height 0.1s ease-out}.dg li:not(.folder){cursor:auto;height:27px;line-height:27px;overflow:hidden;padding:0 4px 0 5px}.dg li.folder{padding:0;border-left:4px solid rgba(0,0,0,0)}.dg li.title{cursor:pointer;margin-left:-4px}.dg .closed li:not(.title),.dg .closed ul li,.dg .closed ul li > *{height:0;overflow:hidden;border:0}.dg .cr{clear:both;padding-left:3px;height:27px}.dg .property-name{cursor:default;float:left;clear:left;width:40%;overflow:hidden;text-overflow:ellipsis}.dg .c{float:left;width:60%}.dg .c input[type=text]{border:0;margin-top:4px;padding:3px;width:100%;float:right}.dg .has-slider input[type=text]{width:30%;margin-left:0}.dg .slider{float:left;width:66%;margin-left:-5px;margin-right:0;height:19px;margin-top:4px}.dg .slider-fg{height:100%}.dg .c input[type=checkbox]{margin-top:9px}.dg .c select{margin-top:5px}.dg .cr.function,.dg .cr.function .property-name,.dg .cr.function *,.dg .cr.boolean,.dg .cr.boolean *{cursor:pointer}.dg .selector{display:none;position:absolute;margin-left:-9px;margin-top:23px;z-index:10}.dg .c:hover .selector,.dg .selector.drag{display:block}.dg li.save-row{padding:0}.dg li.save-row .button{display:inline-block;padding:0px 6px}.dg.dialogue{background-color:#222;width:460px;padding:15px;font-size:13px;line-height:15px}#dg-new-constructor{padding:10px;color:#222;font-family:Monaco, monospace;font-size:10px;border:0;resize:none;box-shadow:inset 1px 1px 1px #888;word-wrap:break-word;margin:12px 0;display:block;width:440px;overflow-y:scroll;height:100px;position:relative}#dg-local-explain{display:none;font-size:11px;line-height:17px;border-radius:3px;background-color:#333;padding:8px;margin-top:10px}#dg-local-explain code{font-size:10px}#dat-gui-save-locally{display:none}.dg{color:#eee;font:11px 'Lucida Grande', sans-serif;text-shadow:0 -1px 0 #111}.dg.main::-webkit-scrollbar{width:5px;background:#1a1a1a}.dg.main::-webkit-scrollbar-corner{height:0;display:none}.dg.main::-webkit-scrollbar-thumb{border-radius:5px;background:#676767}.dg li:not(.folder){background:#1a1a1a;border-bottom:1px solid #2c2c2c}.dg li.save-row{line-height:25px;background:#dad5cb;border:0}.dg li.save-row select{margin-left:5px;width:108px}.dg li.save-row .button{margin-left:5px;margin-top:1px;border-radius:2px;font-size:9px;line-height:7px;padding:4px 4px 5px 4px;background:#c5bdad;color:#fff;text-shadow:0 1px 0 #b0a58f;box-shadow:0 -1px 0 #b0a58f;cursor:pointer}.dg li.save-row .button.gears{background:#c5bdad url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAANCAYAAAB/9ZQ7AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAQJJREFUeNpiYKAU/P//PwGIC/ApCABiBSAW+I8AClAcgKxQ4T9hoMAEUrxx2QSGN6+egDX+/vWT4e7N82AMYoPAx/evwWoYoSYbACX2s7KxCxzcsezDh3evFoDEBYTEEqycggWAzA9AuUSQQgeYPa9fPv6/YWm/Acx5IPb7ty/fw+QZblw67vDs8R0YHyQhgObx+yAJkBqmG5dPPDh1aPOGR/eugW0G4vlIoTIfyFcA+QekhhHJhPdQxbiAIguMBTQZrPD7108M6roWYDFQiIAAv6Aow/1bFwXgis+f2LUAynwoIaNcz8XNx3Dl7MEJUDGQpx9gtQ8YCueB+D26OECAAQDadt7e46D42QAAAABJRU5ErkJggg==) 2px 1px no-repeat;height:7px;width:8px}.dg li.save-row .button:hover{background-color:#bab19e;box-shadow:0 -1px 0 #b0a58f}.dg li.folder{border-bottom:0}.dg li.title{padding-left:16px;background:#000 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.2)}.dg .closed li.title{background-image:url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlGIWqMCbWAEAOw==)}.dg .cr.boolean{border-left:3px solid #806787}.dg .cr.function{border-left:3px solid #e61d5f}.dg .cr.number{border-left:3px solid #2fa1d6}.dg .cr.number input[type=text]{color:#2fa1d6}.dg .cr.string{border-left:3px solid #1ed36f}.dg .cr.string input[type=text]{color:#1ed36f}.dg .cr.function:hover,.dg .cr.boolean:hover{background:#111}.dg .c input[type=text]{background:#303030;outline:none}.dg .c input[type=text]:hover{background:#3c3c3c}.dg .c input[type=text]:focus{background:#494949;color:#fff}.dg .c .slider{background:#303030;cursor:ew-resize}.dg .c .slider-fg{background:#2fa1d6}.dg .c .slider:hover{background:#3c3c3c}.dg .c .slider:hover .slider-fg{background:#44abda}\n",
+	dat.controllers.factory = (function (OptionController, NumberControllerBox, NumberControllerSlider, StringController, FunctionController, BooleanController, common) {
+
+	      return function(object, property) {
+
+	        var initialValue = object[property];
+
+	        // Providing options?
+	        if (common.isArray(arguments[2]) || common.isObject(arguments[2])) {
+	          return new OptionController(object, property, arguments[2]);
+	        }
+
+	        // Providing a map?
+
+	        if (common.isNumber(initialValue)) {
+
+	          if (common.isNumber(arguments[2]) && common.isNumber(arguments[3])) {
+
+	            // Has min and max.
+	            return new NumberControllerSlider(object, property, arguments[2], arguments[3]);
+
+	          } else {
+
+	            return new NumberControllerBox(object, property, { min: arguments[2], max: arguments[3] });
+
+	          }
+
+	        }
+
+	        if (common.isString(initialValue)) {
+	          return new StringController(object, property);
+	        }
+
+	        if (common.isFunction(initialValue)) {
+	          return new FunctionController(object, property, '');
+	        }
+
+	        if (common.isBoolean(initialValue)) {
+	          return new BooleanController(object, property);
+	        }
+
+	      }
+
+	    })(dat.controllers.OptionController,
+	dat.controllers.NumberControllerBox,
+	dat.controllers.NumberControllerSlider,
+	dat.controllers.StringController = (function (Controller, dom, common) {
+
+	  /**
+	   * @class Provides a text input to alter the string property of an object.
+	   *
+	   * @extends dat.controllers.Controller
+	   *
+	   * @param {Object} object The object to be manipulated
+	   * @param {string} property The name of the property to be manipulated
+	   *
+	   * @member dat.controllers
+	   */
+	  var StringController = function(object, property) {
+
+	    StringController.superclass.call(this, object, property);
+
+	    var _this = this;
+
+	    this.__input = document.createElement('input');
+	    this.__input.setAttribute('type', 'text');
+
+	    dom.bind(this.__input, 'keyup', onChange);
+	    dom.bind(this.__input, 'change', onChange);
+	    dom.bind(this.__input, 'blur', onBlur);
+	    dom.bind(this.__input, 'keydown', function(e) {
+	      if (e.keyCode === 13) {
+	        this.blur();
+	      }
+	    });
+	    
+
+	    function onChange() {
+	      _this.setValue(_this.__input.value);
+	    }
+
+	    function onBlur() {
+	      if (_this.__onFinishChange) {
+	        _this.__onFinishChange.call(_this, _this.getValue());
+	      }
+	    }
+
+	    this.updateDisplay();
+
+	    this.domElement.appendChild(this.__input);
+
+	  };
+
+	  StringController.superclass = Controller;
+
+	  common.extend(
+
+	      StringController.prototype,
+	      Controller.prototype,
+
+	      {
+
+	        updateDisplay: function() {
+	          // Stops the caret from moving on account of:
+	          // keyup -> setValue -> updateDisplay
+	          if (!dom.isActive(this.__input)) {
+	            this.__input.value = this.getValue();
+	          }
+	          return StringController.superclass.prototype.updateDisplay.call(this);
+	        }
+
+	      }
+
+	  );
+
+	  return StringController;
+
+	})(dat.controllers.Controller,
+	dat.dom.dom,
+	dat.utils.common),
+	dat.controllers.FunctionController,
+	dat.controllers.BooleanController,
+	dat.utils.common),
+	dat.controllers.Controller,
+	dat.controllers.BooleanController,
+	dat.controllers.FunctionController,
+	dat.controllers.NumberControllerBox,
+	dat.controllers.NumberControllerSlider,
+	dat.controllers.OptionController,
+	dat.controllers.ColorController = (function (Controller, dom, Color, interpret, common) {
+
+	  var ColorController = function(object, property) {
+
+	    ColorController.superclass.call(this, object, property);
+
+	    this.__color = new Color(this.getValue());
+	    this.__temp = new Color(0);
+
+	    var _this = this;
+
+	    this.domElement = document.createElement('div');
+
+	    dom.makeSelectable(this.domElement, false);
+
+	    this.__selector = document.createElement('div');
+	    this.__selector.className = 'selector';
+
+	    this.__saturation_field = document.createElement('div');
+	    this.__saturation_field.className = 'saturation-field';
+
+	    this.__field_knob = document.createElement('div');
+	    this.__field_knob.className = 'field-knob';
+	    this.__field_knob_border = '2px solid ';
+
+	    this.__hue_knob = document.createElement('div');
+	    this.__hue_knob.className = 'hue-knob';
+
+	    this.__hue_field = document.createElement('div');
+	    this.__hue_field.className = 'hue-field';
+
+	    this.__input = document.createElement('input');
+	    this.__input.type = 'text';
+	    this.__input_textShadow = '0 1px 1px ';
+
+	    dom.bind(this.__input, 'keydown', function(e) {
+	      if (e.keyCode === 13) { // on enter
+	        onBlur.call(this);
+	      }
+	    });
+
+	    dom.bind(this.__input, 'blur', onBlur);
+
+	    dom.bind(this.__selector, 'mousedown', function(e) {
+
+	      dom
+	        .addClass(this, 'drag')
+	        .bind(window, 'mouseup', function(e) {
+	          dom.removeClass(_this.__selector, 'drag');
+	        });
+
+	    });
+
+	    var value_field = document.createElement('div');
+
+	    common.extend(this.__selector.style, {
+	      width: '122px',
+	      height: '102px',
+	      padding: '3px',
+	      backgroundColor: '#222',
+	      boxShadow: '0px 1px 3px rgba(0,0,0,0.3)'
+	    });
+
+	    common.extend(this.__field_knob.style, {
+	      position: 'absolute',
+	      width: '12px',
+	      height: '12px',
+	      border: this.__field_knob_border + (this.__color.v < .5 ? '#fff' : '#000'),
+	      boxShadow: '0px 1px 3px rgba(0,0,0,0.5)',
+	      borderRadius: '12px',
+	      zIndex: 1
+	    });
+	    
+	    common.extend(this.__hue_knob.style, {
+	      position: 'absolute',
+	      width: '15px',
+	      height: '2px',
+	      borderRight: '4px solid #fff',
+	      zIndex: 1
+	    });
+
+	    common.extend(this.__saturation_field.style, {
+	      width: '100px',
+	      height: '100px',
+	      border: '1px solid #555',
+	      marginRight: '3px',
+	      display: 'inline-block',
+	      cursor: 'pointer'
+	    });
+
+	    common.extend(value_field.style, {
+	      width: '100%',
+	      height: '100%',
+	      background: 'none'
+	    });
+	    
+	    linearGradient(value_field, 'top', 'rgba(0,0,0,0)', '#000');
+
+	    common.extend(this.__hue_field.style, {
+	      width: '15px',
+	      height: '100px',
+	      display: 'inline-block',
+	      border: '1px solid #555',
+	      cursor: 'ns-resize'
+	    });
+
+	    hueGradient(this.__hue_field);
+
+	    common.extend(this.__input.style, {
+	      outline: 'none',
+	//      width: '120px',
+	      textAlign: 'center',
+	//      padding: '4px',
+	//      marginBottom: '6px',
+	      color: '#fff',
+	      border: 0,
+	      fontWeight: 'bold',
+	      textShadow: this.__input_textShadow + 'rgba(0,0,0,0.7)'
+	    });
+
+	    dom.bind(this.__saturation_field, 'mousedown', fieldDown);
+	    dom.bind(this.__field_knob, 'mousedown', fieldDown);
+
+	    dom.bind(this.__hue_field, 'mousedown', function(e) {
+	      setH(e);
+	      dom.bind(window, 'mousemove', setH);
+	      dom.bind(window, 'mouseup', unbindH);
+	    });
+
+	    function fieldDown(e) {
+	      setSV(e);
+	      // document.body.style.cursor = 'none';
+	      dom.bind(window, 'mousemove', setSV);
+	      dom.bind(window, 'mouseup', unbindSV);
+	    }
+
+	    function unbindSV() {
+	      dom.unbind(window, 'mousemove', setSV);
+	      dom.unbind(window, 'mouseup', unbindSV);
+	      // document.body.style.cursor = 'default';
+	    }
+
+	    function onBlur() {
+	      var i = interpret(this.value);
+	      if (i !== false) {
+	        _this.__color.__state = i;
+	        _this.setValue(_this.__color.toOriginal());
+	      } else {
+	        this.value = _this.__color.toString();
+	      }
+	    }
+
+	    function unbindH() {
+	      dom.unbind(window, 'mousemove', setH);
+	      dom.unbind(window, 'mouseup', unbindH);
+	    }
+
+	    this.__saturation_field.appendChild(value_field);
+	    this.__selector.appendChild(this.__field_knob);
+	    this.__selector.appendChild(this.__saturation_field);
+	    this.__selector.appendChild(this.__hue_field);
+	    this.__hue_field.appendChild(this.__hue_knob);
+
+	    this.domElement.appendChild(this.__input);
+	    this.domElement.appendChild(this.__selector);
+
+	    this.updateDisplay();
+
+	    function setSV(e) {
+
+	      e.preventDefault();
+
+	      var w = dom.getWidth(_this.__saturation_field);
+	      var o = dom.getOffset(_this.__saturation_field);
+	      var s = (e.clientX - o.left + document.body.scrollLeft) / w;
+	      var v = 1 - (e.clientY - o.top + document.body.scrollTop) / w;
+
+	      if (v > 1) v = 1;
+	      else if (v < 0) v = 0;
+
+	      if (s > 1) s = 1;
+	      else if (s < 0) s = 0;
+
+	      _this.__color.v = v;
+	      _this.__color.s = s;
+
+	      _this.setValue(_this.__color.toOriginal());
+
+
+	      return false;
+
+	    }
+
+	    function setH(e) {
+
+	      e.preventDefault();
+
+	      var s = dom.getHeight(_this.__hue_field);
+	      var o = dom.getOffset(_this.__hue_field);
+	      var h = 1 - (e.clientY - o.top + document.body.scrollTop) / s;
+
+	      if (h > 1) h = 1;
+	      else if (h < 0) h = 0;
+
+	      _this.__color.h = h * 360;
+
+	      _this.setValue(_this.__color.toOriginal());
+
+	      return false;
+
+	    }
+
+	  };
+
+	  ColorController.superclass = Controller;
+
+	  common.extend(
+
+	      ColorController.prototype,
+	      Controller.prototype,
+
+	      {
+
+	        updateDisplay: function() {
+
+	          var i = interpret(this.getValue());
+
+	          if (i !== false) {
+
+	            var mismatch = false;
+
+	            // Check for mismatch on the interpreted value.
+
+	            common.each(Color.COMPONENTS, function(component) {
+	              if (!common.isUndefined(i[component]) &&
+	                  !common.isUndefined(this.__color.__state[component]) &&
+	                  i[component] !== this.__color.__state[component]) {
+	                mismatch = true;
+	                return {}; // break
+	              }
+	            }, this);
+
+	            // If nothing diverges, we keep our previous values
+	            // for statefulness, otherwise we recalculate fresh
+	            if (mismatch) {
+	              common.extend(this.__color.__state, i);
+	            }
+
+	          }
+
+	          common.extend(this.__temp.__state, this.__color.__state);
+
+	          this.__temp.a = 1;
+
+	          var flip = (this.__color.v < .5 || this.__color.s > .5) ? 255 : 0;
+	          var _flip = 255 - flip;
+
+	          common.extend(this.__field_knob.style, {
+	            marginLeft: 100 * this.__color.s - 7 + 'px',
+	            marginTop: 100 * (1 - this.__color.v) - 7 + 'px',
+	            backgroundColor: this.__temp.toString(),
+	            border: this.__field_knob_border + 'rgb(' + flip + ',' + flip + ',' + flip +')'
+	          });
+
+	          this.__hue_knob.style.marginTop = (1 - this.__color.h / 360) * 100 + 'px'
+
+	          this.__temp.s = 1;
+	          this.__temp.v = 1;
+
+	          linearGradient(this.__saturation_field, 'left', '#fff', this.__temp.toString());
+
+	          common.extend(this.__input.style, {
+	            backgroundColor: this.__input.value = this.__color.toString(),
+	            color: 'rgb(' + flip + ',' + flip + ',' + flip +')',
+	            textShadow: this.__input_textShadow + 'rgba(' + _flip + ',' + _flip + ',' + _flip +',.7)'
+	          });
+
+	        }
+
+	      }
+
+	  );
+	  
+	  var vendors = ['-moz-','-o-','-webkit-','-ms-',''];
+	  
+	  function linearGradient(elem, x, a, b) {
+	    elem.style.background = '';
+	    common.each(vendors, function(vendor) {
+	      elem.style.cssText += 'background: ' + vendor + 'linear-gradient('+x+', '+a+' 0%, ' + b + ' 100%); ';
+	    });
+	  }
+	  
+	  function hueGradient(elem) {
+	    elem.style.background = '';
+	    elem.style.cssText += 'background: -moz-linear-gradient(top,  #ff0000 0%, #ff00ff 17%, #0000ff 34%, #00ffff 50%, #00ff00 67%, #ffff00 84%, #ff0000 100%);'
+	    elem.style.cssText += 'background: -webkit-linear-gradient(top,  #ff0000 0%,#ff00ff 17%,#0000ff 34%,#00ffff 50%,#00ff00 67%,#ffff00 84%,#ff0000 100%);'
+	    elem.style.cssText += 'background: -o-linear-gradient(top,  #ff0000 0%,#ff00ff 17%,#0000ff 34%,#00ffff 50%,#00ff00 67%,#ffff00 84%,#ff0000 100%);'
+	    elem.style.cssText += 'background: -ms-linear-gradient(top,  #ff0000 0%,#ff00ff 17%,#0000ff 34%,#00ffff 50%,#00ff00 67%,#ffff00 84%,#ff0000 100%);'
+	    elem.style.cssText += 'background: linear-gradient(top,  #ff0000 0%,#ff00ff 17%,#0000ff 34%,#00ffff 50%,#00ff00 67%,#ffff00 84%,#ff0000 100%);'
+	  }
+
+
+	  return ColorController;
+
+	})(dat.controllers.Controller,
+	dat.dom.dom,
+	dat.color.Color = (function (interpret, math, toString, common) {
+
+	  var Color = function() {
+
+	    this.__state = interpret.apply(this, arguments);
+
+	    if (this.__state === false) {
+	      throw 'Failed to interpret color arguments';
+	    }
+
+	    this.__state.a = this.__state.a || 1;
+
+
+	  };
+
+	  Color.COMPONENTS = ['r','g','b','h','s','v','hex','a'];
+
+	  common.extend(Color.prototype, {
+
+	    toString: function() {
+	      return toString(this);
+	    },
+
+	    toOriginal: function() {
+	      return this.__state.conversion.write(this);
+	    }
+
+	  });
+
+	  defineRGBComponent(Color.prototype, 'r', 2);
+	  defineRGBComponent(Color.prototype, 'g', 1);
+	  defineRGBComponent(Color.prototype, 'b', 0);
+
+	  defineHSVComponent(Color.prototype, 'h');
+	  defineHSVComponent(Color.prototype, 's');
+	  defineHSVComponent(Color.prototype, 'v');
+
+	  Object.defineProperty(Color.prototype, 'a', {
+
+	    get: function() {
+	      return this.__state.a;
+	    },
+
+	    set: function(v) {
+	      this.__state.a = v;
+	    }
+
+	  });
+
+	  Object.defineProperty(Color.prototype, 'hex', {
+
+	    get: function() {
+
+	      if (!this.__state.space !== 'HEX') {
+	        this.__state.hex = math.rgb_to_hex(this.r, this.g, this.b);
+	      }
+
+	      return this.__state.hex;
+
+	    },
+
+	    set: function(v) {
+
+	      this.__state.space = 'HEX';
+	      this.__state.hex = v;
+
+	    }
+
+	  });
+
+	  function defineRGBComponent(target, component, componentHexIndex) {
+
+	    Object.defineProperty(target, component, {
+
+	      get: function() {
+
+	        if (this.__state.space === 'RGB') {
+	          return this.__state[component];
+	        }
+
+	        recalculateRGB(this, component, componentHexIndex);
+
+	        return this.__state[component];
+
+	      },
+
+	      set: function(v) {
+
+	        if (this.__state.space !== 'RGB') {
+	          recalculateRGB(this, component, componentHexIndex);
+	          this.__state.space = 'RGB';
+	        }
+
+	        this.__state[component] = v;
+
+	      }
+
+	    });
+
+	  }
+
+	  function defineHSVComponent(target, component) {
+
+	    Object.defineProperty(target, component, {
+
+	      get: function() {
+
+	        if (this.__state.space === 'HSV')
+	          return this.__state[component];
+
+	        recalculateHSV(this);
+
+	        return this.__state[component];
+
+	      },
+
+	      set: function(v) {
+
+	        if (this.__state.space !== 'HSV') {
+	          recalculateHSV(this);
+	          this.__state.space = 'HSV';
+	        }
+
+	        this.__state[component] = v;
+
+	      }
+
+	    });
+
+	  }
+
+	  function recalculateRGB(color, component, componentHexIndex) {
+
+	    if (color.__state.space === 'HEX') {
+
+	      color.__state[component] = math.component_from_hex(color.__state.hex, componentHexIndex);
+
+	    } else if (color.__state.space === 'HSV') {
+
+	      common.extend(color.__state, math.hsv_to_rgb(color.__state.h, color.__state.s, color.__state.v));
+
+	    } else {
+
+	      throw 'Corrupted color state';
+
+	    }
+
+	  }
+
+	  function recalculateHSV(color) {
+
+	    var result = math.rgb_to_hsv(color.r, color.g, color.b);
+
+	    common.extend(color.__state,
+	        {
+	          s: result.s,
+	          v: result.v
+	        }
+	    );
+
+	    if (!common.isNaN(result.h)) {
+	      color.__state.h = result.h;
+	    } else if (common.isUndefined(color.__state.h)) {
+	      color.__state.h = 0;
+	    }
+
+	  }
+
+	  return Color;
+
+	})(dat.color.interpret,
+	dat.color.math = (function () {
+
+	  var tmpComponent;
+
+	  return {
+
+	    hsv_to_rgb: function(h, s, v) {
+
+	      var hi = Math.floor(h / 60) % 6;
+
+	      var f = h / 60 - Math.floor(h / 60);
+	      var p = v * (1.0 - s);
+	      var q = v * (1.0 - (f * s));
+	      var t = v * (1.0 - ((1.0 - f) * s));
+	      var c = [
+	        [v, t, p],
+	        [q, v, p],
+	        [p, v, t],
+	        [p, q, v],
+	        [t, p, v],
+	        [v, p, q]
+	      ][hi];
+
+	      return {
+	        r: c[0] * 255,
+	        g: c[1] * 255,
+	        b: c[2] * 255
+	      };
+
+	    },
+
+	    rgb_to_hsv: function(r, g, b) {
+
+	      var min = Math.min(r, g, b),
+	          max = Math.max(r, g, b),
+	          delta = max - min,
+	          h, s;
+
+	      if (max != 0) {
+	        s = delta / max;
+	      } else {
+	        return {
+	          h: NaN,
+	          s: 0,
+	          v: 0
+	        };
+	      }
+
+	      if (r == max) {
+	        h = (g - b) / delta;
+	      } else if (g == max) {
+	        h = 2 + (b - r) / delta;
+	      } else {
+	        h = 4 + (r - g) / delta;
+	      }
+	      h /= 6;
+	      if (h < 0) {
+	        h += 1;
+	      }
+
+	      return {
+	        h: h * 360,
+	        s: s,
+	        v: max / 255
+	      };
+	    },
+
+	    rgb_to_hex: function(r, g, b) {
+	      var hex = this.hex_with_component(0, 2, r);
+	      hex = this.hex_with_component(hex, 1, g);
+	      hex = this.hex_with_component(hex, 0, b);
+	      return hex;
+	    },
+
+	    component_from_hex: function(hex, componentIndex) {
+	      return (hex >> (componentIndex * 8)) & 0xFF;
+	    },
+
+	    hex_with_component: function(hex, componentIndex, value) {
+	      return value << (tmpComponent = componentIndex * 8) | (hex & ~ (0xFF << tmpComponent));
+	    }
+
+	  }
+
+	})(),
+	dat.color.toString,
+	dat.utils.common),
+	dat.color.interpret,
+	dat.utils.common),
+	dat.utils.requestAnimationFrame = (function () {
+
+	  /**
+	   * requirejs version of Paul Irish's RequestAnimationFrame
+	   * http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+	   */
+
+	  return window.webkitRequestAnimationFrame ||
+	      window.mozRequestAnimationFrame ||
+	      window.oRequestAnimationFrame ||
+	      window.msRequestAnimationFrame ||
+	      function(callback, element) {
+
+	        window.setTimeout(callback, 1000 / 60);
+
+	      };
+	})(),
+	dat.dom.CenteredDiv = (function (dom, common) {
+
+
+	  var CenteredDiv = function() {
+
+	    this.backgroundElement = document.createElement('div');
+	    common.extend(this.backgroundElement.style, {
+	      backgroundColor: 'rgba(0,0,0,0.8)',
+	      top: 0,
+	      left: 0,
+	      display: 'none',
+	      zIndex: '1000',
+	      opacity: 0,
+	      WebkitTransition: 'opacity 0.2s linear'
+	    });
+
+	    dom.makeFullscreen(this.backgroundElement);
+	    this.backgroundElement.style.position = 'fixed';
+
+	    this.domElement = document.createElement('div');
+	    common.extend(this.domElement.style, {
+	      position: 'fixed',
+	      display: 'none',
+	      zIndex: '1001',
+	      opacity: 0,
+	      WebkitTransition: '-webkit-transform 0.2s ease-out, opacity 0.2s linear'
+	    });
+
+
+	    document.body.appendChild(this.backgroundElement);
+	    document.body.appendChild(this.domElement);
+
+	    var _this = this;
+	    dom.bind(this.backgroundElement, 'click', function() {
+	      _this.hide();
+	    });
+
+
+	  };
+
+	  CenteredDiv.prototype.show = function() {
+
+	    var _this = this;
+	    
+
+
+	    this.backgroundElement.style.display = 'block';
+
+	    this.domElement.style.display = 'block';
+	    this.domElement.style.opacity = 0;
+	//    this.domElement.style.top = '52%';
+	    this.domElement.style.webkitTransform = 'scale(1.1)';
+
+	    this.layout();
+
+	    common.defer(function() {
+	      _this.backgroundElement.style.opacity = 1;
+	      _this.domElement.style.opacity = 1;
+	      _this.domElement.style.webkitTransform = 'scale(1)';
+	    });
+
+	  };
+
+	  CenteredDiv.prototype.hide = function() {
+
+	    var _this = this;
+
+	    var hide = function() {
+
+	      _this.domElement.style.display = 'none';
+	      _this.backgroundElement.style.display = 'none';
+
+	      dom.unbind(_this.domElement, 'webkitTransitionEnd', hide);
+	      dom.unbind(_this.domElement, 'transitionend', hide);
+	      dom.unbind(_this.domElement, 'oTransitionEnd', hide);
+
+	    };
+
+	    dom.bind(this.domElement, 'webkitTransitionEnd', hide);
+	    dom.bind(this.domElement, 'transitionend', hide);
+	    dom.bind(this.domElement, 'oTransitionEnd', hide);
+
+	    this.backgroundElement.style.opacity = 0;
+	//    this.domElement.style.top = '48%';
+	    this.domElement.style.opacity = 0;
+	    this.domElement.style.webkitTransform = 'scale(1.1)';
+
+	  };
+
+	  CenteredDiv.prototype.layout = function() {
+	    this.domElement.style.left = window.innerWidth/2 - dom.getWidth(this.domElement) / 2 + 'px';
+	    this.domElement.style.top = window.innerHeight/2 - dom.getHeight(this.domElement) / 2 + 'px';
+	  };
+	  
+	  function lockScroll(e) {
+	    console.log(e);
+	  }
+
+	  return CenteredDiv;
+
+	})(dat.dom.dom,
+	dat.utils.common),
+	dat.dom.dom,
+	dat.utils.common);
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	/**
+	 * dat-gui JavaScript Controller Library
+	 * http://code.google.com/p/dat-gui
+	 *
+	 * Copyright 2011 Data Arts Team, Google Creative Lab
+	 *
+	 * Licensed under the Apache License, Version 2.0 (the "License");
+	 * you may not use this file except in compliance with the License.
+	 * You may obtain a copy of the License at
+	 *
+	 * http://www.apache.org/licenses/LICENSE-2.0
+	 */
+
+	/** @namespace */
+	var dat = module.exports = dat || {};
+
+	/** @namespace */
+	dat.color = dat.color || {};
+
+	/** @namespace */
+	dat.utils = dat.utils || {};
+
+	dat.utils.common = (function () {
+	  
+	  var ARR_EACH = Array.prototype.forEach;
+	  var ARR_SLICE = Array.prototype.slice;
+
+	  /**
+	   * Band-aid methods for things that should be a lot easier in JavaScript.
+	   * Implementation and structure inspired by underscore.js
+	   * http://documentcloud.github.com/underscore/
+	   */
+
+	  return { 
+	    
+	    BREAK: {},
+	  
+	    extend: function(target) {
+	      
+	      this.each(ARR_SLICE.call(arguments, 1), function(obj) {
+	        
+	        for (var key in obj)
+	          if (!this.isUndefined(obj[key])) 
+	            target[key] = obj[key];
+	        
+	      }, this);
+	      
+	      return target;
+	      
+	    },
+	    
+	    defaults: function(target) {
+	      
+	      this.each(ARR_SLICE.call(arguments, 1), function(obj) {
+	        
+	        for (var key in obj)
+	          if (this.isUndefined(target[key])) 
+	            target[key] = obj[key];
+	        
+	      }, this);
+	      
+	      return target;
+	    
+	    },
+	    
+	    compose: function() {
+	      var toCall = ARR_SLICE.call(arguments);
+	            return function() {
+	              var args = ARR_SLICE.call(arguments);
+	              for (var i = toCall.length -1; i >= 0; i--) {
+	                args = [toCall[i].apply(this, args)];
+	              }
+	              return args[0];
+	            }
+	    },
+	    
+	    each: function(obj, itr, scope) {
+
+	      
+	      if (ARR_EACH && obj.forEach === ARR_EACH) { 
+	        
+	        obj.forEach(itr, scope);
+	        
+	      } else if (obj.length === obj.length + 0) { // Is number but not NaN
+	        
+	        for (var key = 0, l = obj.length; key < l; key++)
+	          if (key in obj && itr.call(scope, obj[key], key) === this.BREAK) 
+	            return;
+	            
+	      } else {
+
+	        for (var key in obj) 
+	          if (itr.call(scope, obj[key], key) === this.BREAK)
+	            return;
+	            
+	      }
+	            
+	    },
+	    
+	    defer: function(fnc) {
+	      setTimeout(fnc, 0);
+	    },
+	    
+	    toArray: function(obj) {
+	      if (obj.toArray) return obj.toArray();
+	      return ARR_SLICE.call(obj);
+	    },
+
+	    isUndefined: function(obj) {
+	      return obj === undefined;
+	    },
+	    
+	    isNull: function(obj) {
+	      return obj === null;
+	    },
+	    
+	    isNaN: function(obj) {
+	      return obj !== obj;
+	    },
+	    
+	    isArray: Array.isArray || function(obj) {
+	      return obj.constructor === Array;
+	    },
+	    
+	    isObject: function(obj) {
+	      return obj === Object(obj);
+	    },
+	    
+	    isNumber: function(obj) {
+	      return obj === obj+0;
+	    },
+	    
+	    isString: function(obj) {
+	      return obj === obj+'';
+	    },
+	    
+	    isBoolean: function(obj) {
+	      return obj === false || obj === true;
+	    },
+	    
+	    isFunction: function(obj) {
+	      return Object.prototype.toString.call(obj) === '[object Function]';
+	    }
+	  
+	  };
+	    
+	})();
+
+
+	dat.color.toString = (function (common) {
+
+	  return function(color) {
+
+	    if (color.a == 1 || common.isUndefined(color.a)) {
+
+	      var s = color.hex.toString(16);
+	      while (s.length < 6) {
+	        s = '0' + s;
+	      }
+
+	      return '#' + s;
+
+	    } else {
+
+	      return 'rgba(' + Math.round(color.r) + ',' + Math.round(color.g) + ',' + Math.round(color.b) + ',' + color.a + ')';
+
+	    }
+
+	  }
+
+	})(dat.utils.common);
+
+
+	dat.Color = dat.color.Color = (function (interpret, math, toString, common) {
+
+	  var Color = function() {
+
+	    this.__state = interpret.apply(this, arguments);
+
+	    if (this.__state === false) {
+	      throw 'Failed to interpret color arguments';
+	    }
+
+	    this.__state.a = this.__state.a || 1;
+
+
+	  };
+
+	  Color.COMPONENTS = ['r','g','b','h','s','v','hex','a'];
+
+	  common.extend(Color.prototype, {
+
+	    toString: function() {
+	      return toString(this);
+	    },
+
+	    toOriginal: function() {
+	      return this.__state.conversion.write(this);
+	    }
+
+	  });
+
+	  defineRGBComponent(Color.prototype, 'r', 2);
+	  defineRGBComponent(Color.prototype, 'g', 1);
+	  defineRGBComponent(Color.prototype, 'b', 0);
+
+	  defineHSVComponent(Color.prototype, 'h');
+	  defineHSVComponent(Color.prototype, 's');
+	  defineHSVComponent(Color.prototype, 'v');
+
+	  Object.defineProperty(Color.prototype, 'a', {
+
+	    get: function() {
+	      return this.__state.a;
+	    },
+
+	    set: function(v) {
+	      this.__state.a = v;
+	    }
+
+	  });
+
+	  Object.defineProperty(Color.prototype, 'hex', {
+
+	    get: function() {
+
+	      if (!this.__state.space !== 'HEX') {
+	        this.__state.hex = math.rgb_to_hex(this.r, this.g, this.b);
+	      }
+
+	      return this.__state.hex;
+
+	    },
+
+	    set: function(v) {
+
+	      this.__state.space = 'HEX';
+	      this.__state.hex = v;
+
+	    }
+
+	  });
+
+	  function defineRGBComponent(target, component, componentHexIndex) {
+
+	    Object.defineProperty(target, component, {
+
+	      get: function() {
+
+	        if (this.__state.space === 'RGB') {
+	          return this.__state[component];
+	        }
+
+	        recalculateRGB(this, component, componentHexIndex);
+
+	        return this.__state[component];
+
+	      },
+
+	      set: function(v) {
+
+	        if (this.__state.space !== 'RGB') {
+	          recalculateRGB(this, component, componentHexIndex);
+	          this.__state.space = 'RGB';
+	        }
+
+	        this.__state[component] = v;
+
+	      }
+
+	    });
+
+	  }
+
+	  function defineHSVComponent(target, component) {
+
+	    Object.defineProperty(target, component, {
+
+	      get: function() {
+
+	        if (this.__state.space === 'HSV')
+	          return this.__state[component];
+
+	        recalculateHSV(this);
+
+	        return this.__state[component];
+
+	      },
+
+	      set: function(v) {
+
+	        if (this.__state.space !== 'HSV') {
+	          recalculateHSV(this);
+	          this.__state.space = 'HSV';
+	        }
+
+	        this.__state[component] = v;
+
+	      }
+
+	    });
+
+	  }
+
+	  function recalculateRGB(color, component, componentHexIndex) {
+
+	    if (color.__state.space === 'HEX') {
+
+	      color.__state[component] = math.component_from_hex(color.__state.hex, componentHexIndex);
+
+	    } else if (color.__state.space === 'HSV') {
+
+	      common.extend(color.__state, math.hsv_to_rgb(color.__state.h, color.__state.s, color.__state.v));
+
+	    } else {
+
+	      throw 'Corrupted color state';
+
+	    }
+
+	  }
+
+	  function recalculateHSV(color) {
+
+	    var result = math.rgb_to_hsv(color.r, color.g, color.b);
+
+	    common.extend(color.__state,
+	        {
+	          s: result.s,
+	          v: result.v
+	        }
+	    );
+
+	    if (!common.isNaN(result.h)) {
+	      color.__state.h = result.h;
+	    } else if (common.isUndefined(color.__state.h)) {
+	      color.__state.h = 0;
+	    }
+
+	  }
+
+	  return Color;
+
+	})(dat.color.interpret = (function (toString, common) {
+
+	  var result, toReturn;
+
+	  var interpret = function() {
+
+	    toReturn = false;
+
+	    var original = arguments.length > 1 ? common.toArray(arguments) : arguments[0];
+
+	    common.each(INTERPRETATIONS, function(family) {
+
+	      if (family.litmus(original)) {
+
+	        common.each(family.conversions, function(conversion, conversionName) {
+
+	          result = conversion.read(original);
+
+	          if (toReturn === false && result !== false) {
+	            toReturn = result;
+	            result.conversionName = conversionName;
+	            result.conversion = conversion;
+	            return common.BREAK;
+
+	          }
+
+	        });
+
+	        return common.BREAK;
+
+	      }
+
+	    });
+
+	    return toReturn;
+
+	  };
+
+	  var INTERPRETATIONS = [
+
+	    // Strings
+	    {
+
+	      litmus: common.isString,
+
+	      conversions: {
+
+	        THREE_CHAR_HEX: {
+
+	          read: function(original) {
+
+	            var test = original.match(/^#([A-F0-9])([A-F0-9])([A-F0-9])$/i);
+	            if (test === null) return false;
+
+	            return {
+	              space: 'HEX',
+	              hex: parseInt(
+	                  '0x' +
+	                      test[1].toString() + test[1].toString() +
+	                      test[2].toString() + test[2].toString() +
+	                      test[3].toString() + test[3].toString())
+	            };
+
+	          },
+
+	          write: toString
+
+	        },
+
+	        SIX_CHAR_HEX: {
+
+	          read: function(original) {
+
+	            var test = original.match(/^#([A-F0-9]{6})$/i);
+	            if (test === null) return false;
+
+	            return {
+	              space: 'HEX',
+	              hex: parseInt('0x' + test[1].toString())
+	            };
+
+	          },
+
+	          write: toString
+
+	        },
+
+	        CSS_RGB: {
+
+	          read: function(original) {
+
+	            var test = original.match(/^rgb\(\s*(.+)\s*,\s*(.+)\s*,\s*(.+)\s*\)/);
+	            if (test === null) return false;
+
+	            return {
+	              space: 'RGB',
+	              r: parseFloat(test[1]),
+	              g: parseFloat(test[2]),
+	              b: parseFloat(test[3])
+	            };
+
+	          },
+
+	          write: toString
+
+	        },
+
+	        CSS_RGBA: {
+
+	          read: function(original) {
+
+	            var test = original.match(/^rgba\(\s*(.+)\s*,\s*(.+)\s*,\s*(.+)\s*\,\s*(.+)\s*\)/);
+	            if (test === null) return false;
+
+	            return {
+	              space: 'RGB',
+	              r: parseFloat(test[1]),
+	              g: parseFloat(test[2]),
+	              b: parseFloat(test[3]),
+	              a: parseFloat(test[4])
+	            };
+
+	          },
+
+	          write: toString
+
+	        }
+
+	      }
+
+	    },
+
+	    // Numbers
+	    {
+
+	      litmus: common.isNumber,
+
+	      conversions: {
+
+	        HEX: {
+	          read: function(original) {
+	            return {
+	              space: 'HEX',
+	              hex: original,
+	              conversionName: 'HEX'
+	            }
+	          },
+
+	          write: function(color) {
+	            return color.hex;
+	          }
+	        }
+
+	      }
+
+	    },
+
+	    // Arrays
+	    {
+
+	      litmus: common.isArray,
+
+	      conversions: {
+
+	        RGB_ARRAY: {
+	          read: function(original) {
+	            if (original.length != 3) return false;
+	            return {
+	              space: 'RGB',
+	              r: original[0],
+	              g: original[1],
+	              b: original[2]
+	            };
+	          },
+
+	          write: function(color) {
+	            return [color.r, color.g, color.b];
+	          }
+
+	        },
+
+	        RGBA_ARRAY: {
+	          read: function(original) {
+	            if (original.length != 4) return false;
+	            return {
+	              space: 'RGB',
+	              r: original[0],
+	              g: original[1],
+	              b: original[2],
+	              a: original[3]
+	            };
+	          },
+
+	          write: function(color) {
+	            return [color.r, color.g, color.b, color.a];
+	          }
+
+	        }
+
+	      }
+
+	    },
+
+	    // Objects
+	    {
+
+	      litmus: common.isObject,
+
+	      conversions: {
+
+	        RGBA_OBJ: {
+	          read: function(original) {
+	            if (common.isNumber(original.r) &&
+	                common.isNumber(original.g) &&
+	                common.isNumber(original.b) &&
+	                common.isNumber(original.a)) {
+	              return {
+	                space: 'RGB',
+	                r: original.r,
+	                g: original.g,
+	                b: original.b,
+	                a: original.a
+	              }
+	            }
+	            return false;
+	          },
+
+	          write: function(color) {
+	            return {
+	              r: color.r,
+	              g: color.g,
+	              b: color.b,
+	              a: color.a
+	            }
+	          }
+	        },
+
+	        RGB_OBJ: {
+	          read: function(original) {
+	            if (common.isNumber(original.r) &&
+	                common.isNumber(original.g) &&
+	                common.isNumber(original.b)) {
+	              return {
+	                space: 'RGB',
+	                r: original.r,
+	                g: original.g,
+	                b: original.b
+	              }
+	            }
+	            return false;
+	          },
+
+	          write: function(color) {
+	            return {
+	              r: color.r,
+	              g: color.g,
+	              b: color.b
+	            }
+	          }
+	        },
+
+	        HSVA_OBJ: {
+	          read: function(original) {
+	            if (common.isNumber(original.h) &&
+	                common.isNumber(original.s) &&
+	                common.isNumber(original.v) &&
+	                common.isNumber(original.a)) {
+	              return {
+	                space: 'HSV',
+	                h: original.h,
+	                s: original.s,
+	                v: original.v,
+	                a: original.a
+	              }
+	            }
+	            return false;
+	          },
+
+	          write: function(color) {
+	            return {
+	              h: color.h,
+	              s: color.s,
+	              v: color.v,
+	              a: color.a
+	            }
+	          }
+	        },
+
+	        HSV_OBJ: {
+	          read: function(original) {
+	            if (common.isNumber(original.h) &&
+	                common.isNumber(original.s) &&
+	                common.isNumber(original.v)) {
+	              return {
+	                space: 'HSV',
+	                h: original.h,
+	                s: original.s,
+	                v: original.v
+	              }
+	            }
+	            return false;
+	          },
+
+	          write: function(color) {
+	            return {
+	              h: color.h,
+	              s: color.s,
+	              v: color.v
+	            }
+	          }
+
+	        }
+
+	      }
+
+	    }
+
+
+	  ];
+
+	  return interpret;
+
+
+	})(dat.color.toString,
+	dat.utils.common),
+	dat.color.math = (function () {
+
+	  var tmpComponent;
+
+	  return {
+
+	    hsv_to_rgb: function(h, s, v) {
+
+	      var hi = Math.floor(h / 60) % 6;
+
+	      var f = h / 60 - Math.floor(h / 60);
+	      var p = v * (1.0 - s);
+	      var q = v * (1.0 - (f * s));
+	      var t = v * (1.0 - ((1.0 - f) * s));
+	      var c = [
+	        [v, t, p],
+	        [q, v, p],
+	        [p, v, t],
+	        [p, q, v],
+	        [t, p, v],
+	        [v, p, q]
+	      ][hi];
+
+	      return {
+	        r: c[0] * 255,
+	        g: c[1] * 255,
+	        b: c[2] * 255
+	      };
+
+	    },
+
+	    rgb_to_hsv: function(r, g, b) {
+
+	      var min = Math.min(r, g, b),
+	          max = Math.max(r, g, b),
+	          delta = max - min,
+	          h, s;
+
+	      if (max != 0) {
+	        s = delta / max;
+	      } else {
+	        return {
+	          h: NaN,
+	          s: 0,
+	          v: 0
+	        };
+	      }
+
+	      if (r == max) {
+	        h = (g - b) / delta;
+	      } else if (g == max) {
+	        h = 2 + (b - r) / delta;
+	      } else {
+	        h = 4 + (r - g) / delta;
+	      }
+	      h /= 6;
+	      if (h < 0) {
+	        h += 1;
+	      }
+
+	      return {
+	        h: h * 360,
+	        s: s,
+	        v: max / 255
+	      };
+	    },
+
+	    rgb_to_hex: function(r, g, b) {
+	      var hex = this.hex_with_component(0, 2, r);
+	      hex = this.hex_with_component(hex, 1, g);
+	      hex = this.hex_with_component(hex, 0, b);
+	      return hex;
+	    },
+
+	    component_from_hex: function(hex, componentIndex) {
+	      return (hex >> (componentIndex * 8)) & 0xFF;
+	    },
+
+	    hex_with_component: function(hex, componentIndex, value) {
+	      return value << (tmpComponent = componentIndex * 8) | (hex & ~ (0xFF << tmpComponent));
+	    }
+
+	  }
+
+	})(),
+	dat.color.toString,
+	dat.utils.common);
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	/**
+	 * @author sole / http://soledadpenades.com
+	 * @author mrdoob / http://mrdoob.com
+	 * @author Robert Eisele / http://www.xarg.org
+	 * @author Philippe / http://philippe.elsass.me
+	 * @author Robert Penner / http://www.robertpenner.com/easing_terms_of_use.html
+	 * @author Paul Lewis / http://www.aerotwist.com/
+	 * @author lechecacharro
+	 * @author Josh Faul / http://jocafa.com/
+	 * @author egraether / http://egraether.com/
+	 */
+
+	if ( Date.now === undefined ) {
+
+	  Date.now = function () {
+
+	    return new Date().valueOf();
+
+	  }
+
+	}
+
+	var TWEEN = TWEEN || ( function () {
+
+	  var _tweens = [];
+
+	  return {
+
+	    REVISION: '8',
+
+	    getAll: function () {
+
+	      return _tweens;
+
+	    },
+
+	    removeAll: function () {
+
+	      _tweens = [];
+
+	    },
+
+	    add: function ( tween ) {
+
+	      _tweens.push( tween );
+
+	    },
+
+	    remove: function ( tween ) {
+
+	      var i = _tweens.indexOf( tween );
+
+	      if ( i !== -1 ) {
+
+	        _tweens.splice( i, 1 );
+
+	      }
+
+	    },
+
+	    update: function ( time ) {
+
+	      if ( _tweens.length === 0 ) return false;
+
+	      var i = 0, numTweens = _tweens.length;
+
+	      time = time !== undefined ? time : Date.now();
+
+	      while ( i < numTweens ) {
+
+	        if ( _tweens[ i ].update( time ) ) {
+
+	          i ++;
+
+	        } else {
+
+	          _tweens.splice( i, 1 );
+
+	          numTweens --;
+
+	        }
+
+	      }
+
+	      return true;
+
+	    }
+
+	  };
+
+	} )();
+
+	TWEEN.Tween = function ( object ) {
+
+	  var _object = object;
+	  var _valuesStart = {};
+	  var _valuesEnd = {};
+	  var _duration = 1000;
+	  var _delayTime = 0;
+	  var _startTime = null;
+	  var _easingFunction = TWEEN.Easing.Linear.None;
+	  var _interpolationFunction = TWEEN.Interpolation.Linear;
+	  var _chainedTweens = [];
+	  var _onStartCallback = null;
+	  var _onStartCallbackFired = false;
+	  var _onUpdateCallback = null;
+	  var _onCompleteCallback = null;
+
+	  this.to = function ( properties, duration ) {
+
+	    if ( duration !== undefined ) {
+
+	      _duration = duration;
+
+	    }
+
+	    _valuesEnd = properties;
+
+	    return this;
+
+	  };
+
+	  this.start = function ( time ) {
+
+	    TWEEN.add( this );
+
+	    _onStartCallbackFired = false;
+
+	    _startTime = time !== undefined ? time : Date.now();
+	    _startTime += _delayTime;
+
+	    for ( var property in _valuesEnd ) {
+
+	      // This prevents the interpolation of null values or of non-existing properties
+	      if( _object[ property ] === null || !(property in _object) ) {
+
+	        continue;
+
+	      }
+
+	      // check if an Array was provided as property value
+	      if ( _valuesEnd[ property ] instanceof Array ) {
+
+	        if ( _valuesEnd[ property ].length === 0 ) {
+
+	          continue;
+
+	        }
+
+	        // create a local copy of the Array with the start value at the front
+	        _valuesEnd[ property ] = [ _object[ property ] ].concat( _valuesEnd[ property ] );
+
+	      }
+
+	      _valuesStart[ property ] = _object[ property ];
+
+	    }
+
+	    return this;
+
+	  };
+
+	  this.stop = function () {
+
+	    TWEEN.remove( this );
+	    return this;
+
+	  };
+
+	  this.delay = function ( amount ) {
+
+	    _delayTime = amount;
+	    return this;
+
+	  };
+
+	  this.easing = function ( easing ) {
+
+	    _easingFunction = easing;
+	    return this;
+
+	  };
+
+	  this.interpolation = function ( interpolation ) {
+
+	    _interpolationFunction = interpolation;
+	    return this;
+
+	  };
+
+	  this.chain = function () {
+
+	    _chainedTweens = arguments;
+	    return this;
+
+	  };
+
+	  this.onStart = function ( callback ) {
+
+	    _onStartCallback = callback;
+	    return this;
+
+	  };
+
+	  this.onUpdate = function ( callback ) {
+
+	    _onUpdateCallback = callback;
+	    return this;
+
+	  };
+
+	  this.onComplete = function ( callback ) {
+
+	    _onCompleteCallback = callback;
+	    return this;
+
+	  };
+
+	  this.update = function ( time ) {
+
+	    if ( time < _startTime ) {
+
+	      return true;
+
+	    }
+
+	    if ( _onStartCallbackFired === false ) {
+
+	      if ( _onStartCallback !== null ) {
+
+	        _onStartCallback.call( _object );
+
+	      }
+
+	      _onStartCallbackFired = true;
+
+	    }
+
+	    var elapsed = ( time - _startTime ) / _duration;
+	    elapsed = elapsed > 1 ? 1 : elapsed;
+
+	    var value = _easingFunction( elapsed );
+
+	    for ( var property in _valuesStart ) {
+
+	      var start = _valuesStart[ property ];
+	      var end = _valuesEnd[ property ];
+
+	      if ( end instanceof Array ) {
+
+	        _object[ property ] = _interpolationFunction( end, value );
+
+	      } else {
+
+	        _object[ property ] = start + ( end - start ) * value;
+
+	      }
+
+	    }
+
+	    if ( _onUpdateCallback !== null ) {
+
+	      _onUpdateCallback.call( _object, value );
+
+	    }
+
+	    if ( elapsed == 1 ) {
+
+	      if ( _onCompleteCallback !== null ) {
+
+	        _onCompleteCallback.call( _object );
+
+	      }
+
+	      for ( var i = 0, numChainedTweens = _chainedTweens.length; i < numChainedTweens; i ++ ) {
+
+	        _chainedTweens[ i ].start( time );
+
+	      }
+
+	      return false;
+
+	    }
+
+	    return true;
+
+	  };
+
+	};
+
+	TWEEN.Easing = {
+
+	  Linear: {
+
+	    None: function ( k ) {
+
+	      return k;
+
+	    }
+
+	  },
+
+	  Quadratic: {
+
+	    In: function ( k ) {
+
+	      return k * k;
+
+	    },
+
+	    Out: function ( k ) {
+
+	      return k * ( 2 - k );
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      if ( ( k *= 2 ) < 1 ) return 0.5 * k * k;
+	      return - 0.5 * ( --k * ( k - 2 ) - 1 );
+
+	    }
+
+	  },
+
+	  Cubic: {
+
+	    In: function ( k ) {
+
+	      return k * k * k;
+
+	    },
+
+	    Out: function ( k ) {
+
+	      return --k * k * k + 1;
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      if ( ( k *= 2 ) < 1 ) return 0.5 * k * k * k;
+	      return 0.5 * ( ( k -= 2 ) * k * k + 2 );
+
+	    }
+
+	  },
+
+	  Quartic: {
+
+	    In: function ( k ) {
+
+	      return k * k * k * k;
+
+	    },
+
+	    Out: function ( k ) {
+
+	      return 1 - ( --k * k * k * k );
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      if ( ( k *= 2 ) < 1) return 0.5 * k * k * k * k;
+	      return - 0.5 * ( ( k -= 2 ) * k * k * k - 2 );
+
+	    }
+
+	  },
+
+	  Quintic: {
+
+	    In: function ( k ) {
+
+	      return k * k * k * k * k;
+
+	    },
+
+	    Out: function ( k ) {
+
+	      return --k * k * k * k * k + 1;
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      if ( ( k *= 2 ) < 1 ) return 0.5 * k * k * k * k * k;
+	      return 0.5 * ( ( k -= 2 ) * k * k * k * k + 2 );
+
+	    }
+
+	  },
+
+	  Sinusoidal: {
+
+	    In: function ( k ) {
+
+	      return 1 - Math.cos( k * Math.PI / 2 );
+
+	    },
+
+	    Out: function ( k ) {
+
+	      return Math.sin( k * Math.PI / 2 );
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      return 0.5 * ( 1 - Math.cos( Math.PI * k ) );
+
+	    }
+
+	  },
+
+	  Exponential: {
+
+	    In: function ( k ) {
+
+	      return k === 0 ? 0 : Math.pow( 1024, k - 1 );
+
+	    },
+
+	    Out: function ( k ) {
+
+	      return k === 1 ? 1 : 1 - Math.pow( 2, - 10 * k );
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      if ( k === 0 ) return 0;
+	      if ( k === 1 ) return 1;
+	      if ( ( k *= 2 ) < 1 ) return 0.5 * Math.pow( 1024, k - 1 );
+	      return 0.5 * ( - Math.pow( 2, - 10 * ( k - 1 ) ) + 2 );
+
+	    }
+
+	  },
+
+	  Circular: {
+
+	    In: function ( k ) {
+
+	      return 1 - Math.sqrt( 1 - k * k );
+
+	    },
+
+	    Out: function ( k ) {
+
+	      return Math.sqrt( 1 - ( --k * k ) );
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      if ( ( k *= 2 ) < 1) return - 0.5 * ( Math.sqrt( 1 - k * k) - 1);
+	      return 0.5 * ( Math.sqrt( 1 - ( k -= 2) * k) + 1);
+
+	    }
+
+	  },
+
+	  Elastic: {
+
+	    In: function ( k ) {
+
+	      var s, a = 0.1, p = 0.4;
+	      if ( k === 0 ) return 0;
+	      if ( k === 1 ) return 1;
+	      if ( !a || a < 1 ) { a = 1; s = p / 4; }
+	      else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );
+	      return - ( a * Math.pow( 2, 10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) );
+
+	    },
+
+	    Out: function ( k ) {
+
+	      var s, a = 0.1, p = 0.4;
+	      if ( k === 0 ) return 0;
+	      if ( k === 1 ) return 1;
+	      if ( !a || a < 1 ) { a = 1; s = p / 4; }
+	      else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );
+	      return ( a * Math.pow( 2, - 10 * k) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) + 1 );
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      var s, a = 0.1, p = 0.4;
+	      if ( k === 0 ) return 0;
+	      if ( k === 1 ) return 1;
+	      if ( !a || a < 1 ) { a = 1; s = p / 4; }
+	      else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );
+	      if ( ( k *= 2 ) < 1 ) return - 0.5 * ( a * Math.pow( 2, 10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) );
+	      return a * Math.pow( 2, -10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) * 0.5 + 1;
+
+	    }
+
+	  },
+
+	  Back: {
+
+	    In: function ( k ) {
+
+	      var s = 1.70158;
+	      return k * k * ( ( s + 1 ) * k - s );
+
+	    },
+
+	    Out: function ( k ) {
+
+	      var s = 1.70158;
+	      return --k * k * ( ( s + 1 ) * k + s ) + 1;
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      var s = 1.70158 * 1.525;
+	      if ( ( k *= 2 ) < 1 ) return 0.5 * ( k * k * ( ( s + 1 ) * k - s ) );
+	      return 0.5 * ( ( k -= 2 ) * k * ( ( s + 1 ) * k + s ) + 2 );
+
+	    }
+
+	  },
+
+	  Bounce: {
+
+	    In: function ( k ) {
+
+	      return 1 - TWEEN.Easing.Bounce.Out( 1 - k );
+
+	    },
+
+	    Out: function ( k ) {
+
+	      if ( k < ( 1 / 2.75 ) ) {
+
+	        return 7.5625 * k * k;
+
+	      } else if ( k < ( 2 / 2.75 ) ) {
+
+	        return 7.5625 * ( k -= ( 1.5 / 2.75 ) ) * k + 0.75;
+
+	      } else if ( k < ( 2.5 / 2.75 ) ) {
+
+	        return 7.5625 * ( k -= ( 2.25 / 2.75 ) ) * k + 0.9375;
+
+	      } else {
+
+	        return 7.5625 * ( k -= ( 2.625 / 2.75 ) ) * k + 0.984375;
+
+	      }
+
+	    },
+
+	    InOut: function ( k ) {
+
+	      if ( k < 0.5 ) return TWEEN.Easing.Bounce.In( k * 2 ) * 0.5;
+	      return TWEEN.Easing.Bounce.Out( k * 2 - 1 ) * 0.5 + 0.5;
+
+	    }
+
+	  }
+
+	};
+
+	TWEEN.Interpolation = {
+
+	  Linear: function ( v, k ) {
+
+	    var m = v.length - 1, f = m * k, i = Math.floor( f ), fn = TWEEN.Interpolation.Utils.Linear;
+
+	    if ( k < 0 ) return fn( v[ 0 ], v[ 1 ], f );
+	    if ( k > 1 ) return fn( v[ m ], v[ m - 1 ], m - f );
+
+	    return fn( v[ i ], v[ i + 1 > m ? m : i + 1 ], f - i );
+
+	  },
+
+	  Bezier: function ( v, k ) {
+
+	    var b = 0, n = v.length - 1, pw = Math.pow, bn = TWEEN.Interpolation.Utils.Bernstein, i;
+
+	    for ( i = 0; i <= n; i++ ) {
+	      b += pw( 1 - k, n - i ) * pw( k, i ) * v[ i ] * bn( n, i );
+	    }
+
+	    return b;
+
+	  },
+
+	  CatmullRom: function ( v, k ) {
+
+	    var m = v.length - 1, f = m * k, i = Math.floor( f ), fn = TWEEN.Interpolation.Utils.CatmullRom;
+
+	    if ( v[ 0 ] === v[ m ] ) {
+
+	      if ( k < 0 ) i = Math.floor( f = m * ( 1 + k ) );
+
+	      return fn( v[ ( i - 1 + m ) % m ], v[ i ], v[ ( i + 1 ) % m ], v[ ( i + 2 ) % m ], f - i );
+
+	    } else {
+
+	      if ( k < 0 ) return v[ 0 ] - ( fn( v[ 0 ], v[ 0 ], v[ 1 ], v[ 1 ], -f ) - v[ 0 ] );
+	      if ( k > 1 ) return v[ m ] - ( fn( v[ m ], v[ m ], v[ m - 1 ], v[ m - 1 ], f - m ) - v[ m ] );
+
+	      return fn( v[ i ? i - 1 : 0 ], v[ i ], v[ m < i + 1 ? m : i + 1 ], v[ m < i + 2 ? m : i + 2 ], f - i );
+
+	    }
+
+	  },
+
+	  Utils: {
+
+	    Linear: function ( p0, p1, t ) {
+
+	      return ( p1 - p0 ) * t + p0;
+
+	    },
+
+	    Bernstein: function ( n , i ) {
+
+	      var fc = TWEEN.Interpolation.Utils.Factorial;
+	      return fc( n ) / fc( i ) / fc( n - i );
+
+	    },
+
+	    Factorial: ( function () {
+
+	      var a = [ 1 ];
+
+	      return function ( n ) {
+
+	        var s = 1, i;
+	        if ( a[ n ] ) return a[ n ];
+	        for ( i = n; i > 1; i-- ) s *= i;
+	        return a[ n ] = s;
+
+	      };
+
+	    } )(),
+
+	    CatmullRom: function ( p0, p1, p2, p3, t ) {
+
+	      var v0 = ( p2 - p0 ) * 0.5, v1 = ( p3 - p1 ) * 0.5, t2 = t * t, t3 = t * t2;
+	      return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 + ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 + v0 * t + p1;
+
+	    }
+
+	  }
+
+	};
+
+	module.exports = TWEEN;
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';var _typeof=typeof Symbol==="function"&&typeof Symbol.iterator==="symbol"?function(obj){return typeof obj;}:function(obj){return obj&&typeof Symbol==="function"&&obj.constructor===Symbol?"symbol":typeof obj;};var _three=__webpack_require__(2);var _three2=_interopRequireDefault(_three);var _ImageUtils=__webpack_require__(9);var _ImageUtils2=_interopRequireDefault(_ImageUtils);var _BinaryHeap=__webpack_require__(10);var _BinaryHeap2=_interopRequireDefault(_BinaryHeap);function _interopRequireDefault(obj){return obj&&obj.__esModule?obj:{default:obj};}function _defineProperty(obj,key,value){if(key in obj){Object.defineProperty(obj,key,{value:value,enumerable:true,configurable:true,writable:true});}else {obj[key]=value;}return obj;}_three2.default.ImageUtils=_ImageUtils2.default;function Potree(){} // contains WebWorkers with base64 encoded code
+	Potree.workers={};Potree.Shaders={};Potree.WorkerManager=function(code){this.code=code;this.instances=[];this.createdInstances=0;};Potree.WorkerManager.prototype.getWorker=function(){var ww=this.instances.pop();if(ww===undefined){ww=Potree.utils.createWorker(this.code);this.createdInstances++;}return ww;};Potree.WorkerManager.prototype.returnWorker=function(worker){this.instances.push(worker);}; /**
+	 * urls point to WebWorker code.
+	 * Code must not contain calls to importScripts, 
+	 * concatenation is done by this method.
+	 * 
+	 */Potree.WorkerManager.fromUrls=function(urls){var code="";for(var i=0;i<urls.length;i++){var url=urls[i];var xhr=new XMLHttpRequest();xhr.open('GET',url,false);xhr.responseType='text';xhr.overrideMimeType('text/plain; charset=x-user-defined');xhr.send(null);if(xhr.status===200){code+=xhr.responseText+"\n";}}return new Potree.WorkerManager(code);};Potree.workers.binaryDecoder=new Potree.WorkerManager(atob("Ci8vIGh0dHA6Ly9qc3BlcmYuY29tL3VpbnQ4YXJyYXktdnMtZGF0YXZpZXczLzMKZnVuY3Rpb24gQ3VzdG9tVmlldyhidWZmZXIpIHsKCXRoaXMuYnVmZmVyID0gYnVmZmVyOwoJdGhpcy51OCA9IG5ldyBVaW50OEFycmF5KGJ1ZmZlcik7CgkKCXZhciB0bXAgPSBuZXcgQXJyYXlCdWZmZXIoNCk7Cgl2YXIgdG1wZiA9IG5ldyBGbG9hdDMyQXJyYXkodG1wKTsKCXZhciB0bXB1OCA9IG5ldyBVaW50OEFycmF5KHRtcCk7CgkKCXRoaXMuZ2V0VWludDMyID0gZnVuY3Rpb24gKGkpIHsKCQlyZXR1cm4gKHRoaXMudThbaSszXSA8PCAyNCkgfCAodGhpcy51OFtpKzJdIDw8IDE2KSB8ICh0aGlzLnU4W2krMV0gPDwgOCkgfCB0aGlzLnU4W2ldOwoJfQoJCgl0aGlzLmdldFVpbnQxNiA9IGZ1bmN0aW9uIChpKSB7CgkJcmV0dXJuICh0aGlzLnU4W2krMV0gPDwgOCkgfCB0aGlzLnU4W2ldOwoJfQoJCgl0aGlzLmdldEZsb2F0ID0gZnVuY3Rpb24oaSl7CgkJdG1wdThbMF0gPSB0aGlzLnU4W2krMF07CgkJdG1wdThbMV0gPSB0aGlzLnU4W2krMV07CgkJdG1wdThbMl0gPSB0aGlzLnU4W2krMl07CgkJdG1wdThbM10gPSB0aGlzLnU4W2krM107CgkJCgkJcmV0dXJuIHRtcGZbMF07Cgl9CgkKCXRoaXMuZ2V0VWludDggPSBmdW5jdGlvbihpKXsKCQlyZXR1cm4gdGhpcy51OFtpXTsKCX0KfQoKUG90cmVlID0ge307CgoKb25tZXNzYWdlID0gZnVuY3Rpb24oZXZlbnQpewoJdmFyIGJ1ZmZlciA9IGV2ZW50LmRhdGEuYnVmZmVyOwoJdmFyIHBvaW50QXR0cmlidXRlcyA9IGV2ZW50LmRhdGEucG9pbnRBdHRyaWJ1dGVzOwoJdmFyIG51bVBvaW50cyA9IGJ1ZmZlci5ieXRlTGVuZ3RoIC8gcG9pbnRBdHRyaWJ1dGVzLmJ5dGVTaXplOwoJdmFyIGN2ID0gbmV3IEN1c3RvbVZpZXcoYnVmZmVyKTsKCXZhciB2ZXJzaW9uID0gbmV3IFBvdHJlZS5WZXJzaW9uKGV2ZW50LmRhdGEudmVyc2lvbik7Cgl2YXIgbWluID0gZXZlbnQuZGF0YS5taW47Cgl2YXIgbm9kZU9mZnNldCA9IGV2ZW50LmRhdGEub2Zmc2V0OwoJdmFyIHNjYWxlID0gZXZlbnQuZGF0YS5zY2FsZTsKCXZhciB0aWdodEJveE1pbiA9IFsgTnVtYmVyLlBPU0lUSVZFX0lORklOSVRZLCBOdW1iZXIuUE9TSVRJVkVfSU5GSU5JVFksIE51bWJlci5QT1NJVElWRV9JTkZJTklUWV07Cgl2YXIgdGlnaHRCb3hNYXggPSBbIE51bWJlci5ORUdBVElWRV9JTkZJTklUWSAsIE51bWJlci5ORUdBVElWRV9JTkZJTklUWSAsIE51bWJlci5ORUdBVElWRV9JTkZJTklUWSBdOwoJCgl2YXIgYXR0cmlidXRlQnVmZmVycyA9IHt9OwoJCgl2YXIgb2Zmc2V0ID0gMDsKCWZvcih2YXIgaSA9IDA7IGkgPCBwb2ludEF0dHJpYnV0ZXMuYXR0cmlidXRlcy5sZW5ndGg7IGkrKyl7CgkJdmFyIHBvaW50QXR0cmlidXRlID0gcG9pbnRBdHRyaWJ1dGVzLmF0dHJpYnV0ZXNbaV07CgkKCQlpZihwb2ludEF0dHJpYnV0ZS5uYW1lID09PSBQb3RyZWUuUG9pbnRBdHRyaWJ1dGUuUE9TSVRJT05fQ0FSVEVTSUFOLm5hbWUpewoJCQkKCQkJdmFyIGJ1ZmYgPSBuZXcgQXJyYXlCdWZmZXIobnVtUG9pbnRzKjQqMyk7CgkJCXZhciBwb3NpdGlvbnMgPSBuZXcgRmxvYXQzMkFycmF5KGJ1ZmYpOwoJCQkKCQkJZm9yKHZhciBqID0gMDsgaiA8IG51bVBvaW50czsgaisrKXsKCQkJCWlmKHZlcnNpb24ubmV3ZXJUaGFuKCIxLjMiKSl7CgkJCQkJcG9zaXRpb25zWzMqaiswXSA9IChjdi5nZXRVaW50MzIob2Zmc2V0ICsgaipwb2ludEF0dHJpYnV0ZXMuYnl0ZVNpemUrMCkgKiBzY2FsZSkgKyBtaW5bMF07CgkJCQkJcG9zaXRpb25zWzMqaisxXSA9IChjdi5nZXRVaW50MzIob2Zmc2V0ICsgaipwb2ludEF0dHJpYnV0ZXMuYnl0ZVNpemUrNCkgKiBzY2FsZSkgKyBtaW5bMV07CgkJCQkJcG9zaXRpb25zWzMqaisyXSA9IChjdi5nZXRVaW50MzIob2Zmc2V0ICsgaipwb2ludEF0dHJpYnV0ZXMuYnl0ZVNpemUrOCkgKiBzY2FsZSkgKyBtaW5bMl07CgkJCQl9ZWxzZXsKCQkJCQlwb3NpdGlvbnNbMypqKzBdID0gY3YuZ2V0RmxvYXQoaipwb2ludEF0dHJpYnV0ZXMuYnl0ZVNpemUrMCkgKyBub2RlT2Zmc2V0WzBdOwoJCQkJCXBvc2l0aW9uc1szKmorMV0gPSBjdi5nZXRGbG9hdChqKnBvaW50QXR0cmlidXRlcy5ieXRlU2l6ZSs0KSArIG5vZGVPZmZzZXRbMV07CgkJCQkJcG9zaXRpb25zWzMqaisyXSA9IGN2LmdldEZsb2F0KGoqcG9pbnRBdHRyaWJ1dGVzLmJ5dGVTaXplKzgpICsgbm9kZU9mZnNldFsyXTsKCQkJCX0KCQkJCQoJCQkJdGlnaHRCb3hNaW5bMF0gPSBNYXRoLm1pbih0aWdodEJveE1pblswXSwgcG9zaXRpb25zWzMqaiswXSk7CgkJCQl0aWdodEJveE1pblsxXSA9IE1hdGgubWluKHRpZ2h0Qm94TWluWzFdLCBwb3NpdGlvbnNbMypqKzFdKTsKCQkJCXRpZ2h0Qm94TWluWzJdID0gTWF0aC5taW4odGlnaHRCb3hNaW5bMl0sIHBvc2l0aW9uc1szKmorMl0pOwoJCQkJCgkJCQl0aWdodEJveE1heFswXSA9IE1hdGgubWF4KHRpZ2h0Qm94TWF4WzBdLCBwb3NpdGlvbnNbMypqKzBdKTsKCQkJCXRpZ2h0Qm94TWF4WzFdID0gTWF0aC5tYXgodGlnaHRCb3hNYXhbMV0sIHBvc2l0aW9uc1szKmorMV0pOwoJCQkJdGlnaHRCb3hNYXhbMl0gPSBNYXRoLm1heCh0aWdodEJveE1heFsyXSwgcG9zaXRpb25zWzMqaisyXSk7CgkJCX0KCQkJCgkJCWF0dHJpYnV0ZUJ1ZmZlcnNbcG9pbnRBdHRyaWJ1dGUubmFtZV0gPSB7IGJ1ZmZlcjogYnVmZiwgYXR0cmlidXRlOiBwb2ludEF0dHJpYnV0ZX07CgkJCQoJCX1lbHNlIGlmKHBvaW50QXR0cmlidXRlLm5hbWUgPT09IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZS5DT0xPUl9QQUNLRUQubmFtZSl7CgkJCQoJCQl2YXIgYnVmZiA9IG5ldyBBcnJheUJ1ZmZlcihudW1Qb2ludHMqNCozKTsKCQkJdmFyIGNvbG9ycyA9IG5ldyBGbG9hdDMyQXJyYXkoYnVmZik7CgkJCQoJCQlmb3IodmFyIGogPSAwOyBqIDwgbnVtUG9pbnRzOyBqKyspewoJCQkJY29sb3JzWzMqaiswXSA9IGN2LmdldFVpbnQ4KG9mZnNldCArIGoqcG9pbnRBdHRyaWJ1dGVzLmJ5dGVTaXplICsgMCkgLyAyNTU7CgkJCQljb2xvcnNbMypqKzFdID0gY3YuZ2V0VWludDgob2Zmc2V0ICsgaipwb2ludEF0dHJpYnV0ZXMuYnl0ZVNpemUgKyAxKSAvIDI1NTsKCQkJCWNvbG9yc1szKmorMl0gPSBjdi5nZXRVaW50OChvZmZzZXQgKyBqKnBvaW50QXR0cmlidXRlcy5ieXRlU2l6ZSArIDIpIC8gMjU1OwoJCQl9CgkJCQoJCQlhdHRyaWJ1dGVCdWZmZXJzW3BvaW50QXR0cmlidXRlLm5hbWVdID0geyBidWZmZXI6IGJ1ZmYsIGF0dHJpYnV0ZTogcG9pbnRBdHRyaWJ1dGV9OwoJCQkKCQl9ZWxzZSBpZihwb2ludEF0dHJpYnV0ZS5uYW1lID09PSBQb3RyZWUuUG9pbnRBdHRyaWJ1dGUuSU5URU5TSVRZLm5hbWUpewoKCQkJdmFyIGJ1ZmYgPSBuZXcgQXJyYXlCdWZmZXIobnVtUG9pbnRzKjQpOwoJCQl2YXIgaW50ZW5zaXRpZXMgPSBuZXcgRmxvYXQzMkFycmF5KGJ1ZmYpOwoJCQkKCQkJZm9yKHZhciBqID0gMDsgaiA8IG51bVBvaW50czsgaisrKXsKCQkJCXZhciBpbnRlbnNpdHkgPSBjdi5nZXRVaW50MTYob2Zmc2V0ICsgaipwb2ludEF0dHJpYnV0ZXMuYnl0ZVNpemUpOwoJCQkJaW50ZW5zaXRpZXNbal0gPSBpbnRlbnNpdHk7CgkJCX0KCQkJCgkJCWF0dHJpYnV0ZUJ1ZmZlcnNbcG9pbnRBdHRyaWJ1dGUubmFtZV0gPSB7IGJ1ZmZlcjogYnVmZiwgYXR0cmlidXRlOiBwb2ludEF0dHJpYnV0ZX07CgkJCgkJfWVsc2UgaWYocG9pbnRBdHRyaWJ1dGUubmFtZSA9PT0gUG90cmVlLlBvaW50QXR0cmlidXRlLkNMQVNTSUZJQ0FUSU9OLm5hbWUpewoKCQkJdmFyIGJ1ZmYgPSBuZXcgQXJyYXlCdWZmZXIobnVtUG9pbnRzKjQpOwoJCQl2YXIgY2xhc3NpZmljYXRpb25zID0gbmV3IEZsb2F0MzJBcnJheShidWZmKTsKCQkJCgkJCWZvcih2YXIgaiA9IDA7IGogPCBudW1Qb2ludHM7IGorKyl7CgkJCQl2YXIgY2xhc3NpZmljYXRpb24gPSBjdi5nZXRVaW50OChvZmZzZXQgKyBqKnBvaW50QXR0cmlidXRlcy5ieXRlU2l6ZSk7CgkJCQljbGFzc2lmaWNhdGlvbnNbal0gPSBjbGFzc2lmaWNhdGlvbjsKCQkJfQoJCQkKCQkJYXR0cmlidXRlQnVmZmVyc1twb2ludEF0dHJpYnV0ZS5uYW1lXSA9IHsgYnVmZmVyOiBidWZmLCBhdHRyaWJ1dGU6IHBvaW50QXR0cmlidXRlfTsKCQkKCQl9ZWxzZSBpZihwb2ludEF0dHJpYnV0ZS5uYW1lID09PSBQb3RyZWUuUG9pbnRBdHRyaWJ1dGUuTk9STUFMX1NQSEVSRU1BUFBFRC5uYW1lKXsKCgkJCXZhciBidWZmID0gbmV3IEFycmF5QnVmZmVyKG51bVBvaW50cyo0KjMpOwoJCQl2YXIgbm9ybWFscyA9IG5ldyBGbG9hdDMyQXJyYXkoYnVmZik7CgkJCQoJCQlmb3IodmFyIGogPSAwOyBqIDwgbnVtUG9pbnRzOyBqKyspewoJCQkJdmFyIGJ4ID0gY3YuZ2V0VWludDgob2Zmc2V0ICsgaiAqIHBvaW50QXR0cmlidXRlcy5ieXRlU2l6ZSArIDApOwoJCQkJdmFyIGJ5ID0gY3YuZ2V0VWludDgob2Zmc2V0ICsgaiAqIHBvaW50QXR0cmlidXRlcy5ieXRlU2l6ZSArIDEpOwoJCQkKCQkJCXZhciBleCA9IGJ4IC8gMjU1OwoJCQkJdmFyIGV5ID0gYnkgLyAyNTU7CgkJCQkKCQkJCXZhciBueCA9IGV4ICogMiAtIDE7CgkJCQl2YXIgbnkgPSBleSAqIDIgLSAxOwoJCQkJdmFyIG56ID0gMTsKCQkJCXZhciBudyA9IC0xOwoJCQkJCgkJCQl2YXIgbCA9IChueCAqICgtbngpKSArIChueSAqICgtbnkpKSArIChueiAqICgtbncpKTsKCQkJCW56ID0gbDsKCQkJCW54ID0gbnggKiBNYXRoLnNxcnQobCk7CgkJCQlueSA9IG55ICogTWF0aC5zcXJ0KGwpOwoJCQkJCgkJCQlueCA9IG54ICogMjsKCQkJCW55ID0gbnkgKiAyOwoJCQkJbnogPSBueiAqIDIgLSAxOwoJCQkJCgkJCQlub3JtYWxzWzMqaiArIDBdID0gbng7CgkJCQlub3JtYWxzWzMqaiArIDFdID0gbnk7CgkJCQlub3JtYWxzWzMqaiArIDJdID0gbno7CgkJCX0KCQkJCgkJCWF0dHJpYnV0ZUJ1ZmZlcnNbcG9pbnRBdHRyaWJ1dGUubmFtZV0gPSB7IGJ1ZmZlcjogYnVmZiwgYXR0cmlidXRlOiBwb2ludEF0dHJpYnV0ZX07CgkJfWVsc2UgaWYocG9pbnRBdHRyaWJ1dGUubmFtZSA9PT0gUG90cmVlLlBvaW50QXR0cmlidXRlLk5PUk1BTF9PQ1QxNi5uYW1lKXsKCQkJCgkJCXZhciBidWZmID0gbmV3IEFycmF5QnVmZmVyKG51bVBvaW50cyo0KjMpOwoJCQl2YXIgbm9ybWFscyA9IG5ldyBGbG9hdDMyQXJyYXkoYnVmZik7CgkJCWZvcih2YXIgaiA9IDA7IGogPCBudW1Qb2ludHM7IGorKyl7CgkJCQl2YXIgYnggPSBjdi5nZXRVaW50OChvZmZzZXQgKyBqICogcG9pbnRBdHRyaWJ1dGVzLmJ5dGVTaXplICsgMCk7CgkJCQl2YXIgYnkgPSBjdi5nZXRVaW50OChvZmZzZXQgKyBqICogcG9pbnRBdHRyaWJ1dGVzLmJ5dGVTaXplICsgMSk7CgkJCQkKCQkJCXZhciB1ID0gKGJ4IC8gMjU1KSAqIDIgLSAxOwoJCQkJdmFyIHYgPSAoYnkgLyAyNTUpICogMiAtIDE7CgkJCQkKCQkJCXZhciB6ID0gMSAtIE1hdGguYWJzKHUpIC0gTWF0aC5hYnModik7CgkJCQkKCQkJCWlmKHogPj0gMCl7CgkJCQkJdmFyIHggPSB1OwoJCQkJCXZhciB5ID0gdjsKCQkJCX1lbHNlewoJCQkJCXZhciB4ID0gLSAodi9NYXRoLnNpZ24odikgLSAxKSAvIE1hdGguc2lnbih1KTsKCQkJCQl2YXIgeSA9IC0gKHUvTWF0aC5zaWduKHUpIC0gMSkgLyBNYXRoLnNpZ24odik7CgkJCQl9CgkJCQkKCQkJCXZhciBsZW5ndGggPSBNYXRoLnNxcnQoeCp4ICsgeSp5ICsgeip6KTsKCQkJCXggPSB4IC8gbGVuZ3RoOwoJCQkJeSA9IHkgLyBsZW5ndGg7CgkJCQl6ID0geiAvIGxlbmd0aDsKCQkJCQoJCQkJbm9ybWFsc1szKmogKyAwXSA9IHg7CgkJCQlub3JtYWxzWzMqaiArIDFdID0geTsKCQkJCW5vcm1hbHNbMypqICsgMl0gPSB6OwoJCQl9CgkJCWF0dHJpYnV0ZUJ1ZmZlcnNbcG9pbnRBdHRyaWJ1dGUubmFtZV0gPSB7IGJ1ZmZlcjogYnVmZiwgYXR0cmlidXRlOiBwb2ludEF0dHJpYnV0ZX07CgkJfWVsc2UgaWYocG9pbnRBdHRyaWJ1dGUubmFtZSA9PT0gUG90cmVlLlBvaW50QXR0cmlidXRlLk5PUk1BTC5uYW1lKXsKCQkKCQkJdmFyIGJ1ZmYgPSBuZXcgQXJyYXlCdWZmZXIobnVtUG9pbnRzKjQqMyk7CgkJCXZhciBub3JtYWxzID0gbmV3IEZsb2F0MzJBcnJheShidWZmKTsKCQkJZm9yKHZhciBqID0gMDsgaiA8IG51bVBvaW50czsgaisrKXsKCQkJCXZhciB4ID0gY3YuZ2V0RmxvYXQob2Zmc2V0ICsgaiAqIHBvaW50QXR0cmlidXRlcy5ieXRlU2l6ZSArIDApOwoJCQkJdmFyIHkgPSBjdi5nZXRGbG9hdChvZmZzZXQgKyBqICogcG9pbnRBdHRyaWJ1dGVzLmJ5dGVTaXplICsgNCk7CgkJCQl2YXIgeiA9IGN2LmdldEZsb2F0KG9mZnNldCArIGogKiBwb2ludEF0dHJpYnV0ZXMuYnl0ZVNpemUgKyA4KTsKCQkJCQoJCQkJbm9ybWFsc1szKmogKyAwXSA9IHg7CgkJCQlub3JtYWxzWzMqaiArIDFdID0geTsKCQkJCW5vcm1hbHNbMypqICsgMl0gPSB6OwoJCQl9CgkJCWF0dHJpYnV0ZUJ1ZmZlcnNbcG9pbnRBdHRyaWJ1dGUubmFtZV0gPSB7IGJ1ZmZlcjogYnVmZiwgYXR0cmlidXRlOiBwb2ludEF0dHJpYnV0ZX07CgkJfQoJCQoJCW9mZnNldCArPSBwb2ludEF0dHJpYnV0ZS5ieXRlU2l6ZTsKCX0KCQoJdmFyIGluZGljZXMgPSBuZXcgQXJyYXlCdWZmZXIobnVtUG9pbnRzKjQpOwoJdmFyIGlJbmRpY2VzID0gbmV3IFVpbnQzMkFycmF5KGluZGljZXMpOwoJZm9yKHZhciBpID0gMDsgaSA8IG51bVBvaW50czsgaSsrKXsKCQlpSW5kaWNlc1tpXSA9IGk7Cgl9CgkKCXZhciBtZXNzYWdlID0gewoJCWF0dHJpYnV0ZUJ1ZmZlcnM6IGF0dHJpYnV0ZUJ1ZmZlcnMsCgkJdGlnaHRCb3VuZGluZ0JveDogeyBtaW46IHRpZ2h0Qm94TWluLCBtYXg6IHRpZ2h0Qm94TWF4IH0sCgkJaW5kaWNlczogaW5kaWNlcwoJfTsKCQkKCXZhciB0cmFuc2ZlcmFibGVzID0gW107CgkKCWZvcih2YXIgcHJvcGVydHkgaW4gbWVzc2FnZS5hdHRyaWJ1dGVCdWZmZXJzKXsKCQlpZihtZXNzYWdlLmF0dHJpYnV0ZUJ1ZmZlcnMuaGFzT3duUHJvcGVydHkocHJvcGVydHkpKXsKCQkJdHJhbnNmZXJhYmxlcy5wdXNoKG1lc3NhZ2UuYXR0cmlidXRlQnVmZmVyc1twcm9wZXJ0eV0uYnVmZmVyKTsKCQl9Cgl9CgkKCXRyYW5zZmVyYWJsZXMucHVzaChtZXNzYWdlLmluZGljZXMpOwoJCQoJcG9zdE1lc3NhZ2UobWVzc2FnZSwgdHJhbnNmZXJhYmxlcyk7CgkKfTsKUG90cmVlLlZlcnNpb24gPSBmdW5jdGlvbih2ZXJzaW9uKXsKCXRoaXMudmVyc2lvbiA9IHZlcnNpb247Cgl2YXIgdm1MZW5ndGggPSAodmVyc2lvbi5pbmRleE9mKCIuIikgPT09IC0xKSA/IHZlcnNpb24ubGVuZ3RoIDogdmVyc2lvbi5pbmRleE9mKCIuIik7Cgl0aGlzLnZlcnNpb25NYWpvciA9IHBhcnNlSW50KHZlcnNpb24uc3Vic3RyKDAsIHZtTGVuZ3RoKSk7Cgl0aGlzLnZlcnNpb25NaW5vciA9IHBhcnNlSW50KHZlcnNpb24uc3Vic3RyKHZtTGVuZ3RoICsgMSkpOwoJaWYodGhpcy52ZXJzaW9uTWlub3IubGVuZ3RoID09PSAwKXsKCQl0aGlzLnZlcnNpb25NaW5vciA9IDA7Cgl9CgkKfTsKClBvdHJlZS5WZXJzaW9uLnByb3RvdHlwZS5uZXdlclRoYW4gPSBmdW5jdGlvbih2ZXJzaW9uKXsKCXZhciB2ID0gbmV3IFBvdHJlZS5WZXJzaW9uKHZlcnNpb24pOwoJCglpZiggdGhpcy52ZXJzaW9uTWFqb3IgPiB2LnZlcnNpb25NYWpvcil7CgkJcmV0dXJuIHRydWU7Cgl9ZWxzZSBpZiggdGhpcy52ZXJzaW9uTWFqb3IgPT09IHYudmVyc2lvbk1ham9yICYmIHRoaXMudmVyc2lvbk1pbm9yID4gdi52ZXJzaW9uTWlub3IpewoJCXJldHVybiB0cnVlOwoJfWVsc2V7CgkJcmV0dXJuIGZhbHNlOwoJfQp9OwoKUG90cmVlLlZlcnNpb24ucHJvdG90eXBlLmVxdWFsT3JIaWdoZXIgPSBmdW5jdGlvbih2ZXJzaW9uKXsKCXZhciB2ID0gbmV3IFBvdHJlZS5WZXJzaW9uKHZlcnNpb24pOwoJCglpZiggdGhpcy52ZXJzaW9uTWFqb3IgPiB2LnZlcnNpb25NYWpvcil7CgkJcmV0dXJuIHRydWU7Cgl9ZWxzZSBpZiggdGhpcy52ZXJzaW9uTWFqb3IgPT09IHYudmVyc2lvbk1ham9yICYmIHRoaXMudmVyc2lvbk1pbm9yID49IHYudmVyc2lvbk1pbm9yKXsKCQlyZXR1cm4gdHJ1ZTsKCX1lbHNlewoJCXJldHVybiBmYWxzZTsKCX0KfTsKClBvdHJlZS5WZXJzaW9uLnByb3RvdHlwZS51cFRvID0gZnVuY3Rpb24odmVyc2lvbil7CglyZXR1cm4gIXRoaXMubmV3ZXJUaGFuKHZlcnNpb24pOwp9ClBvdHJlZS5Qb2ludEF0dHJpYnV0ZU5hbWVzID0ge307CgpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5QT1NJVElPTl9DQVJURVNJQU4gCT0gMDsJLy8gZmxvYXQgeCwgeSwgejsKUG90cmVlLlBvaW50QXR0cmlidXRlTmFtZXMuQ09MT1JfUEFDS0VECQk9IDE7CS8vIGJ5dGUgciwgZywgYiwgYTsgCUkgPSBbMCwxXQpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5DT0xPUl9GTE9BVFNfMQkJPSAyOwkvLyBmbG9hdCByLCBnLCBiOyAJCUkgPSBbMCwxXQpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5DT0xPUl9GTE9BVFNfMjU1CT0gMzsJLy8gZmxvYXQgciwgZywgYjsgCQlJID0gWzAsMjU1XQpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5OT1JNQUxfRkxPQVRTCQk9IDQ7ICAJLy8gZmxvYXQgeCwgeSwgejsKUG90cmVlLlBvaW50QXR0cmlidXRlTmFtZXMuRklMTEVSCQkJCT0gNTsKUG90cmVlLlBvaW50QXR0cmlidXRlTmFtZXMuSU5URU5TSVRZCQkJPSA2OwpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5DTEFTU0lGSUNBVElPTgkJPSA3OwpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5OT1JNQUxfU1BIRVJFTUFQUEVECT0gODsKUG90cmVlLlBvaW50QXR0cmlidXRlTmFtZXMuTk9STUFMX09DVDE2CQk9IDk7ClBvdHJlZS5Qb2ludEF0dHJpYnV0ZU5hbWVzLk5PUk1BTAkJCQk9IDEwOwoKLyoqCiAqIFNvbWUgdHlwZXMgb2YgcG9zc2libGUgcG9pbnQgYXR0cmlidXRlIGRhdGEgZm9ybWF0cwogKiAKICogQGNsYXNzCiAqLwpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVUeXBlcyA9IHsKCURBVEFfVFlQRV9ET1VCTEUJOiB7b3JkaW5hbCA6IDAsIHNpemU6IDh9LAoJREFUQV9UWVBFX0ZMT0FUCQk6IHtvcmRpbmFsIDogMSwgc2l6ZTogNH0sCglEQVRBX1RZUEVfSU5UOAkJOiB7b3JkaW5hbCA6IDIsIHNpemU6IDF9LAoJREFUQV9UWVBFX1VJTlQ4CQk6IHtvcmRpbmFsIDogMywgc2l6ZTogMX0sCglEQVRBX1RZUEVfSU5UMTYJCToge29yZGluYWwgOiA0LCBzaXplOiAyfSwKCURBVEFfVFlQRV9VSU5UMTYJOiB7b3JkaW5hbCA6IDUsIHNpemU6IDJ9LAoJREFUQV9UWVBFX0lOVDMyCQk6IHtvcmRpbmFsIDogNiwgc2l6ZTogNH0sCglEQVRBX1RZUEVfVUlOVDMyCToge29yZGluYWwgOiA3LCBzaXplOiA0fSwKCURBVEFfVFlQRV9JTlQ2NAkJOiB7b3JkaW5hbCA6IDgsIHNpemU6IDh9LAoJREFUQV9UWVBFX1VJTlQ2NAk6IHtvcmRpbmFsIDogOSwgc2l6ZTogOH0KfTsKCnZhciBpID0gMDsKZm9yKHZhciBvYmogaW4gUG90cmVlLlBvaW50QXR0cmlidXRlVHlwZXMpewoJUG90cmVlLlBvaW50QXR0cmlidXRlVHlwZXNbaV0gPSBQb3RyZWUuUG9pbnRBdHRyaWJ1dGVUeXBlc1tvYmpdOwoJaSsrOwp9CgovKioKICogQSBzaW5nbGUgcG9pbnQgYXR0cmlidXRlIHN1Y2ggYXMgY29sb3Ivbm9ybWFsLy4uIGFuZCBpdHMgZGF0YSBmb3JtYXQvbnVtYmVyIG9mIGVsZW1lbnRzLy4uLiAKICogCiAqIEBjbGFzcwogKiBAcGFyYW0gbmFtZSAKICogQHBhcmFtIHR5cGUKICogQHBhcmFtIHNpemUKICogQHJldHVybnMKICovClBvdHJlZS5Qb2ludEF0dHJpYnV0ZSA9IGZ1bmN0aW9uKG5hbWUsIHR5cGUsIG51bUVsZW1lbnRzKXsKCXRoaXMubmFtZSA9IG5hbWU7Cgl0aGlzLnR5cGUgPSB0eXBlOyAKCXRoaXMubnVtRWxlbWVudHMgPSBudW1FbGVtZW50czsKCXRoaXMuYnl0ZVNpemUgPSB0aGlzLm51bUVsZW1lbnRzICogdGhpcy50eXBlLnNpemU7Cn0KClBvdHJlZS5Qb2ludEF0dHJpYnV0ZS5QT1NJVElPTl9DQVJURVNJQU4gPSBuZXcgUG90cmVlLlBvaW50QXR0cmlidXRlKAoJCVBvdHJlZS5Qb2ludEF0dHJpYnV0ZU5hbWVzLlBPU0lUSU9OX0NBUlRFU0lBTiwKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVUeXBlcy5EQVRBX1RZUEVfRkxPQVQsIDMpOwoKUG90cmVlLlBvaW50QXR0cmlidXRlLlJHQkFfUEFDS0VEID0gbmV3IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZSgKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5DT0xPUl9QQUNLRUQsCgkJUG90cmVlLlBvaW50QXR0cmlidXRlVHlwZXMuREFUQV9UWVBFX0lOVDgsIDQpOwoKUG90cmVlLlBvaW50QXR0cmlidXRlLkNPTE9SX1BBQ0tFRCA9IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZS5SR0JBX1BBQ0tFRDsKClBvdHJlZS5Qb2ludEF0dHJpYnV0ZS5SR0JfUEFDS0VEID0gbmV3IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZSgKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5DT0xPUl9QQUNLRUQsCgkJUG90cmVlLlBvaW50QXR0cmlidXRlVHlwZXMuREFUQV9UWVBFX0lOVDgsIDMpOwoKUG90cmVlLlBvaW50QXR0cmlidXRlLk5PUk1BTF9GTE9BVFMgPSBuZXcgUG90cmVlLlBvaW50QXR0cmlidXRlKAoJCVBvdHJlZS5Qb2ludEF0dHJpYnV0ZU5hbWVzLk5PUk1BTF9GTE9BVFMsCgkJUG90cmVlLlBvaW50QXR0cmlidXRlVHlwZXMuREFUQV9UWVBFX0ZMT0FULCAzKTsKClBvdHJlZS5Qb2ludEF0dHJpYnV0ZS5GSUxMRVJfMUIgPSBuZXcgUG90cmVlLlBvaW50QXR0cmlidXRlKAoJCVBvdHJlZS5Qb2ludEF0dHJpYnV0ZU5hbWVzLkZJTExFUiwKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVUeXBlcy5EQVRBX1RZUEVfVUlOVDgsIDEpOwoJCQpQb3RyZWUuUG9pbnRBdHRyaWJ1dGUuSU5URU5TSVRZID0gbmV3IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZSgKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5JTlRFTlNJVFksCgkJUG90cmVlLlBvaW50QXR0cmlidXRlVHlwZXMuREFUQV9UWVBFX1VJTlQxNiwgMSk7CQkKCQkKUG90cmVlLlBvaW50QXR0cmlidXRlLkNMQVNTSUZJQ0FUSU9OID0gbmV3IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZSgKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5DTEFTU0lGSUNBVElPTiwKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVUeXBlcy5EQVRBX1RZUEVfVUlOVDgsIDEpOwkKCQkKUG90cmVlLlBvaW50QXR0cmlidXRlLk5PUk1BTF9TUEhFUkVNQVBQRUQgPSBuZXcgUG90cmVlLlBvaW50QXR0cmlidXRlKAoJCVBvdHJlZS5Qb2ludEF0dHJpYnV0ZU5hbWVzLk5PUk1BTF9TUEhFUkVNQVBQRUQsCgkJUG90cmVlLlBvaW50QXR0cmlidXRlVHlwZXMuREFUQV9UWVBFX1VJTlQ4LCAyKTsJCQoJCQpQb3RyZWUuUG9pbnRBdHRyaWJ1dGUuTk9STUFMX09DVDE2ID0gbmV3IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZSgKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVOYW1lcy5OT1JNQUxfT0NUMTYsCgkJUG90cmVlLlBvaW50QXR0cmlidXRlVHlwZXMuREFUQV9UWVBFX1VJTlQ4LCAyKTsJCgkJClBvdHJlZS5Qb2ludEF0dHJpYnV0ZS5OT1JNQUwgPSBuZXcgUG90cmVlLlBvaW50QXR0cmlidXRlKAoJCVBvdHJlZS5Qb2ludEF0dHJpYnV0ZU5hbWVzLk5PUk1BTCwKCQlQb3RyZWUuUG9pbnRBdHRyaWJ1dGVUeXBlcy5EQVRBX1RZUEVfRkxPQVQsIDMpOwoKLyoqCiAqIE9yZGVyZWQgbGlzdCBvZiBQb2ludEF0dHJpYnV0ZXMgdXNlZCB0byBpZGVudGlmeSBob3cgcG9pbnRzIGFyZSBhbGlnbmVkIGluIGEgYnVmZmVyLgogKiAKICogQGNsYXNzCiAqIAogKi8KUG90cmVlLlBvaW50QXR0cmlidXRlcyA9IGZ1bmN0aW9uKHBvaW50QXR0cmlidXRlcyl7Cgl0aGlzLmF0dHJpYnV0ZXMgPSBuZXcgQXJyYXkoKTsKCXRoaXMuYnl0ZVNpemUgPSAwOwoJdGhpcy5zaXplID0gMDsKCQoJaWYocG9pbnRBdHRyaWJ1dGVzICE9IG51bGwpewkKCQlmb3IodmFyIGkgPSAwOyBpIDwgcG9pbnRBdHRyaWJ1dGVzLmxlbmd0aDsgaSsrKXsKCQkJdmFyIHBvaW50QXR0cmlidXRlTmFtZSA9IHBvaW50QXR0cmlidXRlc1tpXTsKCQkJdmFyIHBvaW50QXR0cmlidXRlID0gUG90cmVlLlBvaW50QXR0cmlidXRlW3BvaW50QXR0cmlidXRlTmFtZV07CgkJCXRoaXMuYXR0cmlidXRlcy5wdXNoKHBvaW50QXR0cmlidXRlKTsKCQkJdGhpcy5ieXRlU2l6ZSArPSBwb2ludEF0dHJpYnV0ZS5ieXRlU2l6ZTsKCQkJdGhpcy5zaXplKys7CgkJfQoJfQp9CgpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVzLnByb3RvdHlwZS5hZGQgPSBmdW5jdGlvbihwb2ludEF0dHJpYnV0ZSl7Cgl0aGlzLmF0dHJpYnV0ZXMucHVzaChwb2ludEF0dHJpYnV0ZSk7Cgl0aGlzLmJ5dGVTaXplICs9IHBvaW50QXR0cmlidXRlLmJ5dGVTaXplOwoJdGhpcy5zaXplKys7Cn07CgpQb3RyZWUuUG9pbnRBdHRyaWJ1dGVzLnByb3RvdHlwZS5oYXNDb2xvcnMgPSBmdW5jdGlvbigpewoJZm9yKHZhciBuYW1lIGluIHRoaXMuYXR0cmlidXRlcyl7CgkJdmFyIHBvaW50QXR0cmlidXRlID0gdGhpcy5hdHRyaWJ1dGVzW25hbWVdOwoJCWlmKHBvaW50QXR0cmlidXRlLm5hbWUgPT09IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZU5hbWVzLkNPTE9SX1BBQ0tFRCl7CgkJCXJldHVybiB0cnVlOwoJCX0KCX0KCQoJcmV0dXJuIGZhbHNlOwp9OwoKUG90cmVlLlBvaW50QXR0cmlidXRlcy5wcm90b3R5cGUuaGFzTm9ybWFscyA9IGZ1bmN0aW9uKCl7Cglmb3IodmFyIG5hbWUgaW4gdGhpcy5hdHRyaWJ1dGVzKXsKCQl2YXIgcG9pbnRBdHRyaWJ1dGUgPSB0aGlzLmF0dHJpYnV0ZXNbbmFtZV07CgkJaWYoCgkJCXBvaW50QXR0cmlidXRlID09PSBQb3RyZWUuUG9pbnRBdHRyaWJ1dGUuTk9STUFMX1NQSEVSRU1BUFBFRCB8fCAKCQkJcG9pbnRBdHRyaWJ1dGUgPT09IFBvdHJlZS5Qb2ludEF0dHJpYnV0ZS5OT1JNQUxfRkxPQVRTIHx8CgkJCXBvaW50QXR0cmlidXRlID09PSBQb3RyZWUuUG9pbnRBdHRyaWJ1dGUuTk9STUFMIHx8CgkJCXBvaW50QXR0cmlidXRlID09PSBQb3RyZWUuUG9pbnRBdHRyaWJ1dGUuTk9STUFMX09DVDE2KXsKCQkJcmV0dXJuIHRydWU7CgkJfQoJfQoJCglyZXR1cm4gZmFsc2U7Cn07CgoK"));Potree.Shaders["pointcloud.vs"]=["","// the following is an incomplete list of attributes, uniforms and defines","// which are automatically added through the THREE.ShaderMaterial","","//attribute vec3 position;","//attribute vec3 color;","//attribute vec3 normal;","","//uniform mat4 modelMatrix;","//uniform mat4 modelViewMatrix;","//uniform mat4 projectionMatrix;","//uniform mat4 viewMatrix;","//uniform mat3 normalMatrix;","//uniform vec3 cameraPosition;","","//#define MAX_DIR_LIGHTS 0","//#define MAX_POINT_LIGHTS 1","//#define MAX_SPOT_LIGHTS 0","//#define MAX_HEMI_LIGHTS 0","//#define MAX_SHADOWS 0","//#define MAX_BONES 58","","#define max_clip_boxes 30","","attribute float intensity;","attribute float classification;","attribute float returnNumber;","attribute float numberOfReturns;","attribute float pointSourceID;","attribute vec4 indices;","","uniform float screenWidth;","uniform float screenHeight;","uniform float fov;","uniform float spacing;","uniform float near;","uniform float far;","","#if defined use_clip_box","  uniform mat4 clipBoxes[max_clip_boxes];","#endif","","","uniform float heightMin;","uniform float heightMax;","uniform float intensityMin;","uniform float intensityMax;","uniform float size;       // pixel size factor","uniform float minSize;      // minimum pixel size","uniform float maxSize;      // maximum pixel size","uniform float octreeSize;","uniform vec3 bbSize;","uniform vec3 uColor;","uniform float opacity;","uniform float clipBoxCount;","","","uniform sampler2D visibleNodes;","uniform sampler2D gradient;","uniform sampler2D classificationLUT;","uniform sampler2D depthMap;","","varying float vOpacity;","varying vec3  vColor;","varying float vLinearDepth;","varying float vLogDepth;","varying vec3  vViewPosition;","varying float   vRadius;","varying vec3  vWorldPosition;","varying vec3  vNormal;","","","// ---------------------","// OCTREE","// ---------------------","","#if (defined(adaptive_point_size) || defined(color_type_tree_depth)) && defined(tree_type_octree)","/**"," * number of 1-bits up to inclusive index position"," * number is treated as if it were an integer in the range 0-255"," *"," */","float numberOfOnes(float number, float index){","  float tmp = mod(number, pow(2.0, index + 1.0));","  float numOnes = 0.0;","  for(float i = 0.0; i < 8.0; i++){","    if(mod(tmp, 2.0) != 0.0){","      numOnes++;","    }","    tmp = floor(tmp / 2.0);","  }","  return numOnes;","}","","","/**"," * checks whether the bit at index is 1"," * number is treated as if it were an integer in the range 0-255"," *"," */","bool isBitSet(float number, float index){","  return mod(floor(number / pow(2.0, index)), 2.0) != 0.0;","}","","","/**"," * find the tree depth at the point position"," */","float getLocalTreeDepth(){","  vec3 offset = vec3(0.0, 0.0, 0.0);","  float iOffset = 0.0;","  float depth = 0.0;","  for(float i = 0.0; i <= 1000.0; i++){","    float nodeSizeAtLevel = octreeSize  / pow(2.0, i);","    vec3 index3d = (position - offset) / nodeSizeAtLevel;","    index3d = floor(index3d + 0.5);","    float index = 4.0*index3d.x + 2.0*index3d.y + index3d.z;","    ","    vec4 value = texture2D(visibleNodes, vec2(iOffset / 2048.0, 0.0));","    float mask = value.r * 255.0;","    if(isBitSet(mask, index)){","      // there are more visible child nodes at this position","      iOffset = iOffset + value.g * 255.0 + numberOfOnes(mask, index - 1.0);","      depth++;","    }else{","      // no more visible child nodes at this position","      return depth;","    }","    offset = offset + (vec3(1.0, 1.0, 1.0) * nodeSizeAtLevel * 0.5) * index3d;","  }","    ","  return depth;","}","","float getPointSizeAttenuation(){","  return pow(1.9, getLocalTreeDepth());","}","","","#endif","","","// ---------------------","// KD-TREE","// ---------------------","","#if (defined(adaptive_point_size) || defined(color_type_tree_depth)) && defined(tree_type_kdtree)","","float getLocalTreeDepth(){","  vec3 offset = vec3(0.0, 0.0, 0.0);","  float iOffset = 0.0;","  float depth = 0.0;","    ","    ","  vec3 size = bbSize; ","  vec3 pos = position;","    ","  for(float i = 0.0; i <= 1000.0; i++){","    ","    vec4 value = texture2D(visibleNodes, vec2(iOffset / 2048.0, 0.0));","    ","    int children = int(value.r * 255.0);","    float next = value.g * 255.0;","    int split = int(value.b * 255.0);","    ","    if(next == 0.0){","      return depth;","    }","    ","    vec3 splitv = vec3(0.0, 0.0, 0.0);","    if(split == 1){","      splitv.x = 1.0;","    }else if(split == 2){","      splitv.y = 1.0;","    }else if(split == 4){","      splitv.z = 1.0;","    }","    ","    iOffset = iOffset + next;","    ","    float factor = length(pos * splitv / size);","    if(factor < 0.5){","      // left","        if(children == 0 || children == 2){","          return depth;","        }","    }else{","        // right","        pos = pos - size * splitv * 0.5;","        if(children == 0 || children == 1){","          return depth;","        }","        if(children == 3){","          iOffset = iOffset + 1.0;","        }","    }","    size = size * ((1.0 - (splitv + 1.0) / 2.0) + 0.5);","    ","    depth++;","  }","    ","    ","  return depth; ","}","","float getPointSizeAttenuation(){","  return pow(1.3, getLocalTreeDepth());","}","","#endif","","void main() {","  vec4 worldPosition = modelMatrix * vec4( position, 1.0 );","  vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );","  vViewPosition = -mvPosition.xyz;","  vWorldPosition = worldPosition.xyz;","  gl_Position = projectionMatrix * mvPosition;","  vOpacity = opacity;","  vLinearDepth = -mvPosition.z;","  vNormal = normalize(normalMatrix * normal);","  ","  #if defined(use_edl)","    vLogDepth = log2(gl_Position.w + 1.0) / log2(far + 1.0);","  #endif","  ","  //#if defined(use_logarithmic_depth_buffer)","  //  float logarithmicZ = (2.0 * log2(gl_Position.w + 1.0) / log2(far + 1.0) - 1.0) * gl_Position.w;","  //  gl_Position.z = logarithmicZ;","  //#endif","","  // ---------------------","  // POINT COLOR","  // ---------------------","  ","  #ifdef color_type_rgb","    vColor = color;","  #elif defined color_type_height","    vec4 world = modelMatrix * vec4( position, 1.0 );","    float w = (world.y - heightMin) / (heightMax-heightMin);","    vColor = texture2D(gradient, vec2(w,1.0-w)).rgb;","  #elif defined color_type_depth","    float linearDepth = -mvPosition.z ;","    float expDepth = (gl_Position.z / gl_Position.w) * 0.5 + 0.5;","    vColor = vec3(linearDepth, expDepth, 0.0);","  #elif defined color_type_intensity","    float w = (intensity - intensityMin) / (intensityMax - intensityMin);","    vColor = vec3(w, w, w);","  #elif defined color_type_intensity_gradient","    float w = (intensity - intensityMin) / intensityMax;","    vColor = texture2D(gradient, vec2(w,1.0-w)).rgb;","  #elif defined color_type_color","    vColor = uColor;","  #elif defined color_type_tree_depth","    float depth = getLocalTreeDepth();","    float w = depth / 30.0;","    vColor = texture2D(gradient, vec2(w,1.0-w)).rgb;","  #elif defined color_type_point_index","    vColor = indices.rgb;","  #elif defined color_type_classification","    float c = mod(classification, 16.0);","    vec2 uv = vec2(c / 255.0, 0.5);","    vColor = texture2D(classificationLUT, uv).rgb;","    ","    // TODO only for testing - removing points with class 7","    if(classification == 7.0){","      gl_Position = vec4(100.0, 100.0, 100.0, 0.0);","    }","  #elif defined color_type_return_number","    //float w = (returnNumber - 1.0) / 4.0 + 0.1;","    //vColor = texture2D(gradient, vec2(w, 1.0 - w)).rgb;","    ","    if(numberOfReturns == 1.0){","      vColor = vec3(1.0, 1.0, 0.0);","    }else{","      if(returnNumber == 1.0){","        vColor = vec3(1.0, 0.0, 0.0);","      }else if(returnNumber == numberOfReturns){","        vColor = vec3(0.0, 0.0, 1.0);","      }else{","        vColor = vec3(0.0, 1.0, 0.0);","      }","    }","    ","  #elif defined color_type_source","    float w = mod(pointSourceID, 10.0) / 10.0;","    vColor = texture2D(gradient, vec2(w,1.0 - w)).rgb;","  #elif defined color_type_normal","    vColor = (modelMatrix * vec4(normal, 0.0)).xyz;","  #elif defined color_type_phong","    vColor = color;","  #endif","  ","  //if(vNormal.z < 0.0){","  //  gl_Position = vec4(1000.0, 1000.0, 1000.0, 1.0);","  //}","  ","  // ---------------------","  // POINT SIZE","  // ---------------------","  float pointSize = 1.0;","  ","  float projFactor = 1.0 / tan(fov / 2.0);","  projFactor /= vViewPosition.z;","  projFactor *= screenHeight / 2.0;","  float r = spacing * 1.5;","  vRadius = r;","  #if defined fixed_point_size","    pointSize = size;","  #elif defined attenuated_point_size","    pointSize = size * projFactor;","  #elif defined adaptive_point_size","    float worldSpaceSize = size * r / getPointSizeAttenuation();","    pointSize = worldSpaceSize * projFactor;","  #endif","","  pointSize = max(minSize, pointSize);","  pointSize = min(maxSize, pointSize);","  ","  vRadius = pointSize / projFactor;","  ","  gl_PointSize = pointSize;","  ","  ","  // ---------------------","  // CLIPPING","  // ---------------------","  ","  #if defined use_clip_box","    bool insideAny = false;","    for(int i = 0; i < max_clip_boxes; i++){","      if(i == int(clipBoxCount)){","        break;","      }","    ","      vec4 clipPosition = clipBoxes[i] * modelMatrix * vec4( position, 1.0 );","      bool inside = -0.5 <= clipPosition.x && clipPosition.x <= 0.5;","      inside = inside && -0.5 <= clipPosition.y && clipPosition.y <= 0.5;","      inside = inside && -0.5 <= clipPosition.z && clipPosition.z <= 0.5;","      insideAny = insideAny || inside;","    }","    if(!insideAny){","  ","      #if defined clip_outside","        gl_Position = vec4(1000.0, 1000.0, 1000.0, 1.0);","      #elif defined clip_highlight_inside && !defined(color_type_depth)","        float c = (vColor.r + vColor.g + vColor.b) / 6.0;","      #endif","    }else{","      #if defined clip_highlight_inside","      vColor.r += 0.5;","      #endif","    }","  ","  #endif","  ","}",""].join("\n");Potree.Shaders["pointcloud.fs"]=["","#if defined use_interpolation","  #extension GL_EXT_frag_depth : enable","#endif","","","// the following is an incomplete list of attributes, uniforms and defines","// which are automatically added through the THREE.ShaderMaterial","","// #define USE_COLOR","// ","// uniform mat4 viewMatrix;","// uniform vec3 cameraPosition;","","","uniform mat4 projectionMatrix;","uniform float opacity;","","","#if defined(color_type_phong)","","  uniform vec3 diffuse;","  uniform vec3 ambient;","  uniform vec3 emissive;","  uniform vec3 specular;","  uniform float shininess;","  uniform vec3 ambientLightColor;","","  #if MAX_POINT_LIGHTS > 0","","    uniform vec3  pointLightColor[ MAX_POINT_LIGHTS ];","    uniform vec3  pointLightPosition[ MAX_POINT_LIGHTS ];","    uniform float   pointLightDistance[ MAX_POINT_LIGHTS ];","    uniform float   pointLightDecay[ MAX_POINT_LIGHTS ];","","  #endif","","  #if MAX_DIR_LIGHTS > 0","","    uniform vec3 directionalLightColor[ MAX_DIR_LIGHTS ];","    uniform vec3 directionalLightDirection[ MAX_DIR_LIGHTS ];","","  #endif","","#endif","","//#if MAX_SPOT_LIGHTS > 0","//","//  uniform vec3 spotLightColor[ MAX_SPOT_LIGHTS ];","//  uniform vec3 spotLightPosition[ MAX_SPOT_LIGHTS ];","//  uniform vec3 spotLightDirection[ MAX_SPOT_LIGHTS ];","//  uniform float spotLightAngleCos[ MAX_SPOT_LIGHTS ];","//  uniform float spotLightExponent[ MAX_SPOT_LIGHTS ];","//","//  uniform float spotLightDistance[ MAX_SPOT_LIGHTS ];","//","//#endif","","uniform float fov;","uniform float spacing;","uniform float near;","uniform float far;","uniform float pcIndex;","uniform float screenWidth;","uniform float screenHeight;","","uniform sampler2D depthMap;","","varying vec3  vColor;","varying float vOpacity;","varying float vLinearDepth;","varying float vLogDepth;","varying vec3  vViewPosition;","varying float vRadius;","varying vec3  vWorldPosition;","varying vec3  vNormal;","","float specularStrength = 1.0;","","void main() {","","  vec3 color = vColor;","  float depth = gl_FragCoord.z;","","  #if defined(circle_point_shape) || defined(use_interpolation) || defined (weighted_splats)","    float u = 2.0 * gl_PointCoord.x - 1.0;","    float v = 2.0 * gl_PointCoord.y - 1.0;","  #endif","  ","  #if defined(circle_point_shape) || defined (weighted_splats)","    float cc = u*u + v*v;","    if(cc > 1.0){","      discard;","    }","  #endif","  ","  #if defined weighted_splats","    vec2 uv = gl_FragCoord.xy / vec2(screenWidth, screenHeight);","    float sDepth = texture2D(depthMap, uv).r;","    if(vLinearDepth > sDepth + vRadius){","      discard;","    }","  #endif","  ","  #if defined use_interpolation","    float wi = 0.0 - ( u*u + v*v);","    vec4 pos = vec4(-vViewPosition, 1.0);","    pos.z += wi * vRadius;","    float linearDepth = pos.z;","    pos = projectionMatrix * pos;","    pos = pos / pos.w;","    float expDepth = pos.z;","    depth = (pos.z + 1.0) / 2.0;","    gl_FragDepthEXT = depth;","    ","    #if defined(color_type_depth)","      color.r = linearDepth;","      color.g = expDepth;","    #endif","    ","  #endif","  ","  #if defined color_type_point_index","    gl_FragColor = vec4(color, pcIndex / 255.0);","  #else","    gl_FragColor = vec4(color, vOpacity);","  #endif","  ","  #if defined weighted_splats","      float w = pow(1.0 - (u*u + v*v), 2.0);","    gl_FragColor.rgb = gl_FragColor.rgb * w;","    gl_FragColor.a = w;","  #endif","  ","  vec3 normal = normalize( vNormal );","  normal.z = abs(normal.z);","  vec3 viewPosition = normalize( vViewPosition );","  ","  #if defined(color_type_phong)","","  // code taken from three.js phong light fragment shader","  ","    #if MAX_POINT_LIGHTS > 0","","      vec3 pointDiffuse = vec3( 0.0 );","      vec3 pointSpecular = vec3( 0.0 );","","      for ( int i = 0; i < MAX_POINT_LIGHTS; i ++ ) {","","        vec4 lPosition = viewMatrix * vec4( pointLightPosition[ i ], 1.0 );","        vec3 lVector = lPosition.xyz + vViewPosition.xyz;","","        float lDistance = 1.0;","        if ( pointLightDistance[ i ] > 0.0 )","          lDistance = 1.0 - min( ( length( lVector ) / pointLightDistance[ i ] ), 1.0 );","","        lVector = normalize( lVector );","","            // diffuse","","        float dotProduct = dot( normal, lVector );","","        #ifdef WRAP_AROUND","","          float pointDiffuseWeightFull = max( dotProduct, 0.0 );","          float pointDiffuseWeightHalf = max( 0.5 * dotProduct + 0.5, 0.0 );","","          vec3 pointDiffuseWeight = mix( vec3( pointDiffuseWeightFull ), vec3( pointDiffuseWeightHalf ), wrapRGB );","","        #else","","          float pointDiffuseWeight = max( dotProduct, 0.0 );","","        #endif","","        pointDiffuse += diffuse * pointLightColor[ i ] * pointDiffuseWeight * lDistance;","","            // specular","","        vec3 pointHalfVector = normalize( lVector + viewPosition );","        float pointDotNormalHalf = max( dot( normal, pointHalfVector ), 0.0 );","        float pointSpecularWeight = specularStrength * max( pow( pointDotNormalHalf, shininess ), 0.0 );","","        float specularNormalization = ( shininess + 2.0 ) / 8.0;","","        vec3 schlick = specular + vec3( 1.0 - specular ) * pow( max( 1.0 - dot( lVector, pointHalfVector ), 0.0 ), 5.0 );","        pointSpecular += schlick * pointLightColor[ i ] * pointSpecularWeight * pointDiffuseWeight * lDistance * specularNormalization;","        pointSpecular = vec3(0.0, 0.0, 0.0);","      }","    ","    #endif","    ","    #if MAX_DIR_LIGHTS > 0","","      vec3 dirDiffuse = vec3( 0.0 );","      vec3 dirSpecular = vec3( 0.0 );","","      for( int i = 0; i < MAX_DIR_LIGHTS; i ++ ) {","","        vec4 lDirection = viewMatrix * vec4( directionalLightDirection[ i ], 0.0 );","        vec3 dirVector = normalize( lDirection.xyz );","","            // diffuse","","        float dotProduct = dot( normal, dirVector );","","        #ifdef WRAP_AROUND","","          float dirDiffuseWeightFull = max( dotProduct, 0.0 );","          float dirDiffuseWeightHalf = max( 0.5 * dotProduct + 0.5, 0.0 );","","          vec3 dirDiffuseWeight = mix( vec3( dirDiffuseWeightFull ), vec3( dirDiffuseWeightHalf ), wrapRGB );","","        #else","","          float dirDiffuseWeight = max( dotProduct, 0.0 );","","        #endif","","        dirDiffuse += diffuse * directionalLightColor[ i ] * dirDiffuseWeight;","","        // specular","","        vec3 dirHalfVector = normalize( dirVector + viewPosition );","        float dirDotNormalHalf = max( dot( normal, dirHalfVector ), 0.0 );","        float dirSpecularWeight = specularStrength * max( pow( dirDotNormalHalf, shininess ), 0.0 );","","        float specularNormalization = ( shininess + 2.0 ) / 8.0;","","        vec3 schlick = specular + vec3( 1.0 - specular ) * pow( max( 1.0 - dot( dirVector, dirHalfVector ), 0.0 ), 5.0 );","        dirSpecular += schlick * directionalLightColor[ i ] * dirSpecularWeight * dirDiffuseWeight * specularNormalization;","      }","","    #endif","    ","    vec3 totalDiffuse = vec3( 0.0 );","    vec3 totalSpecular = vec3( 0.0 );","    ","    #if MAX_POINT_LIGHTS > 0","","      totalDiffuse += pointDiffuse;","      totalSpecular += pointSpecular;","","    #endif","    ","    #if MAX_DIR_LIGHTS > 0","","      totalDiffuse += dirDiffuse;","      totalSpecular += dirSpecular;","","    #endif","    ","    gl_FragColor.xyz = gl_FragColor.xyz * ( emissive + totalDiffuse + ambientLightColor * ambient ) + totalSpecular;","","  #endif","  ","  ","  #if defined(use_edl)","    gl_FragColor.a = vLogDepth;","  #endif","  ","}","","",""].join("\n");Potree.Shaders["normalize.vs"]=["","varying vec2 vUv;","","void main() {","    vUv = uv;","","    gl_Position =   projectionMatrix * modelViewMatrix * vec4(position,1.0);","}"].join("\n");Potree.Shaders["normalize.fs"]=["","#extension GL_EXT_frag_depth : enable","","uniform sampler2D depthMap;","uniform sampler2D texture;","","varying vec2 vUv;","","void main() {","    float depth = texture2D(depthMap, vUv).g; ","  ","  if(depth <= 0.0){","    discard;","  }","  ","    vec4 color = texture2D(texture, vUv); ","  color = color / color.w;","    ","  gl_FragColor = vec4(color.xyz, 1.0); ","  ","  gl_FragDepthEXT = depth;","}"].join("\n");Potree.Shaders["edl.vs"]=["","","varying vec2 vUv;","","void main() {","    vUv = uv;","  ","  vec4 mvPosition = modelViewMatrix * vec4(position,1.0);","","    gl_Position = projectionMatrix * mvPosition;","}"].join("\n");Potree.Shaders["edl.fs"]=["","// ","// adapted from the EDL shader code from Christian Boucheny in cloud compare:","// https://github.com/cloudcompare/trunk/tree/master/plugins/qEDL/shaders/EDL","//","","#define NEIGHBOUR_COUNT 8","","uniform mat4 projectionMatrix;","","uniform float screenWidth;","uniform float screenHeight;","uniform float near;","uniform float far;","uniform vec2 neighbours[NEIGHBOUR_COUNT];","uniform vec3 lightDir;","uniform float expScale;","uniform float radius;","","//uniform sampler2D depthMap;","uniform sampler2D colorMap;","","varying vec2 vUv;","","/**"," * transform linear depth to [0,1] interval with 1 beeing closest to the camera."," */","float ztransform(float linearDepth){","  return 1.0 - (linearDepth - near) / (far - near);","}","","float expToLinear(float z){","    z = 2.0 * z - 1.0;","  float linear = (2.0 * near * far) / (far + near - z * (far - near));","","  return linear;","}","","// this actually only returns linear depth values if LOG_BIAS is 1.0","// lower values work out more nicely, though.","#define LOG_BIAS 0.01","float logToLinear(float z){","  return (pow((1.0 + LOG_BIAS * far), z) - 1.0) / LOG_BIAS;","}","","float obscurance(float z, float dist){","  return max(0.0, z) / dist;","}","","float computeObscurance(float linearDepth){","  vec4 P = vec4(0, 0, 1, -ztransform(linearDepth));","  vec2 uvRadius = radius / vec2(screenWidth, screenHeight);","  ","  float sum = 0.0;","  ","  for(int c = 0; c < NEIGHBOUR_COUNT; c++){","    vec2 N_rel_pos = uvRadius * neighbours[c];","    vec2 N_abs_pos = vUv + N_rel_pos;","    ","    float neighbourDepth = logToLinear(texture2D(colorMap, N_abs_pos).a);","    ","    if(neighbourDepth != 0.0){","      float Zn = ztransform(neighbourDepth);","      float Znp = dot( vec4( N_rel_pos, Zn, 1.0), P );","      ","      sum += obscurance( Znp, 0.05 * linearDepth );","    }","  }","  ","  return sum;","}","","void main(){","  float linearDepth = logToLinear(texture2D(colorMap, vUv).a);","  ","  float f = computeObscurance(linearDepth);","  f = exp(-expScale * f);","  ","  vec4 color = texture2D(colorMap, vUv);","  if(color.a == 0.0 && f >= 1.0){","    discard;","  }","  ","  gl_FragColor = vec4(color.rgb * f, 1.0);","}",""].join("\n");Potree.Shaders["blur.vs"]=["","varying vec2 vUv;","","void main() {","    vUv = uv;","","    gl_Position =   projectionMatrix * modelViewMatrix * vec4(position,1.0);","}"].join("\n");Potree.Shaders["blur.fs"]=["","uniform mat4 projectionMatrix;","","uniform float screenWidth;","uniform float screenHeight;","uniform float near;","uniform float far;","","uniform sampler2D map;","","varying vec2 vUv;","","void main() {","","  float dx = 1.0 / screenWidth;","  float dy = 1.0 / screenHeight;","","  vec3 color = vec3(0.0, 0.0, 0.0);","  color += texture2D(map, vUv + vec2(-dx, -dy)).rgb;","  color += texture2D(map, vUv + vec2(  0, -dy)).rgb;","  color += texture2D(map, vUv + vec2(+dx, -dy)).rgb;","  color += texture2D(map, vUv + vec2(-dx,   0)).rgb;","  color += texture2D(map, vUv + vec2(  0,   0)).rgb;","  color += texture2D(map, vUv + vec2(+dx,   0)).rgb;","  color += texture2D(map, vUv + vec2(-dx,  dy)).rgb;","  color += texture2D(map, vUv + vec2(  0,  dy)).rgb;","  color += texture2D(map, vUv + vec2(+dx,  dy)).rgb;","    ","  color = color / 9.0;","  ","  gl_FragColor = vec4(color, 1.0);","  ","  ","}"].join("\n");_three2.default.PerspectiveCamera.prototype.zoomTo=function(node,factor){if(!node.geometry&&!node.boundingSphere){return;}if(node.geometry&&node.geometry.boundingSphere===null){node.geometry.computeBoundingSphere();}node.updateMatrixWorld();var _factor=factor||1;var bs=node.boundingSphere||node.geometry.boundingSphere;bs=bs.clone().applyMatrix4(node.matrixWorld);var radius=bs.radius;var fovr=this.fov*Math.PI/180;if(this.aspect<1){fovr=fovr*this.aspect;}var distanceFactor=Math.abs(radius/Math.sin(fovr/2))*_factor;var dir=new _three2.default.Vector3(0,0,-1).applyQuaternion(this.quaternion);var offset=dir.multiplyScalar(-distanceFactor);this.position.copy(bs.center.clone().add(offset));}; //THREE.PerspectiveCamera.prototype.zoomTo = function(node, factor){
+	//  if(factor === undefined){
+	//    factor = 1;
+	//  }
+	//
+	//  node.updateMatrixWorld();
+	//  this.updateMatrix();
+	//  this.updateMatrixWorld();
+	//  
+	//  var box = Potree.utils.computeTransformedBoundingBox(node.boundingBox, node.matrixWorld);
+	//  var dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.quaternion);
+	//  var pos = box.center().sub(dir);
+	//  
+	//  var ps = [
+	//    new THREE.Vector3(box.min.x, box.min.y, box.min.z),
+	//    new THREE.Vector3(box.min.x, box.min.y, box.min.z),
+	//    new THREE.Vector3(box.max.x, box.min.y, box.min.z),
+	//    new THREE.Vector3(box.min.x, box.max.y, box.min.z),
+	//    new THREE.Vector3(box.min.x, box.min.y, box.max.z),
+	//    new THREE.Vector3(box.min.x, box.max.y, box.max.z),
+	//    new THREE.Vector3(box.max.x, box.max.y, box.min.z),
+	//    new THREE.Vector3(box.max.x, box.min.y, box.max.z),
+	//    new THREE.Vector3(box.max.x, box.max.y, box.max.z)
+	//  ];
+	//  
+	//  var frustum = new THREE.Frustum();
+	//  frustum.setFromMatrix(new THREE.Matrix4().multiplyMatrices(this.projectionMatrix, this.matrixWorldInverse));
+	//  
+	//  var max = Number.MIN_VALUE;
+	//  for(var i = 0; i < ps.length; i++){
+	//    var p  = ps[i];
+	//    
+	//    var distance = Number.MIN_VALUE;
+	//    // iterate through left, right, top and bottom planes
+	//    for(var j = 0; j < frustum.planes.length-2; j++){
+	//      var plane = frustum.planes[j];
+	//      var ray = new THREE.Ray(p, dir);
+	//      var dI = ray.distanceToPlaneWithNegative(plane);
+	//      distance = Math.max(distance, dI);
+	//    }
+	//    max = Math.max(max, distance);
+	//  }
+	//  var offset = dir.clone().multiplyScalar(-max);
+	//  offset.multiplyScalar(factor);
+	//  pos.add(offset);
+	//  this.position.copy(pos);
+	//  
+	//}
+	_three2.default.Ray.prototype.distanceToPlaneWithNegative=function(plane){var denominator=plane.normal.dot(this.direction);if(denominator==0){ // line is coplanar, return origin
+	if(plane.distanceToPoint(this.origin)==0){return 0;} // Null is preferable to undefined since undefined means.... it is undefined
+	return null;}var t=-(this.origin.dot(plane.normal)+plane.constant)/denominator;return t;}; /**
+	 * @class Loads mno files and returns a PointcloudOctree
+	 * for a description of the mno binary file format, read mnoFileFormat.txt
+	 * 
+	 * @author Markus Schuetz
+	 */Potree.POCLoader=function(){}; /**
+	 * @return a point cloud octree with the root node data loaded. 
+	 * loading of descendants happens asynchronously when they're needed
+	 * 
+	 * @param url
+	 * @param loadingFinishedListener executed after loading the binary has been finished
+	 */Potree.POCLoader.load=function load(url,callback){try{var pco=new Potree.PointCloudOctreeGeometry();pco.url=url;var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.onreadystatechange=function(){if(xhr.readyState===4&&(xhr.status===200||xhr.status===0)){var fMno=JSON.parse(xhr.responseText);var version=new Potree.Version(fMno.version); // assume octreeDir is absolute if it starts with http
+	if(fMno.octreeDir.indexOf("http")===0){pco.octreeDir=fMno.octreeDir;}else {pco.octreeDir=url+"/../"+fMno.octreeDir;}pco.spacing=fMno.spacing;pco.hierarchyStepSize=fMno.hierarchyStepSize;pco.pointAttributes=fMno.pointAttributes;var min=new _three2.default.Vector3(fMno.boundingBox.lx,fMno.boundingBox.ly,fMno.boundingBox.lz);var max=new _three2.default.Vector3(fMno.boundingBox.ux,fMno.boundingBox.uy,fMno.boundingBox.uz);var boundingBox=new _three2.default.Box3(min,max);var tightBoundingBox=boundingBox.clone();if(fMno.tightBoundingBox){tightBoundingBox.min.copy(new _three2.default.Vector3(fMno.tightBoundingBox.lx,fMno.tightBoundingBox.ly,fMno.tightBoundingBox.lz));tightBoundingBox.max.copy(new _three2.default.Vector3(fMno.tightBoundingBox.ux,fMno.tightBoundingBox.uy,fMno.tightBoundingBox.uz));}var offset=new _three2.default.Vector3(0,0,0);offset.set(-min.x,-min.y,-min.z);boundingBox.min.add(offset);boundingBox.max.add(offset);tightBoundingBox.min.add(offset);tightBoundingBox.max.add(offset);pco.boundingBox=boundingBox;pco.tightBoundingBox=tightBoundingBox;pco.boundingSphere=boundingBox.getBoundingSphere();pco.tightBoundingSphere=tightBoundingBox.getBoundingSphere();pco.offset=offset;if(fMno.pointAttributes==="LAS"){pco.loader=new Potree.LasLazLoader(fMno.version);}else if(fMno.pointAttributes==="LAZ"){pco.loader=new Potree.LasLazLoader(fMno.version);}else {pco.loader=new Potree.BinaryLoader(fMno.version,boundingBox,fMno.scale);pco.pointAttributes=new Potree.PointAttributes(pco.pointAttributes);}var nodes={};{ // load root
+	var name="r";var root=new Potree.PointCloudOctreeGeometryNode(name,pco,boundingBox);root.level=0;root.hasChildren=true;if(version.upTo("1.5")){root.numPoints=fMno.hierarchy[0][1];}else {root.numPoints=0;}pco.root=root;pco.root.load();nodes[name]=root;} // load remaining hierarchy
+	if(version.upTo("1.4")){for(var i=1;i<fMno.hierarchy.length;i++){var name=fMno.hierarchy[i][0];var numPoints=fMno.hierarchy[i][1];var index=parseInt(name.charAt(name.length-1));var parentName=name.substring(0,name.length-1);var parentNode=nodes[parentName];var level=name.length-1;var boundingBox=Potree.POCLoader.createChildAABB(parentNode.boundingBox,index);var node=new Potree.PointCloudOctreeGeometryNode(name,pco,boundingBox);node.level=level;node.numPoints=numPoints;parentNode.addChild(node);nodes[name]=node;}}pco.nodes=nodes;callback(pco);}};xhr.send(null);}catch(e){console.log("loading failed: '"+url+"'");console.log(e);}};Potree.POCLoader.loadPointAttributes=function(mno){var fpa=mno.pointAttributes;var pa=new Potree.PointAttributes();for(var i=0;i<fpa.length;i++){var pointAttribute=Potree.PointAttribute[fpa[i]];pa.add(pointAttribute);}return pa;};Potree.POCLoader.createChildAABB=function(aabb,childIndex){var V3=_three2.default.Vector3;var min=aabb.min;var max=aabb.max;var dHalfLength=new _three2.default.Vector3().copy(max).sub(min).multiplyScalar(0.5);var xHalfLength=new _three2.default.Vector3(dHalfLength.x,0,0);var yHalfLength=new _three2.default.Vector3(0,dHalfLength.y,0);var zHalfLength=new _three2.default.Vector3(0,0,dHalfLength.z);var cmin=min;var cmax=new _three2.default.Vector3().add(min).add(dHalfLength);var min,max;if(childIndex===1){min=new _three2.default.Vector3().copy(cmin).add(zHalfLength);max=new _three2.default.Vector3().copy(cmax).add(zHalfLength);}else if(childIndex===3){min=new _three2.default.Vector3().copy(cmin).add(zHalfLength).add(yHalfLength);max=new _three2.default.Vector3().copy(cmax).add(zHalfLength).add(yHalfLength);}else if(childIndex===0){min=cmin;max=cmax;}else if(childIndex===2){min=new _three2.default.Vector3().copy(cmin).add(yHalfLength);max=new _three2.default.Vector3().copy(cmax).add(yHalfLength);}else if(childIndex===5){min=new _three2.default.Vector3().copy(cmin).add(zHalfLength).add(xHalfLength);max=new _three2.default.Vector3().copy(cmax).add(zHalfLength).add(xHalfLength);}else if(childIndex===7){min=new _three2.default.Vector3().copy(cmin).add(dHalfLength);max=new _three2.default.Vector3().copy(cmax).add(dHalfLength);}else if(childIndex===4){min=new _three2.default.Vector3().copy(cmin).add(xHalfLength);max=new _three2.default.Vector3().copy(cmax).add(xHalfLength);}else if(childIndex===6){min=new _three2.default.Vector3().copy(cmin).add(xHalfLength).add(yHalfLength);max=new _three2.default.Vector3().copy(cmax).add(xHalfLength).add(yHalfLength);}return new _three2.default.Box3(min,max);};Potree.PointAttributeNames={};Potree.PointAttributeNames.POSITION_CARTESIAN=0; // float x, y, z;
+	Potree.PointAttributeNames.COLOR_PACKED=1; // byte r, g, b, a;   I = [0,1]
+	Potree.PointAttributeNames.COLOR_FLOATS_1=2; // float r, g, b;     I = [0,1]
+	Potree.PointAttributeNames.COLOR_FLOATS_255=3; // float r, g, b;     I = [0,255]
+	Potree.PointAttributeNames.NORMAL_FLOATS=4; // float x, y, z;
+	Potree.PointAttributeNames.FILLER=5;Potree.PointAttributeNames.INTENSITY=6;Potree.PointAttributeNames.CLASSIFICATION=7;Potree.PointAttributeNames.NORMAL_SPHEREMAPPED=8;Potree.PointAttributeNames.NORMAL_OCT16=9;Potree.PointAttributeNames.NORMAL=10; /**
+	 * Some types of possible point attribute data formats
+	 * 
+	 * @class
+	 */Potree.PointAttributeTypes={DATA_TYPE_DOUBLE:{ordinal:0,size:8},DATA_TYPE_FLOAT:{ordinal:1,size:4},DATA_TYPE_INT8:{ordinal:2,size:1},DATA_TYPE_UINT8:{ordinal:3,size:1},DATA_TYPE_INT16:{ordinal:4,size:2},DATA_TYPE_UINT16:{ordinal:5,size:2},DATA_TYPE_INT32:{ordinal:6,size:4},DATA_TYPE_UINT32:{ordinal:7,size:4},DATA_TYPE_INT64:{ordinal:8,size:8},DATA_TYPE_UINT64:{ordinal:9,size:8}};var i=0;for(var obj in Potree.PointAttributeTypes){Potree.PointAttributeTypes[i]=Potree.PointAttributeTypes[obj];i++;} /**
+	 * A single point attribute such as color/normal/.. and its data format/number of elements/... 
+	 * 
+	 * @class
+	 * @param name 
+	 * @param type
+	 * @param size
+	 * @returns
+	 */Potree.PointAttribute=function(name,type,numElements){this.name=name;this.type=type;this.numElements=numElements;this.byteSize=this.numElements*this.type.size;};Potree.PointAttribute.POSITION_CARTESIAN=new Potree.PointAttribute(Potree.PointAttributeNames.POSITION_CARTESIAN,Potree.PointAttributeTypes.DATA_TYPE_FLOAT,3);Potree.PointAttribute.RGBA_PACKED=new Potree.PointAttribute(Potree.PointAttributeNames.COLOR_PACKED,Potree.PointAttributeTypes.DATA_TYPE_INT8,4);Potree.PointAttribute.COLOR_PACKED=Potree.PointAttribute.RGBA_PACKED;Potree.PointAttribute.RGB_PACKED=new Potree.PointAttribute(Potree.PointAttributeNames.COLOR_PACKED,Potree.PointAttributeTypes.DATA_TYPE_INT8,3);Potree.PointAttribute.NORMAL_FLOATS=new Potree.PointAttribute(Potree.PointAttributeNames.NORMAL_FLOATS,Potree.PointAttributeTypes.DATA_TYPE_FLOAT,3);Potree.PointAttribute.FILLER_1B=new Potree.PointAttribute(Potree.PointAttributeNames.FILLER,Potree.PointAttributeTypes.DATA_TYPE_UINT8,1);Potree.PointAttribute.INTENSITY=new Potree.PointAttribute(Potree.PointAttributeNames.INTENSITY,Potree.PointAttributeTypes.DATA_TYPE_UINT16,1);Potree.PointAttribute.CLASSIFICATION=new Potree.PointAttribute(Potree.PointAttributeNames.CLASSIFICATION,Potree.PointAttributeTypes.DATA_TYPE_UINT8,1);Potree.PointAttribute.NORMAL_SPHEREMAPPED=new Potree.PointAttribute(Potree.PointAttributeNames.NORMAL_SPHEREMAPPED,Potree.PointAttributeTypes.DATA_TYPE_UINT8,2);Potree.PointAttribute.NORMAL_OCT16=new Potree.PointAttribute(Potree.PointAttributeNames.NORMAL_OCT16,Potree.PointAttributeTypes.DATA_TYPE_UINT8,2);Potree.PointAttribute.NORMAL=new Potree.PointAttribute(Potree.PointAttributeNames.NORMAL,Potree.PointAttributeTypes.DATA_TYPE_FLOAT,3); /**
+	 * Ordered list of PointAttributes used to identify how points are aligned in a buffer.
+	 * 
+	 * @class
+	 * 
+	 */Potree.PointAttributes=function(pointAttributes){this.attributes=new Array();this.byteSize=0;this.size=0;if(pointAttributes!=null){for(var i=0;i<pointAttributes.length;i++){var pointAttributeName=pointAttributes[i];var pointAttribute=Potree.PointAttribute[pointAttributeName];this.attributes.push(pointAttribute);this.byteSize+=pointAttribute.byteSize;this.size++;}}};Potree.PointAttributes.prototype.add=function(pointAttribute){this.attributes.push(pointAttribute);this.byteSize+=pointAttribute.byteSize;this.size++;};Potree.PointAttributes.prototype.hasColors=function(){for(var name in this.attributes){var pointAttribute=this.attributes[name];if(pointAttribute.name===Potree.PointAttributeNames.COLOR_PACKED){return true;}}return false;};Potree.PointAttributes.prototype.hasNormals=function(){for(var name in this.attributes){var pointAttribute=this.attributes[name];if(pointAttribute===Potree.PointAttribute.NORMAL_SPHEREMAPPED||pointAttribute===Potree.PointAttribute.NORMAL_FLOATS||pointAttribute===Potree.PointAttribute.NORMAL||pointAttribute===Potree.PointAttribute.NORMAL_OCT16){return true;}}return false;};Potree.BinaryLoader=function(version,boundingBox,scale){if(typeof version==="string"){this.version=new Potree.Version(version);}else {this.version=version;}this.boundingBox=boundingBox;this.scale=scale;};Potree.BinaryLoader.prototype.load=function(node){if(node.loaded){return;}var scope=this;var url=node.getURL();if(this.version.equalOrHigher("1.4")){url+=".bin";}var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.responseType='arraybuffer';xhr.overrideMimeType('text/plain; charset=x-user-defined');xhr.onreadystatechange=function(){if(xhr.readyState===4){if(xhr.status===200||xhr.status===0){var buffer=xhr.response;scope.parse(node,buffer);}else {console.log('Failed to load file! HTTP status: '+xhr.status+", file: "+url);}}};try{xhr.send(null);}catch(e){console.log("fehler beim laden der punktwolke: "+e);}};Potree.BinaryLoader.prototype.parse=function(node,buffer){var numPoints=buffer.byteLength/node.pcoGeometry.pointAttributes.byteSize;var pointAttributes=node.pcoGeometry.pointAttributes;if(this.version.upTo("1.5")){node.numPoints=numPoints;}var ww=Potree.workers.binaryDecoder.getWorker();ww.onmessage=function(e){var data=e.data;var buffers=data.attributeBuffers;var tightBoundingBox=new _three2.default.Box3(new _three2.default.Vector3().fromArray(data.tightBoundingBox.min),new _three2.default.Vector3().fromArray(data.tightBoundingBox.max));Potree.workers.binaryDecoder.returnWorker(ww);var geometry=new _three2.default.BufferGeometry();for(var property in buffers){if(buffers.hasOwnProperty(property)){var buffer=buffers[property].buffer;var attribute=buffers[property].attribute;var numElements=attribute.numElements;if(parseInt(property)===Potree.PointAttributeNames.POSITION_CARTESIAN){geometry.addAttribute("position",new _three2.default.BufferAttribute(new Float32Array(buffer),3));}else if(parseInt(property)===Potree.PointAttributeNames.COLOR_PACKED){geometry.addAttribute("color",new _three2.default.BufferAttribute(new Float32Array(buffer),3));}else if(parseInt(property)===Potree.PointAttributeNames.INTENSITY){geometry.addAttribute("intensity",new _three2.default.BufferAttribute(new Float32Array(buffer),1));}else if(parseInt(property)===Potree.PointAttributeNames.CLASSIFICATION){geometry.addAttribute("classification",new _three2.default.BufferAttribute(new Float32Array(buffer),1));}else if(parseInt(property)===Potree.PointAttributeNames.NORMAL_SPHEREMAPPED){geometry.addAttribute("normal",new _three2.default.BufferAttribute(new Float32Array(buffer),3));}else if(parseInt(property)===Potree.PointAttributeNames.NORMAL_OCT16){geometry.addAttribute("normal",new _three2.default.BufferAttribute(new Float32Array(buffer),3));}else if(parseInt(property)===Potree.PointAttributeNames.NORMAL){geometry.addAttribute("normal",new _three2.default.BufferAttribute(new Float32Array(buffer),3));}}}geometry.addAttribute("indices",new _three2.default.BufferAttribute(new Float32Array(data.indices),1));if(!geometry.attributes.normal){var buffer=new Float32Array(numPoints*3);geometry.addAttribute("normal",new _three2.default.BufferAttribute(new Float32Array(buffer),3));}geometry.boundingBox=node.boundingBox; //geometry.boundingBox = tightBoundingBox;
+	node.geometry=geometry; //node.boundingBox = tightBoundingBox;
+	node.tightBoundingBox=tightBoundingBox;node.loaded=true;node.loading=false;node.pcoGeometry.numNodesLoading--;};var message={buffer:buffer,pointAttributes:pointAttributes,version:this.version.version,min:[node.boundingBox.min.x,node.boundingBox.min.y,node.boundingBox.min.z],offset:[node.pcoGeometry.offset.x,node.pcoGeometry.offset.y,node.pcoGeometry.offset.z],scale:this.scale};ww.postMessage(message,[message.buffer]);}; /**
+	 * laslaz code taken and adapted from plas.io js-laslaz
+	 *  http://plas.io/
+	 *  https://github.com/verma/plasio
+	 *
+	 * Thanks to Uday Verma and Howard Butler
+	 *
+	 */Potree.LasLazLoader=function(version){if(typeof version==="string"){this.version=new Potree.Version(version);}else {this.version=version;}};Potree.LasLazLoader.prototype.load=function(node){if(node.loaded){return;} //var url = node.pcoGeometry.octreeDir + "/" + node.name;
+	var pointAttributes=node.pcoGeometry.pointAttributes; //var url = node.pcoGeometry.octreeDir + "/" + node.name + "." + pointAttributes.toLowerCase()
+	var url=node.getURL();if(this.version.equalOrHigher("1.4")){url+="."+pointAttributes.toLowerCase();}var scope=this;var xhr=new XMLHttpRequest();xhr.open('GET',url,true);xhr.responseType='arraybuffer';xhr.overrideMimeType('text/plain; charset=x-user-defined');xhr.onreadystatechange=function(){if(xhr.readyState===4){if(xhr.status===200){var buffer=xhr.response; //LasLazLoader.loadData(buffer, handler);
+	scope.parse(node,buffer);}else {console.log('Failed to load file! HTTP status: '+xhr.status+", file: "+url);}}};xhr.send(null);};Potree.LasLazLoader.progressCB=function(arg){};Potree.LasLazLoader.prototype.parse=function loadData(node,buffer){var lf=new LASFile(buffer);var handler=new Potree.LasLazBatcher(node);return Promise.resolve(lf).cancellable().then(function(lf){return lf.open().then(function(){lf.isOpen=true;return lf;}).catch(Promise.CancellationError,function(e){ // open message was sent at this point, but then handler was not called
+	// because the operation was cancelled, explicitly close the file
+	return lf.close().then(function(){throw e;});});}).then(function(lf){return lf.getHeader().then(function(h){return [lf,h];});}).then(function(v){var lf=v[0];var header=v[1];var skip=1;var totalRead=0;var totalToRead=skip<=1?header.pointsCount:header.pointsCount/skip;var reader=function reader(){var p=lf.readData(1000000,0,skip);return p.then(function(data){handler.push(new LASDecoder(data.buffer,header.pointsFormatId,header.pointsStructSize,data.count,header.scale,header.offset,header.mins,header.maxs));totalRead+=data.count;Potree.LasLazLoader.progressCB(totalRead/totalToRead);if(data.hasMoreData)return reader();else {header.totalRead=totalRead;header.versionAsString=lf.versionAsString;header.isCompressed=lf.isCompressed;return [lf,header,handler];}});};return reader();}).then(function(v){var lf=v[0]; // we're done loading this file
+	//
+	Potree.LasLazLoader.progressCB(1); // Close it
+	return lf.close().then(function(){lf.isOpen=false; // Delay this a bit so that the user sees 100% completion
+	//
+	return Promise.delay(200).cancellable();}).then(function(){ // trim off the first element (our LASFile which we don't really want to pass to the user)
+	//
+	return v.slice(1);});}).catch(Promise.CancellationError,function(e){ // If there was a cancellation, make sure the file is closed, if the file is open
+	// close and then fail
+	if(lf.isOpen)return lf.close().then(function(){lf.isOpen=false;throw e;});throw e;});};Potree.LasLazLoader.prototype.handle=function(node,url){};Potree.LasLazBatcher=function(node){this.push=function(lasBuffer){var ww=Potree.workers.lasdecoder.getWorker();var mins=new _three2.default.Vector3(lasBuffer.mins[0],lasBuffer.mins[1],lasBuffer.mins[2]);var maxs=new _three2.default.Vector3(lasBuffer.maxs[0],lasBuffer.maxs[1],lasBuffer.maxs[2]);mins.add(node.pcoGeometry.offset);maxs.add(node.pcoGeometry.offset);ww.onmessage=function(e){var geometry=new _three2.default.BufferGeometry();var numPoints=lasBuffer.pointsCount;var endsWith=function endsWith(str,suffix){return str.indexOf(suffix,str.length-suffix.length)!==-1;};var positions=e.data.position;var colors=e.data.color;var intensities=e.data.intensity;var classifications=new Uint8Array(e.data.classification);var classifications_f=new Float32Array(classifications.byteLength);var returnNumbers=new Uint8Array(e.data.returnNumber);var numberOfReturns=new Uint8Array(e.data.numberOfReturns);var returnNumbers_f=new Float32Array(returnNumbers.byteLength);var numberOfReturns_f=new Float32Array(numberOfReturns.byteLength);var pointSourceIDs=new Uint16Array(e.data.pointSourceID);var pointSourceIDs_f=new Float32Array(pointSourceIDs.length);var indices=new ArrayBuffer(numPoints*4);var iIndices=new Uint32Array(indices);var box=new _three2.default.Box3();var fPositions=new Float32Array(positions);for(var i=0;i<numPoints;i++){classifications_f[i]=classifications[i];returnNumbers_f[i]=returnNumbers[i];numberOfReturns_f[i]=numberOfReturns[i];pointSourceIDs_f[i]=pointSourceIDs[i];iIndices[i]=i;box.expandByPoint(new _three2.default.Vector3(fPositions[3*i+0],fPositions[3*i+1],fPositions[3*i+2]));}geometry.addAttribute('position',new _three2.default.BufferAttribute(new Float32Array(positions),3));geometry.addAttribute('color',new _three2.default.BufferAttribute(new Float32Array(colors),3));geometry.addAttribute('intensity',new _three2.default.BufferAttribute(new Float32Array(intensities),1));geometry.addAttribute('classification',new _three2.default.BufferAttribute(new Float32Array(classifications_f),1));geometry.addAttribute('returnNumber',new _three2.default.BufferAttribute(new Float32Array(returnNumbers_f),1));geometry.addAttribute('numberOfReturns',new _three2.default.BufferAttribute(new Float32Array(numberOfReturns_f),1));geometry.addAttribute('pointSourceID',new _three2.default.BufferAttribute(new Float32Array(pointSourceIDs_f),1));geometry.addAttribute('indices',new _three2.default.BufferAttribute(indices,1));geometry.addAttribute("normal",new _three2.default.BufferAttribute(new Float32Array(numPoints*3),3));var tightBoundingBox=new _three2.default.Box3(new _three2.default.Vector3().fromArray(e.data.tightBoundingBox.min),new _three2.default.Vector3().fromArray(e.data.tightBoundingBox.max));geometry.boundingBox=new _three2.default.Box3(mins,maxs); //geometry.boundingBox = tightBoundingBox;
+	//node.boundingBox = geometry.boundingBox;
+	node.tightBoundingBox=tightBoundingBox;node.geometry=geometry;node.loaded=true;node.loading=false;node.pcoGeometry.numNodesLoading--;Potree.workers.lasdecoder.returnWorker(ww);};var message={buffer:lasBuffer.arrayb,numPoints:lasBuffer.pointsCount,pointSize:lasBuffer.pointSize,pointFormatID:2,scale:lasBuffer.scale,offset:lasBuffer.offset,mins:[node.pcoGeometry.boundingBox.min.x,node.pcoGeometry.boundingBox.min.y,node.pcoGeometry.boundingBox.min.z],maxs:[node.pcoGeometry.boundingBox.max.x,node.pcoGeometry.boundingBox.max.y,node.pcoGeometry.boundingBox.max.z],bbOffset:[node.pcoGeometry.offset.x,node.pcoGeometry.offset.y,node.pcoGeometry.offset.z]};ww.postMessage(message,[message.buffer]);};}; //
+	//
+	//
+	// how to calculate the radius of a projected sphere in screen space
+	// http://stackoverflow.com/questions/21648630/radius-of-projected-sphere-in-screen-space
+	// http://stackoverflow.com/questions/3717226/radius-of-projected-sphere
+	//
+	Potree.Gradients={RAINBOW:[[0,new _three2.default.Color(0.278,0,0.714)],[1/6,new _three2.default.Color(0,0,1)],[2/6,new _three2.default.Color(0,1,1)],[3/6,new _three2.default.Color(0,1,0)],[4/6,new _three2.default.Color(1,1,0)],[5/6,new _three2.default.Color(1,0.64,0)],[1,new _three2.default.Color(1,0,0)]],GRAYSCALE:[[0,new _three2.default.Color(0,0,0)],[1,new _three2.default.Color(1,1,1)]]};Potree.Classification={"DEFAULT":{0:new _three2.default.Color(0.5,0.5,0.5),1:new _three2.default.Color(0.5,0.5,0.5),2:new _three2.default.Color(0.63,0.32,0.18),3:new _three2.default.Color(0.0,1.0,0.0),4:new _three2.default.Color(0.0,0.8,0.0),5:new _three2.default.Color(0.0,0.6,0.0),6:new _three2.default.Color(1.0,0.66,0.0),7:new _three2.default.Color(1.0,0,1.0),8:new _three2.default.Color(1.0,0,0.0),9:new _three2.default.Color(0.0,0.0,1.0),12:new _three2.default.Color(1.0,1.0,0.0),"DEFAULT":new _three2.default.Color(0.3,0.6,0.6)}};Potree.PointSizeType={FIXED:0,ATTENUATED:1,ADAPTIVE:2};Potree.PointShape={SQUARE:0,CIRCLE:1};Potree.PointColorType=_defineProperty({RGB:0,COLOR:1,DEPTH:2,HEIGHT:3,INTENSITY:4,INTENSITY_GRADIENT:5,TREE_DEPTH:6,POINT_INDEX:7,CLASSIFICATION:8,RETURN_NUMBER:9,SOURCE:10,NORMAL:11,PHONG:12},'TREE_DEPTH',13);Potree.ClipMode={DISABLED:0,CLIP_OUTSIDE:1,HIGHLIGHT_INSIDE:2};Potree.TreeType={OCTREE:0,KDTREE:1};Potree.PointCloudMaterial=function(parameters){_three2.default.Material.call(this);parameters=parameters||{};var color=new _three2.default.Color(0xffffff);var map=_three2.default.ImageUtils.generateDataTexture(2048,1,color);map.magFilter=_three2.default.NearestFilter;this.visibleNodesTexture=map;var pointSize=parameters.size||1.0;var minSize=parameters.minSize||1.0;var maxSize=parameters.maxSize||50.0;var treeType=parameters.treeType||Potree.TreeType.OCTREE;var nodeSize=1.0;this._pointSizeType=Potree.PointSizeType.ATTENUATED;this._pointShape=Potree.PointShape.SQUARE;this._interpolate=false;this._pointColorType=Potree.PointColorType.RGB;this._useClipBox=false;this.numClipBoxes=0;this._clipMode=Potree.ClipMode.DISABLED;this._weighted=false;this._depthMap;this._gradient=Potree.Gradients.RAINBOW;this._classification=Potree.Classification.DEFAULT;this.gradientTexture=Potree.PointCloudMaterial.generateGradientTexture(this._gradient);this.classificationTexture=Potree.PointCloudMaterial.generateClassificationTexture(this._classification);this.lights=true;this._treeType=treeType;this._useLogarithmicDepthBuffer=false;this._useEDL=false;var attributes={};var uniforms={spacing:{type:"f",value:1.0},fov:{type:"f",value:1.0},screenWidth:{type:"f",value:1.0},screenHeight:{type:"f",value:1.0},near:{type:"f",value:0.1},far:{type:"f",value:1.0},uColor:{type:"c",value:new _three2.default.Color(0xffffff)},opacity:{type:"f",value:1.0},size:{type:"f",value:10},minSize:{type:"f",value:2},maxSize:{type:"f",value:2},octreeSize:{type:"f",value:0},bbSize:{type:"fv",value:[0,0,0]},heightMin:{type:"f",value:0.0},heightMax:{type:"f",value:1.0},intensityMin:{type:"f",value:0.0},intensityMax:{type:"f",value:1.0},clipBoxCount:{type:"f",value:0},visibleNodes:{type:"t",value:this.visibleNodesTexture},pcIndex:{type:"f",value:0},gradient:{type:"t",value:this.gradientTexture},classificationLUT:{type:"t",value:this.classificationTexture},clipBoxes:{type:"Matrix4fv",value:[]},depthMap:{type:"t",value:null},diffuse:{type:"fv",value:[1,1,1]},ambient:{type:"fv",value:[0.1,0.1,0.1]},ambientLightColor:{type:"fv",value:[1,1,1]},directionalLightColor:{type:"fv",value:null},directionalLightDirection:{type:"fv",value:null},pointLightColor:{type:"fv",value:null},pointLightPosition:{type:"fv",value:null},pointLightDistance:{type:"fv1",value:null},pointLightDecay:{type:"fv1",value:null},spotLightColor:{type:"fv",value:null},spotLightPosition:{type:"fv",value:null},spotLightDistance:{type:"fv1",value:null},spotLightDecay:{type:"fv1",value:null},spotLightDirection:{type:"fv",value:null},spotLightAngleCos:{type:"fv1",value:null},spotLightExponent:{type:"fv1",value:null},hemisphereLightSkyColor:{type:"fv",value:null},hemisphereLightGroundColor:{type:"fv",value:null},hemisphereLightDirection:{type:"fv",value:null}};this.defaultAttributeValues.normal=[0,0,0];this.setValues({uniforms:uniforms,attributes:attributes,vertexShader:this.getDefines()+Potree.Shaders["pointcloud.vs"],fragmentShader:this.getDefines()+Potree.Shaders["pointcloud.fs"],vertexColors:_three2.default.VertexColors,size:pointSize,minSize:minSize,maxSize:maxSize,nodeSize:nodeSize,pcIndex:0,alphaTest:0.9});};Potree.PointCloudMaterial.prototype=new _three2.default.ShaderMaterial();Potree.PointCloudMaterial.prototype.updateShaderSource=function(){var attributes={};if(this.pointColorType===Potree.PointColorType.INTENSITY||this.pointColorType===Potree.PointColorType.INTENSITY_GRADIENT){attributes.intensity={type:"f",value:[]};}else if(this.pointColorType===Potree.PointColorType.CLASSIFICATION){attributes.classification={type:"f",value:[]};}else if(this.pointColorType===Potree.PointColorType.RETURN_NUMBER){attributes.returnNumber={type:"f",value:[]};attributes.numberOfReturns={type:"f",value:[]};}else if(this.pointColorType===Potree.PointColorType.SOURCE){attributes.pointSourceID={type:"f",value:[]};}else if(this.pointColorType===Potree.PointColorType.NORMAL||this.pointColorType===Potree.PointColorType.PHONG){attributes.normal={type:"f",value:[]};}var vs=this.getDefines()+Potree.Shaders["pointcloud.vs"];var fs=this.getDefines()+Potree.Shaders["pointcloud.fs"];this.setValues({attributes:attributes,vertexShader:vs,fragmentShader:fs});if(this.depthMap){this.uniforms.depthMap.value=this.depthMap;this.setValues({depthMap:this.depthMap});}if(this.opacity===1.0){this.setValues({blending:_three2.default.NoBlending,transparent:false,depthTest:true,depthWrite:true});}else {this.setValues({blending:_three2.default.AdditiveBlending,transparent:true,depthTest:false,depthWrite:true});}if(this.weighted){this.setValues({blending:_three2.default.AdditiveBlending,transparent:true,depthTest:true,depthWrite:false});}this.needsUpdate=true;};Potree.PointCloudMaterial.prototype.getDefines=function(){var defines="";if(this.pointSizeType===Potree.PointSizeType.FIXED){defines+="#define fixed_point_size\n";}else if(this.pointSizeType===Potree.PointSizeType.ATTENUATED){defines+="#define attenuated_point_size\n";}else if(this.pointSizeType===Potree.PointSizeType.ADAPTIVE){defines+="#define adaptive_point_size\n";}if(this.pointShape===Potree.PointShape.SQUARE){defines+="#define square_point_shape\n";}else if(this.pointShape===Potree.PointShape.CIRCLE){defines+="#define circle_point_shape\n";}if(this._interpolate){defines+="#define use_interpolation\n";}if(this._useLogarithmicDepthBuffer){defines+="#define use_logarithmic_depth_buffer\n";}if(this._useEDL){defines+="#define use_edl\n";}if(this._pointColorType===Potree.PointColorType.RGB){defines+="#define color_type_rgb\n";}else if(this._pointColorType===Potree.PointColorType.COLOR){defines+="#define color_type_color\n";}else if(this._pointColorType===Potree.PointColorType.DEPTH){defines+="#define color_type_depth\n";}else if(this._pointColorType===Potree.PointColorType.HEIGHT){defines+="#define color_type_height\n";}else if(this._pointColorType===Potree.PointColorType.INTENSITY){defines+="#define color_type_intensity\n";}else if(this._pointColorType===Potree.PointColorType.INTENSITY_GRADIENT){defines+="#define color_type_intensity_gradient\n";}else if(this._pointColorType===Potree.PointColorType.TREE_DEPTH){defines+="#define color_type_tree_depth\n";}else if(this._pointColorType===Potree.PointColorType.POINT_INDEX){defines+="#define color_type_point_index\n";}else if(this._pointColorType===Potree.PointColorType.CLASSIFICATION){defines+="#define color_type_classification\n";}else if(this._pointColorType===Potree.PointColorType.RETURN_NUMBER){defines+="#define color_type_return_number\n";}else if(this._pointColorType===Potree.PointColorType.SOURCE){defines+="#define color_type_source\n";}else if(this._pointColorType===Potree.PointColorType.NORMAL){defines+="#define color_type_normal\n";}else if(this._pointColorType===Potree.PointColorType.PHONG){defines+="#define color_type_phong\n";}if(this.clipMode===Potree.ClipMode.DISABLED){defines+="#define clip_disabled\n";}else if(this.clipMode===Potree.ClipMode.CLIP_OUTSIDE){defines+="#define clip_outside\n";}else if(this.clipMode===Potree.ClipMode.HIGHLIGHT_INSIDE){defines+="#define clip_highlight_inside\n";}if(this._treeType===Potree.TreeType.OCTREE){defines+="#define tree_type_octree\n";}else if(this._treeType===Potree.TreeType.KDTREE){defines+="#define tree_type_kdtree\n";}if(this.weighted){defines+="#define weighted_splats\n";}if(this.numClipBoxes>0){defines+="#define use_clip_box\n";}return defines;};Potree.PointCloudMaterial.prototype.setClipBoxes=function(clipBoxes){if(!clipBoxes){return;}this.clipBoxes=clipBoxes;var doUpdate=this.numClipBoxes!=clipBoxes.length&&(clipBoxes.length===0||this.numClipBoxes===0);this.numClipBoxes=clipBoxes.length;this.uniforms.clipBoxCount.value=this.numClipBoxes;if(doUpdate){this.updateShaderSource();}this.uniforms.clipBoxes.value=new Float32Array(this.numClipBoxes*16);for(var i=0;i<this.numClipBoxes;i++){var box=clipBoxes[i];this.uniforms.clipBoxes.value.set(box.elements,16*i);}};Object.defineProperty(Potree.PointCloudMaterial.prototype,"gradient",{get:function get(){return this._gradient;},set:function set(value){if(this._gradient!==value){this._gradient=value;this.gradientTexture=Potree.PointCloudMaterial.generateGradientTexture(this._gradient);this.uniforms.gradient.value=this.gradientTexture;}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"classification",{get:function get(){return this._classification;},set:function set(value){if(this._classification!==value){this._classification=value;this.classificationTexture=Potree.PointCloudMaterial.generateClassificationTexture(this._classification);this.uniforms.classificationLUT.value=this.classificationTexture;}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"spacing",{get:function get(){return this.uniforms.spacing.value;},set:function set(value){if(this.uniforms.spacing.value!==value){this.uniforms.spacing.value=value; //this.updateShaderSource();
+	}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"useClipBox",{get:function get(){return this._useClipBox;},set:function set(value){if(this._useClipBox!==value){this._useClipBox=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"weighted",{get:function get(){return this._weighted;},set:function set(value){if(this._weighted!==value){this._weighted=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"fov",{get:function get(){return this.uniforms.fov.value;},set:function set(value){if(this.uniforms.fov.value!==value){this.uniforms.fov.value=value; //this.updateShaderSource();
+	}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"screenWidth",{get:function get(){return this.uniforms.screenWidth.value;},set:function set(value){if(this.uniforms.screenWidth.value!==value){this.uniforms.screenWidth.value=value; //this.updateShaderSource();
+	}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"screenHeight",{get:function get(){return this.uniforms.screenHeight.value;},set:function set(value){if(this.uniforms.screenHeight.value!==value){this.uniforms.screenHeight.value=value; //this.updateShaderSource();
+	}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"near",{get:function get(){return this.uniforms.near.value;},set:function set(value){if(this.uniforms.near.value!==value){this.uniforms.near.value=value;}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"far",{get:function get(){return this.uniforms.far.value;},set:function set(value){if(this.uniforms.far.value!==value){this.uniforms.far.value=value;}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"opacity",{get:function get(){return this.uniforms.opacity.value;},set:function set(value){if(this.uniforms.opacity){if(this.uniforms.opacity.value!==value){this.uniforms.opacity.value=value;this.updateShaderSource();}}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"pointColorType",{get:function get(){return this._pointColorType;},set:function set(value){if(this._pointColorType!==value){this._pointColorType=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"depthMap",{get:function get(){return this._depthMap;},set:function set(value){if(this._depthMap!==value){this._depthMap=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"pointSizeType",{get:function get(){return this._pointSizeType;},set:function set(value){if(this._pointSizeType!==value){this._pointSizeType=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"clipMode",{get:function get(){return this._clipMode;},set:function set(value){if(this._clipMode!==value){this._clipMode=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"interpolate",{get:function get(){return this._interpolate;},set:function set(value){if(this._interpolate!==value){this._interpolate=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"useEDL",{get:function get(){return this._useEDL;},set:function set(value){if(this._useEDL!==value){this._useEDL=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"useLogarithmicDepthBuffer",{get:function get(){return this._useLogarithmicDepthBuffer;},set:function set(value){if(this._useLogarithmicDepthBuffer!==value){this._useLogarithmicDepthBuffer=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"color",{get:function get(){return this.uniforms.uColor.value;},set:function set(value){if(this.uniforms.uColor.value!==value){this.uniforms.uColor.value.copy(value);this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"pointShape",{get:function get(){return this._pointShape;},set:function set(value){if(this._pointShape!==value){this._pointShape=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"size",{get:function get(){return this.uniforms.size.value;},set:function set(value){this.uniforms.size.value=value;}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"minSize",{get:function get(){return this.uniforms.minSize.value;},set:function set(value){this.uniforms.minSize.value=value;}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"maxSize",{get:function get(){return this.uniforms.maxSize.value;},set:function set(value){this.uniforms.maxSize.value=value;}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"heightMin",{get:function get(){return this.uniforms.heightMin.value;},set:function set(value){this.uniforms.heightMin.value=value;}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"heightMax",{get:function get(){return this.uniforms.heightMax.value;},set:function set(value){this.uniforms.heightMax.value=value;}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"intensityMin",{get:function get(){return this.uniforms.intensityMin.value;},set:function set(value){this.uniforms.intensityMin.value=value;}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"intensityMax",{get:function get(){return this.uniforms.intensityMax.value;},set:function set(value){this.uniforms.intensityMax.value=value;}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"pcIndex",{get:function get(){return this.uniforms.pcIndex.value;},set:function set(value){this.uniforms.pcIndex.value=value;}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"treeType",{get:function get(){return this._treeType;},set:function set(value){if(this._treeType!=value){this._treeType=value;this.updateShaderSource();}}});Object.defineProperty(Potree.PointCloudMaterial.prototype,"bbSize",{get:function get(){return this.uniforms.bbSize.value;},set:function set(value){this.uniforms.bbSize.value=value;}}); /**
+	 * Generates a look-up texture for gradient values (height, intensity, ...)
+	 *
+	 */Potree.PointCloudMaterial.generateGradientTexture=function(gradient){var size=64; // create canvas
+	var canvas=document.createElement('canvas');canvas.width=size;canvas.height=size; // get context
+	var context=canvas.getContext('2d'); // draw gradient
+	context.rect(0,0,size,size);var ctxGradient=context.createLinearGradient(0,0,size,size);for(var i=0;i<gradient.length;i++){var step=gradient[i];ctxGradient.addColorStop(step[0],"#"+step[1].getHexString());}context.fillStyle=ctxGradient;context.fill();var texture=new _three2.default.Texture(canvas);texture.needsUpdate=true;var textureImage=texture.image;return texture;}; /**
+	 * Generates a look up texture for classification colors
+	 *
+	 */Potree.PointCloudMaterial.generateClassificationTexture=function(classification){var width=256;var height=256;var map=_three2.default.ImageUtils.generateDataTexture(width,height,new _three2.default.Color());map.magFilter=_three2.default.NearestFilter;var data=map.image.data;for(var x=0;x<width;x++){for(var y=0;y<height;y++){var u=2*(x/width)-1;var v=2*(y/height)-1;var i=x+width*y;var color;if(classification[x]){color=classification[x];}else {color=classification.DEFAULT;}data[3*i+0]=255*color.r;data[3*i+1]=255*color.g;data[3*i+2]=255*color.b;}}return map;}; //
+	// Algorithm by Christian Boucheny
+	// shader code taken and adapted from CloudCompare
+	//
+	// see
+	// https://github.com/cloudcompare/trunk/tree/master/plugins/qEDL/shaders/EDL
+	// http://www.kitware.com/source/home/post/9
+	// https://tel.archives-ouvertes.fr/tel-00438464/document p. 115+ (french)
+	Potree.EyeDomeLightingMaterial=function(parameters){_three2.default.Material.call(this);parameters=parameters||{};var neighbourCount=8;var neighbours=new Float32Array(neighbourCount*2);for(var c=0;c<neighbourCount;c++){neighbours[2*c+0]=Math.cos(2*c*Math.PI/neighbourCount);neighbours[2*c+1]=Math.sin(2*c*Math.PI/neighbourCount);} //var neighbourCount = 32;
+	//var neighbours = new Float32Array(neighbourCount*2);
+	//for(var c = 0; c < neighbourCount; c++){
+	//  var r = (c / neighbourCount) * 4 + 0.1;
+	//  neighbours[2*c+0] = Math.cos(2 * c * Math.PI / neighbourCount) * r;
+	//  neighbours[2*c+1] = Math.sin(2 * c * Math.PI / neighbourCount) * r;
+	//}
+	var lightDir=new _three2.default.Vector3(0.0,0.0,1.0).normalize();var uniforms={screenWidth:{type:"f",value:0},screenHeight:{type:"f",value:0},near:{type:"f",value:0},far:{type:"f",value:0},expScale:{type:"f",value:100.0},radius:{type:"f",value:3.0},lightDir:{type:"v3",value:lightDir},neighbours:{type:"2fv",value:neighbours},depthMap:{type:"t",value:null},colorMap:{type:"t",value:null}};this.setValues({uniforms:uniforms,vertexShader:Potree.Shaders["edl.vs"],fragmentShader:Potree.Shaders["edl.fs"]});};Potree.EyeDomeLightingMaterial.prototype=new _three2.default.ShaderMaterial(); // see http://john-chapman-graphics.blogspot.co.at/2013/01/ssao-tutorial.html
+	Potree.BlurMaterial=function(parameters){_three2.default.Material.call(this);parameters=parameters||{};var uniforms={near:{type:"f",value:0},far:{type:"f",value:0},screenWidth:{type:"f",value:0},screenHeight:{type:"f",value:0},map:{type:"t",value:null}};this.setValues({uniforms:uniforms,vertexShader:Potree.Shaders["blur.vs"],fragmentShader:Potree.Shaders["blur.fs"]});};Potree.BlurMaterial.prototype=new _three2.default.ShaderMaterial(); /**
+	 * @author mschuetz / http://mschuetz.at
+	 *
+	 * adapted from THREE.OrbitControls by 
+	 *
+	 * @author qiao / https://github.com/qiao
+	 * @author mrdoob / http://mrdoob.com
+	 * @author alteredq / http://alteredqualia.com/
+	 * @author WestLangley / http://github.com/WestLangley
+	 * @author erich666 / http://erichaines.com
+	 *
+	 * This set of controls performs first person navigation without mouse lock.
+	 * Instead, rotating the camera is done by dragging with the left mouse button.
+	 *
+	 * move: a/s/d/w or up/down/left/right
+	 * rotate: left mouse
+	 * pan: right mouse
+	 * change speed: mouse wheel
+	 *
+	 *
+	 */_three2.default.FirstPersonControls=function(object,domElement){this.object=object;this.domElement=domElement!==undefined?domElement:document; // Set to false to disable this control
+	this.enabled=true;this.rotateSpeed=1.0;this.moveSpeed=10.0;this.keys={LEFT:37,UP:38,RIGHT:39,BOTTOM:40,A:'A'.charCodeAt(0),S:'S'.charCodeAt(0),D:'D'.charCodeAt(0),W:'W'.charCodeAt(0)};var scope=this;var rotateStart=new _three2.default.Vector2();var rotateEnd=new _three2.default.Vector2();var rotateDelta=new _three2.default.Vector2();var panStart=new _three2.default.Vector2();var panEnd=new _three2.default.Vector2();var panDelta=new _three2.default.Vector2();var panOffset=new _three2.default.Vector3();var offset=new _three2.default.Vector3();var phiDelta=0;var thetaDelta=0;var scale=1;var pan=new _three2.default.Vector3();var lastPosition=new _three2.default.Vector3();var STATE={NONE:-1,ROTATE:0,SPEEDCHANGE:1,PAN:2};var state=STATE.NONE; // for reset
+	this.position0=this.object.position.clone(); // events
+	var changeEvent={type:'change'};var startEvent={type:'start'};var endEvent={type:'end'};this.rotateLeft=function(angle){thetaDelta-=angle;};this.rotateUp=function(angle){phiDelta-=angle;}; // pass in distance in world space to move left
+	this.panLeft=function(distance){var te=this.object.matrix.elements; // get X column of matrix
+	panOffset.set(te[0],te[1],te[2]);panOffset.multiplyScalar(-distance);pan.add(panOffset);}; // pass in distance in world space to move up
+	this.panUp=function(distance){var te=this.object.matrix.elements; // get Y column of matrix
+	panOffset.set(te[4],te[5],te[6]);panOffset.multiplyScalar(distance);pan.add(panOffset);}; // pass in distance in world space to move forward
+	this.panForward=function(distance){var te=this.object.matrix.elements; // get Y column of matrix
+	panOffset.set(te[8],te[9],te[10]);panOffset.multiplyScalar(distance);pan.add(panOffset);};this.pan=function(deltaX,deltaY){var element=scope.domElement===document?scope.domElement.body:scope.domElement;if(scope.object.fov!==undefined){ // perspective
+	var position=scope.object.position;var offset=position.clone();var targetDistance=offset.length(); // half of the fov is center to top of screen
+	targetDistance*=Math.tan(scope.object.fov/2*Math.PI/180.0); // we actually don't use screenWidth, since perspective camera is fixed to screen height
+	scope.panLeft(2*deltaX*targetDistance/element.clientHeight);scope.panUp(2*deltaY*targetDistance/element.clientHeight);}else if(scope.object.top!==undefined){ // orthographic
+	scope.panLeft(deltaX*(scope.object.right-scope.object.left)/element.clientWidth);scope.panUp(deltaY*(scope.object.top-scope.object.bottom)/element.clientHeight);}else { // camera neither orthographic or perspective
+	console.warn('WARNING: FirstPersonControls.js encountered an unknown camera type - pan disabled.');}};this.update=function(delta){this.object.rotation.order='ZYX';var object=this.object;this.object=new _three2.default.Object3D();this.object.position.copy(object.position);this.object.rotation.copy(object.rotation);this.object.updateMatrix();this.object.updateMatrixWorld();var position=this.object.position;if(delta!==undefined){if(this.moveRight){this.panLeft(-delta*this.moveSpeed);}if(this.moveLeft){this.panLeft(delta*this.moveSpeed);}if(this.moveForward){this.panForward(-delta*this.moveSpeed);}if(this.moveBackward){this.panForward(delta*this.moveSpeed);}}if(!pan.equals(new _three2.default.Vector3(0,0,0))){var event={type:'move',translation:pan.clone()};this.dispatchEvent(event);}position.add(pan);if(!(thetaDelta===0.0&&phiDelta===0.0)){var event={type:'rotate',thetaDelta:thetaDelta,phiDelta:phiDelta};this.dispatchEvent(event);}this.object.updateMatrix();var rot=new _three2.default.Matrix4().makeRotationY(thetaDelta);var res=new _three2.default.Matrix4().multiplyMatrices(rot,this.object.matrix);this.object.quaternion.setFromRotationMatrix(res);this.object.rotation.x+=phiDelta;this.object.updateMatrixWorld(); // send transformation proposal to listeners
+	var proposeTransformEvent={type:"proposeTransform",oldPosition:object.position,newPosition:this.object.position,objections:0,counterProposals:[]};this.dispatchEvent(proposeTransformEvent); // check some counter proposals if transformation wasn't accepted
+	if(proposeTransformEvent.objections>0){if(proposeTransformEvent.counterProposals.length>0){var cp=proposeTransformEvent.counterProposals;this.object.position.copy(cp[0]);proposeTransformEvent.objections=0;proposeTransformEvent.counterProposals=[];}} // apply transformation, if accepted
+	if(proposeTransformEvent.objections>0){}else {object.position.copy(this.object.position);}object.rotation.copy(this.object.rotation);this.object=object;thetaDelta=0;phiDelta=0;scale=1;pan.set(0,0,0);if(lastPosition.distanceTo(this.object.position)>0){this.dispatchEvent(changeEvent);lastPosition.copy(this.object.position);}};this.reset=function(){state=STATE.NONE;this.object.position.copy(this.position0);};function onMouseDown(event){if(scope.enabled===false)return;event.preventDefault();if(event.button===0){state=STATE.ROTATE;rotateStart.set(event.clientX,event.clientY);}else if(event.button===2){state=STATE.PAN;panStart.set(event.clientX,event.clientY);}scope.domElement.addEventListener('mousemove',onMouseMove,false);scope.domElement.addEventListener('mouseup',onMouseUp,false);scope.dispatchEvent(startEvent);}function onMouseMove(event){if(scope.enabled===false)return;event.preventDefault();var element=scope.domElement===document?scope.domElement.body:scope.domElement;if(state===STATE.ROTATE){rotateEnd.set(event.clientX,event.clientY);rotateDelta.subVectors(rotateEnd,rotateStart); // rotating across whole screen goes 360 degrees around
+	scope.rotateLeft(2*Math.PI*rotateDelta.x/element.clientWidth*scope.rotateSpeed); // rotating up and down along whole screen attempts to go 360, but limited to 180
+	scope.rotateUp(2*Math.PI*rotateDelta.y/element.clientHeight*scope.rotateSpeed);rotateStart.copy(rotateEnd);}else if(state===STATE.PAN){panEnd.set(event.clientX,event.clientY);panDelta.subVectors(panEnd,panStart); //panDelta.multiplyScalar(this.moveSpeed).multiplyScalar(0.0001);
+	panDelta.multiplyScalar(0.0005).multiplyScalar(scope.moveSpeed);scope.pan(panDelta.x,panDelta.y);panStart.copy(panEnd);}}function onMouseUp(){if(scope.enabled===false)return;scope.domElement.removeEventListener('mousemove',onMouseMove,false);scope.domElement.removeEventListener('mouseup',onMouseUp,false);scope.dispatchEvent(endEvent);state=STATE.NONE;}function onMouseWheel(event){if(scope.enabled===false||scope.noZoom===true)return;event.preventDefault();var direction=event.detail<0||event.wheelDelta>0?1:-1;scope.moveSpeed+=scope.moveSpeed*0.1*direction;scope.moveSpeed=Math.max(0.1,scope.moveSpeed);scope.dispatchEvent(startEvent);scope.dispatchEvent(endEvent);}function onKeyDown(event){if(scope.enabled===false)return;switch(event.keyCode){case scope.keys.UP:scope.moveForward=true;break;case scope.keys.BOTTOM:scope.moveBackward=true;break;case scope.keys.LEFT:scope.moveLeft=true;break;case scope.keys.RIGHT:scope.moveRight=true;break;case scope.keys.W:scope.moveForward=true;break;case scope.keys.S:scope.moveBackward=true;break;case scope.keys.A:scope.moveLeft=true;break;case scope.keys.D:scope.moveRight=true;break;}}function onKeyUp(event){switch(event.keyCode){case scope.keys.W:scope.moveForward=false;break;case scope.keys.S:scope.moveBackward=false;break;case scope.keys.A:scope.moveLeft=false;break;case scope.keys.D:scope.moveRight=false;break;case scope.keys.UP:scope.moveForward=false;break;case scope.keys.BOTTOM:scope.moveBackward=false;break;case scope.keys.LEFT:scope.moveLeft=false;break;case scope.keys.RIGHT:scope.moveRight=false;break;}}this.domElement.addEventListener('contextmenu',function(event){event.preventDefault();},false);this.domElement.addEventListener('mousedown',onMouseDown,false);this.domElement.addEventListener('mousewheel',onMouseWheel,false);this.domElement.addEventListener('DOMMouseScroll',onMouseWheel,false); // firefox
+	window.addEventListener('keydown',onKeyDown,false);window.addEventListener('keyup',onKeyUp,false);};_three2.default.FirstPersonControls.prototype=Object.create(_three2.default.EventDispatcher.prototype); /**
+	 * @author mschuetz / http://mschuetz.at/
+	 * @author qiao / https://github.com/qiao
+	 * @author mrdoob / http://mrdoob.com
+	 * @author alteredq / http://alteredqualia.com/
+	 * @author WestLangley / http://github.com/WestLangley
+	 * @author erich666 / http://erichaines.com
+	 */ /*global THREE, console */ // 
+	// Adapted from THREE.OrbitControls
+	// - Smooth movements
+	// - creates "proposeTransform" events
+	// 
+	// 
+	// This set of controls performs orbiting, dollying (zooming), and panning. It maintains
+	// the "up" direction as +Y, unlike the TrackballControls. Touch on tablet and phones is
+	// supported.
+	//
+	//    Orbit - left mouse / touch: one finger move
+	//    Zoom - middle mouse, or mousewheel / touch: two finger spread or squish
+	//    Pan - right mouse, or arrow keys / touch: three finter swipe
+	//
+	// This is a drop-in replacement for (most) TrackballControls used in examples.
+	// That is, include this js file and wherever you see:
+	//      controls = new THREE.TrackballControls( camera );
+	//      controls.target.z = 150;
+	// Simple substitute "OrbitControls" and the control should work as-is.
+	Potree.OrbitControls=function(object,domElement){this.object=object;this.domElement=domElement!==undefined?domElement:document; // API
+	// Set to false to disable this control
+	this.enabled=true; // "target" sets the location of focus, where the control orbits around
+	// and where it pans with respect to.
+	this.target=new _three2.default.Vector3(); // center is old, deprecated; use "target" instead
+	this.center=this.target; // This option actually enables dollying in and out; left as "zoom" for
+	// backwards compatibility
+	this.noZoom=false;this.zoomSpeed=1.0; // Limits to how far you can dolly in and out
+	this.minDistance=0;this.maxDistance=Infinity; // Set to true to disable this control
+	this.noRotate=false;this.rotateSpeed=1.0; // Set to true to disable this control
+	this.noPan=false;this.keyPanSpeed=7.0; // pixels moved per arrow key push
+	// Set to true to automatically rotate around the target
+	this.autoRotate=false;this.autoRotateSpeed=2.0; // 30 seconds per round when fps is 60
+	this.fadeFactor=10; // How far you can orbit vertically, upper and lower limits.
+	// Range is 0 to Math.PI radians.
+	this.minPolarAngle=0; // radians
+	this.maxPolarAngle=Math.PI; // radians
+	// Set to true to disable use of the keys
+	this.noKeys=false; // The four arrow keys
+	this.keys={LEFT:37,UP:38,RIGHT:39,BOTTOM:40}; ////////////
+	// internals
+	var scope=this;var EPS=0.000001;var rotateStart=new _three2.default.Vector2();var rotateEnd=new _three2.default.Vector2();var rotateDelta=new _three2.default.Vector2();var panStart=new _three2.default.Vector2();var panEnd=new _three2.default.Vector2();var panDelta=new _three2.default.Vector2();var panOffset=new _three2.default.Vector3();var offset=new _three2.default.Vector3();var dollyStart=new _three2.default.Vector2();var dollyEnd=new _three2.default.Vector2();var dollyDelta=new _three2.default.Vector2();var phiDelta=0;var thetaDelta=0;var scale=1;var pan=new _three2.default.Vector3();var lastPosition=new _three2.default.Vector3();var STATE={NONE:-1,ROTATE:0,DOLLY:1,PAN:2,TOUCH_ROTATE:3,TOUCH_DOLLY:4,TOUCH_PAN:5};var state=STATE.NONE; // for reset
+	this.target0=this.target.clone();this.position0=this.object.position.clone(); // events
+	var changeEvent={type:'change'};var startEvent={type:'start'};var endEvent={type:'end'};this.rotateLeft=function(angle){if(angle===undefined){angle=getAutoRotationAngle();}thetaDelta-=angle;};this.rotateUp=function(angle){if(angle===undefined){angle=getAutoRotationAngle();}phiDelta-=angle;}; // pass in distance in world space to move left
+	this.panLeft=function(distance){var te=this.object.matrix.elements; // get X column of matrix
+	panOffset.set(te[0],te[1],te[2]);panOffset.multiplyScalar(-distance);pan.add(panOffset);}; // pass in distance in world space to move up
+	this.panUp=function(distance){var te=this.object.matrix.elements; // get Y column of matrix
+	panOffset.set(te[4],te[5],te[6]);panOffset.multiplyScalar(distance);pan.add(panOffset);}; // pass in x,y of change desired in pixel space,
+	// right and down are positive
+	this.pan=function(deltaX,deltaY){var element=scope.domElement===document?scope.domElement.body:scope.domElement;if(scope.object.fov!==undefined){ // perspective
+	var position=scope.object.position;var offset=position.clone().sub(scope.target);var targetDistance=offset.length(); // half of the fov is center to top of screen
+	targetDistance*=Math.tan(scope.object.fov/2*Math.PI/180.0); // we actually don't use screenWidth, since perspective camera is fixed to screen height
+	scope.panLeft(2*deltaX*targetDistance/element.clientHeight);scope.panUp(2*deltaY*targetDistance/element.clientHeight);}else if(scope.object.top!==undefined){ // orthographic
+	scope.panLeft(deltaX*(scope.object.right-scope.object.left)/element.clientWidth);scope.panUp(deltaY*(scope.object.top-scope.object.bottom)/element.clientHeight);}else { // camera neither orthographic or perspective
+	console.warn('WARNING: OrbitControls.js encountered an unknown camera type - pan disabled.');}};this.dollyIn=function(dollyScale){if(dollyScale===undefined){dollyScale=getZoomScale();}scale/=dollyScale;};this.dollyOut=function(dollyScale){if(dollyScale===undefined){dollyScale=getZoomScale();}scale*=dollyScale;};this.update=function(delta){var position=this.object.position.clone();offset.copy(position).sub(this.target); // angle from z-axis around y-axis
+	var theta=Math.atan2(offset.x,offset.z); // angle from y-axis
+	var phi=Math.atan2(Math.sqrt(offset.x*offset.x+offset.z*offset.z),offset.y);if(this.autoRotate){this.rotateLeft(getAutoRotationAngle());}var progression=Math.min(1,this.fadeFactor*delta);theta+=progression*thetaDelta;phi+=progression*phiDelta; // restrict phi to be between desired limits
+	phi=Math.max(this.minPolarAngle,Math.min(this.maxPolarAngle,phi)); // restrict phi to be betwee EPS and PI-EPS
+	phi=Math.max(EPS,Math.min(Math.PI-EPS,phi)); //var radius = offset.length() * scale;
+	var radius=offset.length();radius+=(scale-1)*radius*progression; // restrict radius to be between desired limits
+	radius=Math.max(this.minDistance,Math.min(this.maxDistance,radius)); // move target to panned location
+	this.target.add(pan.clone().multiplyScalar(progression));offset.x=radius*Math.sin(phi)*Math.sin(theta);offset.y=radius*Math.cos(phi);offset.z=radius*Math.sin(phi)*Math.cos(theta);position.copy(this.target).add(offset); // send transformation proposal to listeners
+	var proposeTransformEvent={type:"proposeTransform",oldPosition:this.object.position,newPosition:position,objections:0,counterProposals:[]};this.dispatchEvent(proposeTransformEvent); // check some counter proposals if transformation wasn't accepted
+	if(proposeTransformEvent.objections>0){if(proposeTransformEvent.counterProposals.length>0){var cp=proposeTransformEvent.counterProposals;position.copy(cp[0]);proposeTransformEvent.objections=0;proposeTransformEvent.counterProposals=[];}} // apply transformation, if accepted
+	if(proposeTransformEvent.objections>0){thetaDelta=0;phiDelta=0;scale=1;pan.set(0,0,0);}else {this.object.position.copy(position);this.object.lookAt(this.target);var attenuation=Math.max(0,1-this.fadeFactor*delta);thetaDelta*=attenuation;phiDelta*=attenuation;scale=1+(scale-1)*attenuation;pan.multiplyScalar(attenuation);}if(lastPosition.distanceTo(this.object.position)>0){this.dispatchEvent(changeEvent);lastPosition.copy(this.object.position);}};this.reset=function(){state=STATE.NONE;this.target.copy(this.target0);this.object.position.copy(this.position0);this.update();};function getAutoRotationAngle(){return 2*Math.PI/60/60*scope.autoRotateSpeed;}function getZoomScale(){return Math.pow(0.95,scope.zoomSpeed);}function onMouseDown(event){if(scope.enabled===false)return;event.preventDefault();if(event.button===0){if(scope.noRotate===true)return;state=STATE.ROTATE;rotateStart.set(event.clientX,event.clientY);}else if(event.button===1){if(scope.noZoom===true)return;state=STATE.DOLLY;dollyStart.set(event.clientX,event.clientY);}else if(event.button===2){if(scope.noPan===true)return;state=STATE.PAN;panStart.set(event.clientX,event.clientY);}scope.domElement.addEventListener('mousemove',onMouseMove,false);scope.domElement.addEventListener('mouseup',onMouseUp,false);scope.dispatchEvent(startEvent);}function onMouseMove(event){if(scope.enabled===false)return;event.preventDefault();var element=scope.domElement===document?scope.domElement.body:scope.domElement;if(state===STATE.ROTATE){if(scope.noRotate===true)return;rotateEnd.set(event.clientX,event.clientY);rotateDelta.subVectors(rotateEnd,rotateStart); // rotating across whole screen goes 360 degrees around
+	scope.rotateLeft(2*Math.PI*rotateDelta.x/element.clientWidth*scope.rotateSpeed); // rotating up and down along whole screen attempts to go 360, but limited to 180
+	scope.rotateUp(2*Math.PI*rotateDelta.y/element.clientHeight*scope.rotateSpeed);rotateStart.copy(rotateEnd);}else if(state===STATE.DOLLY){if(scope.noZoom===true)return;dollyEnd.set(event.clientX,event.clientY);dollyDelta.subVectors(dollyEnd,dollyStart);if(dollyDelta.y>0){scope.dollyIn();}else {scope.dollyOut();}dollyStart.copy(dollyEnd);}else if(state===STATE.PAN){if(scope.noPan===true)return;panEnd.set(event.clientX,event.clientY);panDelta.subVectors(panEnd,panStart);scope.pan(panDelta.x,panDelta.y);panStart.copy(panEnd);} //scope.update();
+	}function onMouseUp() /* event */{if(scope.enabled===false)return;scope.domElement.removeEventListener('mousemove',onMouseMove,false);scope.domElement.removeEventListener('mouseup',onMouseUp,false);scope.dispatchEvent(endEvent);state=STATE.NONE;}function onMouseWheel(event){if(scope.enabled===false||scope.noZoom===true)return;event.preventDefault();var delta=0;if(event.wheelDelta!==undefined){ // WebKit / Opera / Explorer 9
+	delta=event.wheelDelta;}else if(event.detail!==undefined){ // Firefox
+	delta=-event.detail;}if(delta>0){scope.dollyOut();}else {scope.dollyIn();} //scope.update();
+	scope.dispatchEvent(startEvent);scope.dispatchEvent(endEvent);}function onKeyDown(event){if(scope.enabled===false||scope.noKeys===true||scope.noPan===true)return;switch(event.keyCode){case scope.keys.UP:scope.pan(0,scope.keyPanSpeed); //scope.update();
+	break;case scope.keys.BOTTOM:scope.pan(0,-scope.keyPanSpeed); //scope.update();
+	break;case scope.keys.LEFT:scope.pan(scope.keyPanSpeed,0); //scope.update();
+	break;case scope.keys.RIGHT:scope.pan(-scope.keyPanSpeed,0); //scope.update();
+	break;}}function touchstart(event){if(scope.enabled===false)return;switch(event.touches.length){case 1: // one-fingered touch: rotate
+	if(scope.noRotate===true)return;state=STATE.TOUCH_ROTATE;rotateStart.set(event.touches[0].pageX,event.touches[0].pageY);break;case 2: // two-fingered touch: dolly
+	if(scope.noZoom===true)return;state=STATE.TOUCH_DOLLY;var dx=event.touches[0].pageX-event.touches[1].pageX;var dy=event.touches[0].pageY-event.touches[1].pageY;var distance=Math.sqrt(dx*dx+dy*dy);dollyStart.set(0,distance);break;case 3: // three-fingered touch: pan
+	if(scope.noPan===true)return;state=STATE.TOUCH_PAN;panStart.set(event.touches[0].pageX,event.touches[0].pageY);break;default:state=STATE.NONE;}scope.dispatchEvent(startEvent);}function touchmove(event){if(scope.enabled===false)return;event.preventDefault();event.stopPropagation();var element=scope.domElement===document?scope.domElement.body:scope.domElement;switch(event.touches.length){case 1: // one-fingered touch: rotate
+	if(scope.noRotate===true)return;if(state!==STATE.TOUCH_ROTATE)return;rotateEnd.set(event.touches[0].pageX,event.touches[0].pageY);rotateDelta.subVectors(rotateEnd,rotateStart); // rotating across whole screen goes 360 degrees around
+	scope.rotateLeft(2*Math.PI*rotateDelta.x/element.clientWidth*scope.rotateSpeed); // rotating up and down along whole screen attempts to go 360, but limited to 180
+	scope.rotateUp(2*Math.PI*rotateDelta.y/element.clientHeight*scope.rotateSpeed);rotateStart.copy(rotateEnd); //scope.update();
+	break;case 2: // two-fingered touch: dolly
+	if(scope.noZoom===true)return;if(state!==STATE.TOUCH_DOLLY)return;var dx=event.touches[0].pageX-event.touches[1].pageX;var dy=event.touches[0].pageY-event.touches[1].pageY;var distance=Math.sqrt(dx*dx+dy*dy);dollyEnd.set(0,distance);dollyDelta.subVectors(dollyEnd,dollyStart);var ew=element.clientWidth;var eh=element.clientHeight;var diagonal=Math.sqrt(ew*ew+eh*eh);var delta=dollyDelta.y/diagonal;if(dollyDelta.y>0){scope.dollyOut(1-delta);}else {scope.dollyIn(1+delta);}dollyStart.copy(dollyEnd); //scope.update();
+	break;case 3: // three-fingered touch: pan
+	if(scope.noPan===true)return;if(state!==STATE.TOUCH_PAN)return;panEnd.set(event.touches[0].pageX,event.touches[0].pageY);panDelta.subVectors(panEnd,panStart);scope.pan(panDelta.x,panDelta.y);panStart.copy(panEnd); //scope.update();
+	break;default:state=STATE.NONE;}}function touchend() /* event */{if(scope.enabled===false)return;scope.dispatchEvent(endEvent);state=STATE.NONE;}this.domElement.addEventListener('contextmenu',function(event){event.preventDefault();},false);this.domElement.addEventListener('mousedown',onMouseDown,false);this.domElement.addEventListener('mousewheel',onMouseWheel,false);this.domElement.addEventListener('DOMMouseScroll',onMouseWheel,false); // firefox
+	this.domElement.addEventListener('touchstart',touchstart,false);this.domElement.addEventListener('touchend',touchend,false);this.domElement.addEventListener('touchmove',touchmove,false);window.addEventListener('keydown',onKeyDown,false);};Potree.OrbitControls.prototype=Object.create(_three2.default.EventDispatcher.prototype); /**
+	 * @author mschuetz / http://mschuetz.at
+	 *
+	 *
+	 * Navigation similar to Google Earth.
+	 *
+	 * left mouse: Drag with respect to intersection
+	 * wheel: zoom towards/away from intersection
+	 * right mouse: Rotate camera around intersection
+	 *
+	 *
+	 */_three2.default.EarthControls=function(camera,renderer,scene){this.camera=camera;this.renderer=renderer;this.pointclouds=[];this.domElement=renderer.domElement;this.scene=scene; // Set to false to disable this control
+	this.enabled=true;var scope=this;var STATE={NONE:-1,DRAG:0,ROTATE:1};var state=STATE.NONE;var dragStart=new _three2.default.Vector2();var dragEnd=new _three2.default.Vector2();var sphereGeometry=new _three2.default.SphereGeometry(1,32,32);var sphereMaterial=new _three2.default.MeshNormalMaterial({shading:_three2.default.SmoothShading,transparent:true,opacity:0.5});this.pivotNode=new _three2.default.Mesh(sphereGeometry,sphereMaterial);var mouseDelta=new _three2.default.Vector2();var camStart=null;var pivot=null;this.minAngle=10/180*Math.PI; // 10°
+	this.maxAngle=70/180*Math.PI; // 70°
+	this.update=function(delta){var position=this.camera.position;this.camera.updateMatrixWorld();var proposal=new _three2.default.Object3D();proposal.position.copy(this.camera.position);proposal.rotation.copy(this.camera.rotation);proposal.updateMatrix();proposal.updateMatrixWorld();if(pivot){if(state===STATE.DRAG){var plane=new _three2.default.Plane().setFromNormalAndCoplanarPoint(new _three2.default.Vector3(0,1,0),pivot);var mouse={x:dragEnd.x/this.domElement.clientWidth*2-1,y:-(dragEnd.y/this.domElement.clientHeight)*2+1};var vec=new _three2.default.Vector3(mouse.x,mouse.y,0.5);vec.unproject(camStart);var dir=vec.sub(camStart.position).normalize();var ray=new _three2.default.Ray(camStart.position,dir);var distanceToPlane=ray.distanceToPlane(plane);if(distanceToPlane>0){var newCamPos=new _three2.default.Vector3().subVectors(pivot,dir.clone().multiplyScalar(distanceToPlane));proposal.position.copy(newCamPos);}}else if(state===STATE.ROTATE){ // rotate around pivot point
+	var diff=mouseDelta.clone().multiplyScalar(delta);diff.x*=0.3;diff.y*=0.2; // do calculations on fresh nodes 
+	var p=new _three2.default.Object3D();var c=new _three2.default.Object3D();p.add(c);p.position.copy(pivot);c.position.copy(this.camera.position).sub(pivot);c.rotation.copy(this.camera.rotation); // rotate left/right
+	p.rotation.y+=-diff.x; // rotate up/down
+	var dir=this.camera.getWorldDirection();var up=new _three2.default.Vector3(0,1,0);var side=new _three2.default.Vector3().crossVectors(up,dir);var dirp=c.position.clone();dirp.y=0;dirp.normalize();var ac=dirp.dot(c.position.clone().normalize());var angle=Math.acos(ac);if(c.position.y<0){angle=-angle;}var amount=0;if(diff.y>0){ // rotate downwards and apply minAngle limit
+	amount=diff.y-Math.max(0,this.minAngle-(angle-diff.y));}else { // rotate upwards and apply maxAngle limit
+	amount=diff.y+Math.max(0,angle-diff.y-this.maxAngle);}p.rotateOnAxis(side,-amount); // apply changes to object
+	p.updateMatrixWorld();proposal.position.copy(c.getWorldPosition());proposal.quaternion.copy(c.getWorldQuaternion());}var proposeTransformEvent={type:"proposeTransform",oldPosition:this.camera.position,newPosition:proposal.position,objections:0};this.dispatchEvent(proposeTransformEvent);if(proposeTransformEvent.objections>0){}else {this.camera.position.copy(proposal.position);this.camera.rotation.copy(proposal.rotation);}var wp=this.pivotNode.getWorldPosition().applyMatrix4(this.camera.matrixWorldInverse);var w=Math.abs(wp.z/30);var l=this.pivotNode.scale.length();this.pivotNode.scale.multiplyScalar(w/l);}mouseDelta.set(0,0);};this.reset=function(){state=STATE.NONE;this.camera.position.copy(this.position0);};function onMouseDown(event){if(scope.enabled===false)return;event.preventDefault();var rect=scope.domElement.getBoundingClientRect();var mouse={x:(event.clientX-rect.left)/scope.domElement.clientWidth*2-1,y:-((event.clientY-rect.top)/scope.domElement.clientHeight)*2+1};var I=getMousePointCloudIntersection(mouse,scope.camera,scope.renderer,scope.pointclouds);if(!I){return;}var plane=new _three2.default.Plane().setFromNormalAndCoplanarPoint(new _three2.default.Vector3(0,1,0),I);var vec=new _three2.default.Vector3(mouse.x,mouse.y,0.5);vec.unproject(scope.camera);var dir=vec.sub(scope.camera.position).normalize();var ray=new _three2.default.Ray(scope.camera.position,dir);pivot=ray.intersectPlane(plane); //pivot = I;
+	camStart=scope.camera.clone();camStart.rotation.copy(scope.camera.rotation);dragStart.set(event.clientX-rect.left,event.clientY-rect.top);dragEnd.set(event.clientX-rect.left,event.clientY-rect.top);scope.scene.add(scope.pivotNode);scope.pivotNode.position.copy(pivot);if(event.button===0){state=STATE.DRAG;}else if(event.button===2){state=STATE.ROTATE;}scope.domElement.addEventListener('mousemove',onMouseMove,false);scope.domElement.addEventListener('mouseup',onMouseUp,false);}function onMouseMove(event){if(scope.enabled===false)return;event.preventDefault();var rect=scope.domElement.getBoundingClientRect();var element=scope.domElement===document?scope.domElement.body:scope.domElement;mouseDelta.set(event.clientX-rect.left-dragEnd.x,event.clientY-rect.top-dragEnd.y);dragEnd.set(event.clientX-rect.left,event.clientY-rect.top);}function onMouseUp(){if(scope.enabled===false)return;scope.domElement.removeEventListener('mousemove',onMouseMove,false);scope.domElement.removeEventListener('mouseup',onMouseUp,false);state=STATE.NONE; //scope.dragStartIndicator.style.display = "none";
+	scope.scene.remove(scope.pivotNode);}function onMouseWheel(event){if(scope.enabled===false||scope.noZoom===true)return;event.preventDefault();var rect=scope.domElement.getBoundingClientRect();var amount=event.detail<0||event.wheelDelta>0?1:-1;var mouse={x:(event.clientX-rect.left)/scope.domElement.clientWidth*2-1,y:-((event.clientY-rect.top)/scope.domElement.clientHeight)*2+1};var I=getMousePointCloudIntersection(mouse,scope.camera,scope.renderer,scope.pointclouds);if(I){var distance=I.distanceTo(scope.camera.position);var dir=new _three2.default.Vector3().subVectors(I,scope.camera.position).normalize();scope.camera.position.add(dir.multiplyScalar(distance*0.1*amount));}}this.domElement.addEventListener('contextmenu',function(event){event.preventDefault();},false);this.domElement.addEventListener('mousedown',onMouseDown,false);this.domElement.addEventListener('mousewheel',onMouseWheel,false);this.domElement.addEventListener('DOMMouseScroll',onMouseWheel,false); // firefox
+	};_three2.default.EarthControls.prototype=Object.create(_three2.default.EventDispatcher.prototype); /**
+	 * 
+	 * @param node
+	 * @class an item in the lru list. 
+	 */function LRUItem(node){this.previous=null;this.next=null;this.node=node;} /**
+	 * 
+	 * @class A doubly-linked-list of the least recently used elements.
+	 */function LRU(){ // the least recently used item
+	this.first=null; // the most recently used item
+	this.last=null; // a list of all items in the lru list
+	this.items={};this.elements=0;this.numPoints=0;} /**
+	 * number of elements in the list
+	 * 
+	 * @returns {Number}
+	 */LRU.prototype.size=function(){return this.elements;};LRU.prototype.contains=function(node){return this.items[node.id]==null;}; /**
+	 * makes node the most recently used item. if the list does not contain node, it will be added.
+	 * 
+	 * @param node
+	 */LRU.prototype.touch=function(node){if(!node.loaded){return;}var item;if(this.items[node.id]==null){ // add to list
+	item=new LRUItem(node);item.previous=this.last;this.last=item;if(item.previous!==null){item.previous.next=item;}this.items[node.id]=item;this.elements++;if(this.first===null){this.first=item;}this.numPoints+=node.numPoints;}else { // update in list
+	item=this.items[node.id];if(item.previous===null){ // handle touch on first element
+	if(item.next!==null){this.first=item.next;this.first.previous=null;item.previous=this.last;item.next=null;this.last=item;item.previous.next=item;}}else if(item.next===null){ // handle touch on last element
+	}else { // handle touch on any other element
+	item.previous.next=item.next;item.next.previous=item.previous;item.previous=this.last;item.next=null;this.last=item;item.previous.next=item;}}}; ///**
+	// * removes the least recently used item from the list and returns it. 
+	// * if the list was empty, null will be returned.
+	// */
+	//LRU.prototype.remove = function remove(){
+	//  if(this.first === null){
+	//    return null;
+	//  }
+	//  var lru = this.first;
+	//
+	//  // if the lru list contains at least 2 items, the item after the least recently used elemnt will be the new lru item. 
+	//  if(lru.next !== null){
+	//    this.first = lru.next;
+	//    this.first.previous = null;
+	//  }else{
+	//    this.first = null;
+	//    this.last = null;
+	//  }
+	//  
+	//  delete this.items[lru.node.id];
+	//  this.elements--;
+	//  this.numPoints -= lru.node.numPoints;
+	//  
+	////  Logger.info("removed node: " + lru.node.id);
+	//  return lru.node;
+	//};
+	LRU.prototype.remove=function remove(node){var lruItem=this.items[node.id];if(lruItem){if(this.elements===1){this.first=null;this.last=null;}else {if(!lruItem.previous){this.first=lruItem.next;this.first.previous=null;}if(!lruItem.next){this.last=lruItem.previous;this.last.next=null;}if(lruItem.previous&&lruItem.next){lruItem.previous.next=lruItem.next;lruItem.next.previous=lruItem.previous;}}delete this.items[node.id];this.elements--;this.numPoints-=node.numPoints;}};LRU.prototype.getLRUItem=function(){if(this.first===null){return null;}var lru=this.first;return lru.node;};LRU.prototype.toString=function(){var string="{ ";var curr=this.first;while(curr!==null){string+=curr.node.id;if(curr.next!==null){string+=", ";}curr=curr.next;}string+="}";string+="("+this.size()+")";return string;};LRU.prototype.freeMemory=function(){if(this.elements<=1){return;}while(this.numPoints>Potree.pointLoadLimit){var element=this.first;var node=element.node;this.disposeDescendants(node);};};LRU.prototype.disposeDescendants=function(node){var stack=[];stack.push(node);while(stack.length>0){var current=stack.pop();current.dispose();this.remove(current);for(var key in current.children){if(current.children.hasOwnProperty(key)){var child=current.children[key];if(child.loaded){stack.push(current.children[key]);}}}}};Potree.PointCloudOctreeNode=function(){this.children={};this.sceneNode=null;};Potree.PointCloudOctree=function(geometry,material){_three2.default.Object3D.call(this);Potree.PointCloudOctree.lru=Potree.PointCloudOctree.lru||new LRU();this.pcoGeometry=geometry;this.boundingBox=this.pcoGeometry.tightBoundingBox;this.boundingSphere=this.boundingBox.getBoundingSphere();this.material=material||new Potree.PointCloudMaterial();this.visiblePointsTarget=2*1000*1000;this.minimumNodePixelSize=150;this.level=0;this.position.sub(geometry.offset);this.updateMatrix();this.showBoundingBox=false;this.boundingBoxNodes=[];this.loadQueue=[];this.visibleBounds=new _three2.default.Box3();this.visibleNodes=[];this.visibleGeometry=[];this.pickTarget;this.generateDEM=false;this.root=this.pcoGeometry.root;};Potree.PointCloudOctree.prototype=Object.create(_three2.default.Object3D.prototype);Potree.PointCloudOctree.prototype.updateVisibility=function(camera,renderer){this.numVisibleNodes=0;this.numVisiblePoints=0; // frustum in object space
+	camera.updateMatrixWorld();var frustum=new _three2.default.Frustum();var viewI=camera.matrixWorldInverse;var world=this.matrixWorld;var proj=camera.projectionMatrix;var fm=new _three2.default.Matrix4().multiply(proj).multiply(viewI).multiply(world);frustum.setFromMatrix(fm); // camera position in object space
+	var view=camera.matrixWorld;var worldI=new _three2.default.Matrix4().getInverse(world);var camMatrixObject=new _three2.default.Matrix4().multiply(worldI).multiply(view);var camObjPos=new _three2.default.Vector3().setFromMatrixPosition(camMatrixObject); // traverse nodes with highest weight(depends on node size and distance to camera) first
+	var priorityQueue=new _BinaryHeap2.default(function(x){return 1/x.weight;});priorityQueue.push({node:this.root,weight:1});var visibleNodes=[];var visibleGeometry=[];var unloadedGeometry=[];var pointCount=0; // first, hide all visible nodes
+	if(this.root instanceof Potree.PointCloudOctreeNode){this.hideDescendants(this.root.sceneNode);}for(var i=0;i<this.boundingBoxNodes.length;i++){this.boundingBoxNodes[i].visible=false;}while(priorityQueue.size()>0){var element=priorityQueue.pop();var node=element.node;var parent=element.parent;var box=node.boundingBox;var insideFrustum=frustum.intersectsBox(box);var visible=insideFrustum;visible=visible&&!(this.numVisiblePoints+node.numPoints>this.visiblePointsTarget);if(!visible){continue;}this.numVisibleNodes++;this.numVisiblePoints+=node.numPoints; // if geometry is loaded, create a scene node
+	if(node instanceof Potree.PointCloudOctreeGeometryNode){var geometryNode=node;var geometry=geometryNode.geometry;if((typeof parent==="undefined"||parent instanceof Potree.PointCloudOctreeNode)&&geometryNode.loaded){var pcoNode=new Potree.PointCloudOctreeNode();var sceneNode=new _three2.default.PointCloud(geometry,this.material);sceneNode.visible=false;pcoNode.name=geometryNode.name;pcoNode.level=geometryNode.level;pcoNode.numPoints=geometryNode.numPoints;pcoNode.boundingBox=geometry.boundingBox;pcoNode.tightBoundingBox=geometry.tightBoundingBox;pcoNode.boundingSphere=pcoNode.boundingBox.getBoundingSphere();pcoNode.geometryNode=geometryNode;pcoNode.parent=parent;pcoNode.children=geometryNode.children;sceneNode.boundingBox=pcoNode.boundingBox;sceneNode.boundingSphere=pcoNode.boundingSphere;sceneNode.numPoints=pcoNode.numPoints;sceneNode.level=pcoNode.level;pcoNode.sceneNode=sceneNode;if(typeof node.parent==="undefined"){this.root=pcoNode;this.add(pcoNode.sceneNode);sceneNode.matrixWorld.multiplyMatrices(this.matrixWorld,sceneNode.matrix);}else {var childIndex=parseInt(pcoNode.name[pcoNode.name.length-1]);parent.sceneNode.add(sceneNode);parent.children[childIndex]=pcoNode;sceneNode.matrixWorld.multiplyMatrices(parent.sceneNode.matrixWorld,sceneNode.matrix);}node=pcoNode;}if(!geometryNode.loaded){unloadedGeometry.push(node);visibleGeometry.push(node);}}if(node instanceof Potree.PointCloudOctreeNode){Potree.PointCloudOctree.lru.touch(node.geometryNode);node.sceneNode.visible=true;node.sceneNode.material=this.material;visibleNodes.push(node);visibleGeometry.push(node.geometryNode);if(node.parent){node.sceneNode.matrixWorld.multiplyMatrices(node.parent.sceneNode.matrixWorld,node.sceneNode.matrix);}else {node.sceneNode.matrixWorld.multiplyMatrices(this.matrixWorld,node.sceneNode.matrix);}if(this.showBoundingBox&&!node.boundingBoxNode){var boxHelper=new _three2.default.BoxHelper(node.sceneNode);this.add(boxHelper);this.boundingBoxNodes.push(boxHelper);node.boundingBoxNode=boxHelper;node.boundingBoxNode.matrixWorld.copy(node.sceneNode.matrixWorld);}else if(this.showBoundingBox){node.boundingBoxNode.visible=true;node.boundingBoxNode.matrixWorld.copy(node.sceneNode.matrixWorld);}else if(!this.showBoundingBox&&node.boundingBoxNode){node.boundingBoxNode.visible=false;}if(this.generateDEM&&node.level<=2){if(!node.dem){node.dem=this.createDEM(node);}}} // add child nodes to priorityQueue
+	for(var i=0;i<8;i++){if(!node.children[i]){continue;}var child=node.children[i];var sphere=child.boundingSphere;var distance=sphere.center.distanceTo(camObjPos);var radius=sphere.radius;var fov=camera.fov/2*Math.PI/180.0;var pr=1/Math.tan(fov)*radius/Math.sqrt(distance*distance-radius*radius);var screenPixelRadius=renderer.domElement.clientHeight*pr;if(screenPixelRadius<this.minimumNodePixelSize){continue;}var weight=pr;if(distance-radius<0){weight=Number.MAX_VALUE;}priorityQueue.push({node:child,parent:node,weight:weight});}}this.visibleNodes=visibleNodes;this.visibleGeometry=visibleGeometry; // load next few unloaded geometries
+	for(var i=0;i<Math.min(5,unloadedGeometry.length);i++){unloadedGeometry[i].load();}};Potree.PointCloudOctree.prototype.updateVisibleBounds=function(){var leafNodes=[];for(var i=0;i<this.visibleNodes.length;i++){var node=this.visibleNodes[i];var isLeaf=true;for(var j=0;j<node.children.length;j++){var child=node.children[j];if(child instanceof Potree.PointCloudOctreeNode){isLeaf=isLeaf&&!child.sceneNode.visible;}else if(child instanceof Potree.PointCloudOctreeGeometryNode){isLeaf=true;}}if(isLeaf){leafNodes.push(node);}}this.visibleBounds.min=new _three2.default.Vector3(Infinity,Infinity,Infinity);this.visibleBounds.max=new _three2.default.Vector3(-Infinity,-Infinity,-Infinity);for(var i=0;i<leafNodes.length;i++){var node=leafNodes[i];this.visibleBounds.expandByPoint(node.boundingBox.min);this.visibleBounds.expandByPoint(node.boundingBox.max);}};Potree.PointCloudOctree.prototype.updateMaterial=function(material,visibleNodes,camera,renderer){material.fov=camera.fov*(Math.PI/180);material.screenWidth=renderer.domElement.clientWidth;material.screenHeight=renderer.domElement.clientHeight;material.spacing=this.pcoGeometry.spacing;material.near=camera.near;material.far=camera.far;material.uniforms.octreeSize.value=this.pcoGeometry.boundingBox.size().x; // update visibility texture
+	if(material.pointSizeType){if(material.pointSizeType===Potree.PointSizeType.ADAPTIVE||material.pointColorType===Potree.PointColorType.OCTREE_DEPTH){this.updateVisibilityTexture(material,visibleNodes);}}};Potree.PointCloudOctree.prototype.update=function(camera,renderer){this.updateVisibility(camera,renderer);this.updateMaterial(this.material,this.visibleNodes,camera,renderer);this.updateVisibleBounds();Potree.PointCloudOctree.lru.freeMemory(); // TODO bounds
+	// TODO free memory
+	};Potree.PointCloudOctree.prototype.updateVisibilityTexture=function(material,visibleNodes){if(!material){return;}var texture=material.visibleNodesTexture;var data=texture.image.data; // copy array
+	visibleNodes=visibleNodes.slice(); // sort by level and index, e.g. r, r0, r3, r4, r01, r07, r30, ...
+	var sort=function sort(a,b){var na=a.name;var nb=b.name;if(na.length!=nb.length)return na.length-nb.length;if(na<nb)return -1;if(na>nb)return 1;return 0;};visibleNodes.sort(sort);for(var i=0;i<visibleNodes.length;i++){var node=visibleNodes[i];var children=[];for(var j=0;j<8;j++){var child=node.children[j];if(child instanceof Potree.PointCloudOctreeNode&&child.sceneNode.visible){children.push(child);}}children.sort(function(a,b){if(a.name<b.name)return -1;if(a.name>b.name)return 1;return 0;});data[i*3+0]=0;data[i*3+1]=0;data[i*3+2]=0;for(var j=0;j<children.length;j++){var child=children[j];var index=parseInt(child.name.substr(-1));data[i*3+0]+=Math.pow(2,index);if(j===0){var vArrayIndex=visibleNodes.indexOf(child);data[i*3+1]=vArrayIndex-i;}}}texture.needsUpdate=true;};Potree.PointCloudOctree.prototype.nodesOnRay=function(nodes,ray){var nodesOnRay=[];var _ray=ray.clone();for(var i=0;i<nodes.length;i++){var node=nodes[i]; //var inverseWorld = new THREE.Matrix4().getInverse(node.matrixWorld);
+	var sphere=node.boundingSphere.clone().applyMatrix4(node.sceneNode.matrixWorld);if(_ray.isIntersectionSphere(sphere)){nodesOnRay.push(node);}}return nodesOnRay;};Potree.PointCloudOctree.prototype.updateMatrixWorld=function(force){ //node.matrixWorld.multiplyMatrices( node.parent.matrixWorld, node.matrix );
+	if(this.matrixAutoUpdate===true)this.updateMatrix();if(this.matrixWorldNeedsUpdate===true||force===true){if(this.parent===undefined){this.matrixWorld.copy(this.matrix);}else {this.matrixWorld.multiplyMatrices(this.parent.matrixWorld,this.matrix);}this.matrixWorldNeedsUpdate=false;force=true;}};Potree.PointCloudOctree.prototype.hideDescendants=function(object){var stack=[];for(var i=0;i<object.children.length;i++){var child=object.children[i];if(child.visible){stack.push(child);}}while(stack.length>0){var object=stack.shift();object.visible=false;for(var i=0;i<object.children.length;i++){var child=object.children[i];if(child.visible){stack.push(child);}}}};Potree.PointCloudOctree.prototype.moveToOrigin=function(){this.position.set(0,0,0);this.updateMatrixWorld(true);var box=this.boundingBox;var transform=this.matrixWorld;var tBox=Potree.utils.computeTransformedBoundingBox(box,transform);this.position.set(0,0,0).sub(tBox.center());};Potree.PointCloudOctree.prototype.moveToGroundPlane=function(){this.updateMatrixWorld(true);var box=this.boundingBox;var transform=this.matrixWorld;var tBox=Potree.utils.computeTransformedBoundingBox(box,transform);this.position.y+=-tBox.min.y;};Potree.PointCloudOctree.prototype.getBoundingBoxWorld=function(){this.updateMatrixWorld(true);var box=this.boundingBox;var transform=this.matrixWorld;var tBox=Potree.utils.computeTransformedBoundingBox(box,transform);return tBox;}; /**
+	 * returns points inside the profile points
+	 *
+	 * maxDepth:    search points up to the given octree depth
+	 *
+	 *
+	 * The return value is an array with all segments of the profile path
+	 *  var segment = {
+	 *    start:  THREE.Vector3,
+	 *    end:  THREE.Vector3,
+	 *    points: {}
+	 *    project: function()
+	 *  };
+	 *
+	 * The project() function inside each segment can be used to transform
+	 * that segments point coordinates to line up along the x-axis.
+	 *
+	 *
+	 */Potree.PointCloudOctree.prototype.getPointsInProfile=function(profile,maxDepth){var points={segments:[],boundingBox:new _three2.default.Box3(),projectedBoundingBox:new _three2.default.Box2()}; // evaluate segments
+	for(var i=0;i<profile.points.length-1;i++){var start=profile.points[i];var end=profile.points[i+1];var ps=this.getProfile(start,end,profile.width,maxDepth);var segment={start:start,end:end,points:ps,project:null};points.segments.push(segment);points.boundingBox.expandByPoint(ps.boundingBox.min);points.boundingBox.expandByPoint(ps.boundingBox.max);} // add projection functions to the segments
+	var mileage=new _three2.default.Vector3();for(var i=0;i<points.segments.length;i++){var segment=points.segments[i];var start=segment.start;var end=segment.end;var project=function(_start,_end,_mileage,_boundingBox){var start=_start;var end=_end;var mileage=_mileage;var boundingBox=_boundingBox;var xAxis=new _three2.default.Vector3(1,0,0);var dir=new _three2.default.Vector3().subVectors(end,start);dir.y=0;dir.normalize();var alpha=Math.acos(xAxis.dot(dir));if(dir.z>0){alpha=-alpha;}return function(position){var toOrigin=new _three2.default.Matrix4().makeTranslation(-start.x,-boundingBox.min.y,-start.z);var alignWithX=new _three2.default.Matrix4().makeRotationY(-alpha);var applyMileage=new _three2.default.Matrix4().makeTranslation(mileage.x,0,0);var pos=position.clone();pos.applyMatrix4(toOrigin);pos.applyMatrix4(alignWithX);pos.applyMatrix4(applyMileage);return pos;};}(start,end,mileage.clone(),points.boundingBox.clone());segment.project=project;mileage.x+=new _three2.default.Vector3(start.x,0,start.z).distanceTo(new _three2.default.Vector3(end.x,0,end.z));mileage.y+=end.y-start.y;}points.projectedBoundingBox.min.x=0;points.projectedBoundingBox.min.y=points.boundingBox.min.y;points.projectedBoundingBox.max.x=mileage.x;points.projectedBoundingBox.max.y=points.boundingBox.max.y;return points;}; /**
+	 * returns points inside the given profile bounds.
+	 *
+	 * start:   
+	 * end:   
+	 * width: 
+	 * depth:   search points up to the given octree depth
+	 * callback:  if specified, points are loaded before searching
+	 *        
+	 *
+	 */Potree.PointCloudOctree.prototype.getProfile=function(start,end,width,depth,callback){if(callback!==undefined){this.profileRequests.push(new Potree.ProfileRequest(start,end,width,depth,callback));}else {var stack=[];stack.push(this);var center=new _three2.default.Vector3().addVectors(end,start).multiplyScalar(0.5);var length=new _three2.default.Vector3().subVectors(end,start).length();var side=new _three2.default.Vector3().subVectors(end,start).normalize();var up=new _three2.default.Vector3(0,1,0);var forward=new _three2.default.Vector3().crossVectors(side,up).normalize();var N=forward;var cutPlane=new _three2.default.Plane().setFromNormalAndCoplanarPoint(N,start);var halfPlane=new _three2.default.Plane().setFromNormalAndCoplanarPoint(side,center);var inside=null;var boundingBox=new _three2.default.Box3();while(stack.length>0){var object=stack.shift();var pointsFound=0;if(object instanceof _three2.default.PointCloud){var geometry=object.geometry;var positions=geometry.attributes.position;var p=positions.array;var numPoints=object.numPoints;if(!inside){inside={};for(var property in geometry.attributes){if(geometry.attributes.hasOwnProperty(property)){if(property==="indices"){}else {inside[property]=[];}}}}for(var i=0;i<numPoints;i++){var pos=new _three2.default.Vector3(p[3*i],p[3*i+1],p[3*i+2]);pos.applyMatrix4(this.matrixWorld);var distance=Math.abs(cutPlane.distanceToPoint(pos));var centerDistance=Math.abs(halfPlane.distanceToPoint(pos));if(distance<width/2&&centerDistance<length/2){boundingBox.expandByPoint(pos);for(var property in geometry.attributes){if(geometry.attributes.hasOwnProperty(property)){if(property==="position"){inside[property].push(pos);}else if(property==="indices"){ // skip indices
+	}else {var values=geometry.attributes[property];if(values.itemSize===1){inside[property].push(values.array[i+j]);}else {var value=[];for(var j=0;j<values.itemSize;j++){value.push(values.array[i*values.itemSize+j]);}inside[property].push(value);}}}}pointsFound++;}}} //console.log("traversing: " + object.name + ", #points found: " + pointsFound);
+	if(object==this||object.level<depth){for(var i=0;i<object.children.length;i++){var child=object.children[i];if(child instanceof _three2.default.PointCloud){var sphere=child.boundingSphere.clone().applyMatrix4(child.matrixWorld);if(cutPlane.distanceToSphere(sphere)<sphere.radius){stack.push(child);}}}}}inside.numPoints=inside.position.length;var project=function(_start,_end){var start=_start;var end=_end;var xAxis=new _three2.default.Vector3(1,0,0);var dir=new _three2.default.Vector3().subVectors(end,start);dir.y=0;dir.normalize();var alpha=Math.acos(xAxis.dot(dir));if(dir.z>0){alpha=-alpha;}return function(position){var toOrigin=new _three2.default.Matrix4().makeTranslation(-start.x,-start.y,-start.z);var alignWithX=new _three2.default.Matrix4().makeRotationY(-alpha);var pos=position.clone();pos.applyMatrix4(toOrigin);pos.applyMatrix4(alignWithX);return pos;};}(start,end);inside.project=project;inside.boundingBox=boundingBox;return inside;}};Potree.PointCloudOctree.prototype.getVisibleExtent=function(){return this.visibleBounds.applyMatrix4(this.matrixWorld);}; /**
+	 *
+	 *
+	 *
+	 * params.pickWindowSize: Look for points inside a pixel window of this size.
+	 *              Use odd values: 1, 3, 5, ...
+	 * 
+	 * 
+	 * TODO: only draw pixels that are actually read with readPixels(). 
+	 * 
+	 */Potree.PointCloudOctree.prototype.pick=function(renderer,camera,ray,params){ // this function finds intersections by rendering point indices and then checking the point index at the mouse location.
+	// point indices are 3 byte and rendered to the RGB component.
+	// point cloud node indices are 1 byte and stored in the ALPHA component.
+	// this limits picking capabilities to 256 nodes and 2^24 points per node. 
+	var params=params||{};var pickWindowSize=params.pickWindowSize||17;var nodes=this.nodesOnRay(this.visibleNodes,ray);if(nodes.length===0){return null;}var width=Math.ceil(renderer.domElement.clientWidth);var height=Math.ceil(renderer.domElement.clientHeight);var pixelPos=new _three2.default.Vector3().addVectors(camera.position,ray.direction).project(camera);pixelPos.addScalar(1).multiplyScalar(0.5);pixelPos.x*=width;pixelPos.y*=height;if(!this.pickTarget){this.pickTarget=new _three2.default.WebGLRenderTarget(1,1,{minFilter:_three2.default.LinearFilter,magFilter:_three2.default.NearestFilter,format:_three2.default.RGBAFormat});}else if(this.pickTarget.width!=width||this.pickTarget.height!=height){this.pickTarget.dispose();this.pickTarget=new _three2.default.WebGLRenderTarget(1,1,{minFilter:_three2.default.LinearFilter,magFilter:_three2.default.NearestFilter,format:_three2.default.RGBAFormat});}this.pickTarget.setSize(width,height); // setup pick material.
+	// use the same point size functions as the main material to get the same point sizes.
+	if(!this.pickMaterial){this.pickMaterial=new Potree.PointCloudMaterial();this.pickMaterial.pointColorType=Potree.PointColorType.POINT_INDEX;}this.pickMaterial.pointSizeType=this.material.pointSizeType;this.pickMaterial.size=this.material.size;this.pickMaterial.pointShape=this.material.pointShape;this.pickMaterial.interpolate=this.material.interpolate;this.pickMaterial.minSize=this.material.minSize;this.pickMaterial.maxSize=this.material.maxSize;this.updateMaterial(this.pickMaterial,nodes,camera,renderer);var _gl=renderer.context;_gl.enable(_gl.SCISSOR_TEST);_gl.scissor(pixelPos.x-(pickWindowSize-1)/2,pixelPos.y-(pickWindowSize-1)/2,pickWindowSize,pickWindowSize);_gl.disable(_gl.SCISSOR_TEST);var material=this.pickMaterial;renderer.setRenderTarget(this.pickTarget);renderer.state.setDepthTest(material.depthTest);renderer.state.setDepthWrite(material.depthWrite);renderer.state.setBlending(_three2.default.NoBlending);renderer.clear(renderer.autoClearColor,renderer.autoClearDepth,renderer.autoClearStencil); //TODO: UGLY HACK CHAMPIONSHIP SUBMISSION!! drawing first node does not work properly so we draw it twice.
+	if(nodes.length>0){nodes.push(nodes[0]);}for(var i=0;i<nodes.length;i++){var object=nodes[i].sceneNode;var geometry=object.geometry;if(!geometry.attributes.indices.buffer){continue;}material.pcIndex=i;if(material.program){var program=material.program.program;_gl.useProgram(program); //_gl.disable( _gl.BLEND );
+	var attributePointer=_gl.getAttribLocation(program,"indices");var attributeSize=4;_gl.bindBuffer(_gl.ARRAY_BUFFER,geometry.attributes.indices.buffer); //if(!bufferSubmitted){
+	//  _gl.bufferData( _gl.ARRAY_BUFFER, new Uint8Array(geometry.attributes.indices.array), _gl.STATIC_DRAW );
+	//  bufferSubmitted = true;
+	//}
+	_gl.enableVertexAttribArray(attributePointer);_gl.vertexAttribPointer(attributePointer,attributeSize,_gl.UNSIGNED_BYTE,true,0,0);_gl.uniform1f(material.program.uniforms.pcIndex,material.pcIndex);}renderer.renderBufferDirect(camera,[],null,material,geometry,object);var program=material.program.program;_gl.useProgram(program);var attributePointer=_gl.getAttribLocation(program,"indices");_gl.disableVertexAttribArray(attributePointer);}var pixelCount=pickWindowSize*pickWindowSize;var buffer=new ArrayBuffer(pixelCount*4);var pixels=new Uint8Array(buffer);var ibuffer=new Uint32Array(buffer);renderer.context.readPixels(pixelPos.x-(pickWindowSize-1)/2,pixelPos.y-(pickWindowSize-1)/2,pickWindowSize,pickWindowSize,renderer.context.RGBA,renderer.context.UNSIGNED_BYTE,pixels); // find closest hit inside pixelWindow boundaries
+	var min=Number.MAX_VALUE;var hit=null; //console.log("finding closest hit");
+	for(var u=0;u<pickWindowSize;u++){for(var v=0;v<pickWindowSize;v++){var offset=u+v*pickWindowSize;var distance=Math.pow(u-(pickWindowSize-1)/2,2)+Math.pow(v-(pickWindowSize-1)/2,2);var pcIndex=pixels[4*offset+3];pixels[4*offset+3]=0;var pIndex=ibuffer[offset];if((pIndex!==0||pcIndex!==0)&&distance<min){hit={pIndex:pIndex,pcIndex:pcIndex};min=distance;}}}if(hit){var point={};var pc=nodes[hit.pcIndex].sceneNode;var attributes=pc.geometry.attributes;for(var property in attributes){if(attributes.hasOwnProperty(property)){var values=geometry.attributes[property];if(property==="position"){var positionArray=pc.geometry.attributes.position.array;var x=positionArray[3*hit.pIndex+0];var y=positionArray[3*hit.pIndex+1];var z=positionArray[3*hit.pIndex+2];var position=new _three2.default.Vector3(x,y,z);position.applyMatrix4(this.matrixWorld);point[property]=position;}else if(property==="indices"){}else {if(values.itemSize===1){point[property]=values.array[i+j];}else {var value=[];for(var j=0;j<values.itemSize;j++){value.push(values.array[i*values.itemSize+j]);}point[property]=value;}}}}return point;}else {return null;}};var demTime=0;Potree.PointCloudOctree.prototype.createDEM=function(node){var start=new Date().getTime();var sceneNode=node.sceneNode;var world=sceneNode.matrixWorld;var boundingBox=sceneNode.boundingBox.clone().applyMatrix4(world);var bbSize=boundingBox.size();var positions=sceneNode.geometry.attributes.position.array;var demSize=64;var demMArray=new Array(demSize*demSize);var dem=new Float32Array(demSize*demSize);var n=positions.length/3;var toWorld=function toWorld(dx,dy){var x=dx*bbSize.x/(demSize-1)+boundingBox.min.x;var y=dem[dx+dy*demSize];var z=dy*bbSize.z/(demSize-1)+boundingBox.min.z;return [x,y,z];};var toDem=function toDem(x,y){var dx=parseInt(demSize*(x-boundingBox.min.x)/bbSize.x);var dy=parseInt(demSize*(z-boundingBox.min.z)/bbSize.z);dx=Math.min(dx,demSize-1);dy=Math.min(dy,demSize-1);return [dx,dy];};for(var i=0;i<n;i++){var x=positions[3*i+0];var y=positions[3*i+1];var z=positions[3*i+2];var worldPos=new _three2.default.Vector3(x,y,z).applyMatrix4(world);var dx=parseInt(demSize*(worldPos.x-boundingBox.min.x)/bbSize.x);var dy=parseInt(demSize*(worldPos.z-boundingBox.min.z)/bbSize.z);dx=Math.min(dx,demSize-1);dy=Math.min(dy,demSize-1);var index=dx+dy*demSize;if(!demMArray[index]){demMArray[index]=[];}demMArray[index].push(worldPos.y); //if(dem[dx + dy * demSize] === 0){
+	//  dem[dx + dy * demSize] = worldPos.y;
+	//}else{
+	//  dem[dx + dy * demSize] = Math.max(dem[dx + dy * demSize], worldPos.y);
+	//}
+	}for(var i=0;i<demMArray.length;i++){var values=demMArray[i];if(!values){dem[i]=0;}else if(values.length===0){dem[i]=0;}else {var medianIndex=parseInt((values.length-1)/2);dem[i]=values[medianIndex];}}var box2=new _three2.default.Box2();box2.expandByPoint(new _three2.default.Vector3(boundingBox.min.x,boundingBox.min.z));box2.expandByPoint(new _three2.default.Vector3(boundingBox.max.x,boundingBox.max.z));var result={boundingBox:boundingBox,boundingBox2D:box2,dem:dem,demSize:demSize}; //if(node.level == 2){
+	//  var geometry = new THREE.BufferGeometry();
+	//  var vertices = new Float32Array((demSize-1)*(demSize-1)*2*3*3);
+	//  var offset = 0;
+	//  for(var i = 0; i < demSize-1; i++){
+	//    for(var j = 0; j < demSize-1; j++){
+	//      //var offset = 18*i + 18*j*demSize;
+	//      
+	//      var dx = i;
+	//      var dy = j;
+	//      
+	//      var v1 = toWorld(dx, dy);
+	//      var v2 = toWorld(dx+1, dy);
+	//      var v3 = toWorld(dx+1, dy+1);
+	//      var v4 = toWorld(dx, dy+1);
+	//      
+	//      vertices[offset+0] = v3[0];
+	//      vertices[offset+1] = v3[1];
+	//      vertices[offset+2] = v3[2];
+	//      
+	//      vertices[offset+3] = v2[0];
+	//      vertices[offset+4] = v2[1];
+	//      vertices[offset+5] = v2[2];
+	//      
+	//      vertices[offset+6] = v1[0];
+	//      vertices[offset+7] = v1[1];
+	//      vertices[offset+8] = v1[2];
+	//      
+	//      
+	//      vertices[offset+9 ] = v3[0];
+	//      vertices[offset+10] = v3[1];
+	//      vertices[offset+11] = v3[2];
+	//      
+	//      vertices[offset+12] = v1[0];
+	//      vertices[offset+13] = v1[1];
+	//      vertices[offset+14] = v1[2];
+	//      
+	//      vertices[offset+15] = v4[0];
+	//      vertices[offset+16] = v4[1];
+	//      vertices[offset+17] = v4[2];
+	//           
+	//          
+	//      
+	//      //var x = (dx * bbSize.min.x) / demSize + boundingBox.min.x;
+	//      //var y = (dy * bbSize.min.y) / demSize + boundingBox.min.y;
+	//      //var z = dem[dx + dy * demSize];
+	//      
+	//      offset += 18;
+	//      
+	//    }
+	//  }
+	//  
+	//  geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+	//  geometry.computeFaceNormals();
+	//  geometry.computeVertexNormals();
+	//  
+	//  var material = new THREE.MeshNormalMaterial( { color: 0xff0000, shading: THREE.SmoothShading } );
+	//  var mesh = new THREE.Mesh( geometry, material );
+	//  scene.add(mesh);
+	//}
+	//
+	//
+	//if(node.level == 0){
+	//  scene.add(mesh);
+	//  
+	//  var demb = new Uint8Array(demSize*demSize*4);
+	//  for(var i = 0; i < demSize*demSize; i++){
+	//    demb[4*i + 0] = 255 * dem[i] / 300;
+	//    demb[4*i + 1] = 255 * dem[i] / 300;
+	//    demb[4*i + 2] = 255 * dem[i] / 300;
+	//    demb[4*i + 3] = 255;
+	//  }
+	//
+	//  var img = pixelsArrayToImage(demb, demSize, demSize);
+	//  img.style.boder = "2px solid red";
+	//  img.style.position = "absolute";
+	//  img.style.top  = "0px";
+	//  img.style.width = "400px";
+	//  img.style.height = "200px";
+	//  var txt = document.createElement("div");
+	//  txt.innerHTML = node.name;
+	//  //document.body.appendChild(txt);
+	//  document.body.appendChild(img);
+	//}
+	var end=new Date().getTime();var duration=end-start;demTime+=duration;return result;};Potree.PointCloudOctree.prototype.getDEMHeight=function(position){var pos2=new _three2.default.Vector2(position.x,position.z);var demHeight=function demHeight(dem){var demSize=dem.demSize;var box=dem.boundingBox2D;var insideBox=box.containsPoint(pos2);if(box.containsPoint(pos2)){var uv=pos2.clone().sub(box.min).divide(box.size());var xy=uv.clone().multiplyScalar(demSize);var demHeight=0;if(xy.x>0.5&&xy.x<demSize-0.5&&xy.y>0.5&&xy.y<demSize-0.5){var i=Math.floor(xy.x-0.5);var j=Math.floor(xy.y-0.5);i=i===demSize-1?demSize-2:i;j=j===demSize-1?demSize-2:j;var u=xy.x-i-0.5;var v=xy.y-j-0.5;var index00=i+j*demSize;var index10=i+1+j*demSize;var index01=i+(j+1)*demSize;var index11=i+1+(j+1)*demSize;var height00=dem.dem[index00];var height10=dem.dem[index10];var height01=dem.dem[index01];var height11=dem.dem[index11];if(height00===0||height10===0||height01===0||height11===0){demHeight=null;}else {var hx1=height00*(1-u)+height10*u;var hx2=height01*(1-u)+height11*u;demHeight=hx1*(1-v)+hx2*v;}var bla;}else {xy.x=Math.min(parseInt(Math.min(xy.x,demSize)),demSize-1);xy.y=Math.min(parseInt(Math.min(xy.y,demSize)),demSize-1);var index=xy.x+xy.y*demSize;demHeight=dem.dem[index];}return demHeight;}return null;};var height=null;var stack=[];var chosenNode=null;if(this.root.dem){stack.push(this.root);}while(stack.length>0){var node=stack.shift();var dem=node.dem;var demSize=dem.demSize;var box=dem.boundingBox2D;var insideBox=box.containsPoint(pos2);if(!box.containsPoint(pos2)){continue;}var dh=demHeight(dem);if(!height){height=dh;}else if(dh!=null&&dh>0){height=dh;}if(node.level<=2){for(var i=0;i<node.children.length;i++){var child=node.children[i];if(child.dem){stack.push(child);}}}}return height;};Potree.PointCloudOctree.prototype.generateTerain=function(){var bb=this.boundingBox.clone().applyMatrix4(this.matrixWorld);var width=300;var height=300;var geometry=new _three2.default.BufferGeometry();var vertices=new Float32Array(width*height*3);var offset=0;for(var i=0;i<width;i++){for(var j=0;j<height;j++){var u=i/width;var v=j/height;var x=u*bb.size().x+bb.min.x;var z=v*bb.size().z+bb.min.z;var y=this.getDEMHeight(new _three2.default.Vector3(x,0,z));if(!y){y=0;}vertices[offset+0]=x;vertices[offset+1]=y;vertices[offset+2]=z; //var sm = new THREE.Mesh(sg);
+	//sm.position.set(x,y,z);
+	//scene.add(sm);
+	offset+=3;}}geometry.addAttribute('position',new _three2.default.BufferAttribute(vertices,3));var material=new _three2.default.PointCloudMaterial({size:20,color:0x00ff00});var pc=new _three2.default.PointCloud(geometry,material);scene.add(pc);};Object.defineProperty(Potree.PointCloudOctree.prototype,"progress",{get:function get(){return this.visibleNodes.length/this.visibleGeometry.length;}});var nodesLoadTimes={};Potree.PointCloudOctreeGeometry=function(){Potree.PointCloudOctree.lru=Potree.PointCloudOctree.lru||new LRU();this.url=null;this.octreeDir=null;this.spacing=0;this.boundingBox=null;this.root=null;this.numNodesLoading=0;this.nodes=null;this.pointAttributes=null;this.hierarchyStepSize=-1;this.loader=null;};Potree.PointCloudOctreeGeometryNode=function(name,pcoGeometry,boundingBox){this.id=Potree.PointCloudOctreeGeometryNode.IDCount++;this.name=name;this.index=parseInt(name.charAt(name.length-1));this.pcoGeometry=pcoGeometry;this.geometry=null;this.boundingBox=boundingBox;this.boundingSphere=boundingBox.getBoundingSphere();this.children={};this.numPoints=0;this.level=null;};Potree.PointCloudOctreeGeometryNode.IDCount=0;Potree.PointCloudOctreeGeometryNode.prototype.getURL=function(){var url="";var version=this.pcoGeometry.loader.version;if(version.equalOrHigher("1.5")){url=this.pcoGeometry.octreeDir+"/"+this.getHierarchyPath()+"/"+this.name;}else if(version.equalOrHigher("1.4")){url=this.pcoGeometry.octreeDir+"/"+this.name;}else if(version.upTo("1.3")){url=this.pcoGeometry.octreeDir+"/"+this.name;}return url;};Potree.PointCloudOctreeGeometryNode.prototype.getHierarchyPath=function(){var path="r/";var hierarchyStepSize=this.pcoGeometry.hierarchyStepSize;var indices=this.name.substr(1);var numParts=Math.floor(indices.length/hierarchyStepSize);for(var i=0;i<numParts;i++){path+=indices.substr(i*hierarchyStepSize,hierarchyStepSize)+"/";}path=path.slice(0,-1);return path;};Potree.PointCloudOctreeGeometryNode.prototype.addChild=function(child){this.children[child.index]=child;child.parent=this;};Potree.PointCloudOctreeGeometryNode.prototype.load=function(){if(this.loading===true||this.pcoGeometry.numNodesLoading>3){return;}this.loading=true; //if(Potree.PointCloudOctree.lru.numPoints + this.numPoints >= Potree.pointLoadLimit){
+	//  Potree.PointCloudOctree.disposeLeastRecentlyUsed(this.numPoints);
+	//}
+	this.pcoGeometry.numNodesLoading++;if(this.pcoGeometry.loader.version.equalOrHigher("1.5")){if(this.level%this.pcoGeometry.hierarchyStepSize===0&&this.hasChildren){this.loadHierachyThenPoints();}else {this.loadPoints();}}else {this.loadPoints();}};Potree.PointCloudOctreeGeometryNode.prototype.loadPoints=function(){this.pcoGeometry.loader.load(this);};Potree.PointCloudOctreeGeometryNode.prototype.loadHierachyThenPoints=function(){var node=this; // load hierarchy
+	var callback=function callback(node,hbuffer){var count=hbuffer.byteLength/5;var view=new DataView(hbuffer);var stack=[];var children=view.getUint8(0);var numPoints=view.getUint32(1,true);node.numPoints=numPoints;stack.push({children:children,numPoints:numPoints,name:node.name});var decoded=[];var offset=5;while(stack.length>0){var snode=stack.shift();var mask=1;for(var i=0;i<8;i++){if((snode.children&mask)!==0){var childIndex=i;var childName=snode.name+i;var childChildren=view.getUint8(offset);var childNumPoints=view.getUint32(offset+1,true);stack.push({children:childChildren,numPoints:childNumPoints,name:childName});decoded.push({children:childChildren,numPoints:childNumPoints,name:childName});offset+=5;}mask=mask*2;}if(offset===hbuffer.byteLength){break;}} //console.log(decoded);
+	var nodes={};nodes[node.name]=node;var pco=node.pcoGeometry;for(var i=0;i<decoded.length;i++){var name=decoded[i].name;var numPoints=decoded[i].numPoints;var index=parseInt(name.charAt(name.length-1));var parentName=name.substring(0,name.length-1);var parentNode=nodes[parentName];var level=name.length-1;var boundingBox=Potree.POCLoader.createChildAABB(parentNode.boundingBox,index);var currentNode=new Potree.PointCloudOctreeGeometryNode(name,pco,boundingBox);currentNode.level=level;currentNode.numPoints=numPoints;currentNode.hasChildren=decoded[i].children>0;parentNode.addChild(currentNode);nodes[name]=currentNode;}node.loadPoints();};if(node.level%node.pcoGeometry.hierarchyStepSize===0){ //var hurl = node.pcoGeometry.octreeDir + "/../hierarchy/" + node.name + ".hrc";
+	var hurl=node.pcoGeometry.octreeDir+"/"+node.getHierarchyPath()+"/"+node.name+".hrc";var xhr=new XMLHttpRequest();xhr.open('GET',hurl,true);xhr.responseType='arraybuffer';xhr.overrideMimeType('text/plain; charset=x-user-defined');xhr.onreadystatechange=function(){if(xhr.readyState===4){if(xhr.status===200||xhr.status===0){var hbuffer=xhr.response;callback(node,hbuffer);}else {console.log('Failed to load file! HTTP status: '+xhr.status+", file: "+url);}}};try{xhr.send(null);}catch(e){console.log("fehler beim laden der punktwolke: "+e);}}};Potree.PointCloudOctreeGeometryNode.prototype.dispose=function(){if(this.geometry){this.geometry.dispose();this.geometry=null;this.loaded=false;}};Potree.utils=function(){};Potree.utils.pathExists=function(url){var req=new XMLHttpRequest();req.open('GET',url,false);req.send(null);if(req.status!==200){return false;}return true;}; /**
+	 * adapted from mhluska at https://github.com/mrdoob/three.js/issues/1561
+	 */Potree.utils.computeTransformedBoundingBox=function(box,transform){var vertices=[new _three2.default.Vector3(box.min.x,box.min.y,box.min.z).applyMatrix4(transform),new _three2.default.Vector3(box.min.x,box.min.y,box.min.z).applyMatrix4(transform),new _three2.default.Vector3(box.max.x,box.min.y,box.min.z).applyMatrix4(transform),new _three2.default.Vector3(box.min.x,box.max.y,box.min.z).applyMatrix4(transform),new _three2.default.Vector3(box.min.x,box.min.y,box.max.z).applyMatrix4(transform),new _three2.default.Vector3(box.min.x,box.max.y,box.max.z).applyMatrix4(transform),new _three2.default.Vector3(box.max.x,box.max.y,box.min.z).applyMatrix4(transform),new _three2.default.Vector3(box.max.x,box.min.y,box.max.z).applyMatrix4(transform),new _three2.default.Vector3(box.max.x,box.max.y,box.max.z).applyMatrix4(transform)];var boundingBox=new _three2.default.Box3();boundingBox.setFromPoints(vertices);return boundingBox;}; /**
+	 * add separators to large numbers
+	 * 
+	 * @param nStr
+	 * @returns
+	 */Potree.utils.addCommas=function(nStr){nStr+='';x=nStr.split('.');x1=x[0];x2=x.length>1?'.'+x[1]:'';var rgx=/(\d+)(\d{3})/;while(rgx.test(x1)){x1=x1.replace(rgx,'$1'+','+'$2');}return x1+x2;}; /**
+	 * create worker from a string
+	 *
+	 * code from http://stackoverflow.com/questions/10343913/how-to-create-a-web-worker-from-a-string
+	 */Potree.utils.createWorker=function(code){var blob=new Blob([code],{type:'application/javascript'});var worker=new Worker(URL.createObjectURL(blob));return worker;};Potree.utils.loadSkybox=function(path){var camera=new _three2.default.PerspectiveCamera(75,window.innerWidth/window.innerHeight,1,100000);var scene=new _three2.default.Scene();var format=".jpg";var urls=[path+'px'+format,path+'nx'+format,path+'py'+format,path+'ny'+format,path+'pz'+format,path+'nz'+format];var textureCube=_three2.default.ImageUtils.loadTextureCube(urls,_three2.default.CubeRefractionMapping);var shader={uniforms:{"tCube":{type:"t",value:textureCube},"tFlip":{type:"f",value:-1}},vertexShader:_three2.default.ShaderLib["cube"].vertexShader,fragmentShader:_three2.default.ShaderLib["cube"].fragmentShader};var material=new _three2.default.ShaderMaterial({fragmentShader:shader.fragmentShader,vertexShader:shader.vertexShader,uniforms:shader.uniforms,depthWrite:false,side:_three2.default.BackSide});var mesh=new _three2.default.Mesh(new _three2.default.BoxGeometry(100,100,100),material);scene.add(mesh);return {"camera":camera,"scene":scene};};Potree.utils.createGrid=function createGrid(width,length,spacing,color){var material=new _three2.default.LineBasicMaterial({color:color||0x888888});var geometry=new _three2.default.Geometry();for(var i=0;i<=length;i++){geometry.vertices.push(new _three2.default.Vector3(-(spacing*width)/2,0,i*spacing-spacing*length/2));geometry.vertices.push(new _three2.default.Vector3(+(spacing*width)/2,0,i*spacing-spacing*length/2));}for(var i=0;i<=width;i++){geometry.vertices.push(new _three2.default.Vector3(i*spacing-spacing*width/2,0,-(spacing*length)/2));geometry.vertices.push(new _three2.default.Vector3(i*spacing-spacing*width/2,0,+(spacing*length)/2));}var line=new _three2.default.Line(geometry,material,_three2.default.LinePieces);line.receiveShadow=true;return line;};Potree.utils.createBackgroundTexture=function(width,height){function gauss(x,y){return 1/(2*Math.PI)*Math.exp(-(x*x+y*y)/2);};var map=_three2.default.ImageUtils.generateDataTexture(width,height,new _three2.default.Color());map.magFilter=_three2.default.NearestFilter;var data=map.image.data; //var data = new Uint8Array(width*height*4);
+	var chroma=[1,1.5,1.7];var max=gauss(0,0);for(var x=0;x<width;x++){for(var y=0;y<height;y++){var u=2*(x/width)-1;var v=2*(y/height)-1;var i=x+width*y;var d=gauss(2*u,2*v)/max;var r=(Math.random()+Math.random()+Math.random())/3;r=(d*0.5+0.5)*r*0.03;r=r*0.4; //d = Math.pow(d, 0.6);
+	data[3*i+0]=255*(d/15+0.05+r)*chroma[0];data[3*i+1]=255*(d/15+0.05+r)*chroma[1];data[3*i+2]=255*(d/15+0.05+r)*chroma[2]; //data[4*i+3] = 255;
+	}}return map;};function getMousePointCloudIntersection(mouse,camera,renderer,pointclouds){var vector=new _three2.default.Vector3(mouse.x,mouse.y,0.5);vector.unproject(camera);var direction=vector.sub(camera.position).normalize();var ray=new _three2.default.Ray(camera.position,direction);var closestPoint=null;var closestPointDistance=null;for(var i=0;i<pointclouds.length;i++){var pointcloud=pointclouds[i];var point=pointcloud.pick(renderer,camera,ray);if(!point){continue;}var distance=camera.position.distanceTo(point.position);if(!closestPoint||distance<closestPointDistance){closestPoint=point;closestPointDistance=distance;}}return closestPoint?closestPoint.position:null;}function pixelsArrayToImage(pixels,width,height){var canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;var context=canvas.getContext('2d');pixels=new pixels.constructor(pixels);for(var i=0;i<pixels.length;i++){pixels[i*4+3]=255;}var imageData=context.createImageData(width,height);imageData.data.set(pixels);context.putImageData(imageData,0,0);var img=new Image();img.src=canvas.toDataURL();img.style.transform="scaleY(-1)";return img;}function projectedRadius(radius,fov,distance,screenHeight){var projFactor=1/Math.tan(fov/2)/distance;projFactor=projFactor*screenHeight/2;return radius*projFactor;};Potree.utils.topView=function(camera,controls,pointcloud){camera.position.set(0,1,0);camera.rotation.set(-Math.PI/2,0,0);camera.zoomTo(pointcloud,1);if(controls.target){var sg=pointcloud.boundingSphere.clone().applyMatrix4(pointcloud.matrixWorld);var target=new _three2.default.Vector3(camera.position.x,sg.center.y,camera.position.z);controls.target.copy(target);}};Potree.utils.frontView=function(camera,controls,pointcloud){camera.position.set(0,0,1);camera.rotation.set(0,0,0);camera.zoomTo(pointcloud,1);if(controls.target){var sg=pointcloud.boundingSphere.clone().applyMatrix4(pointcloud.matrixWorld);var target=new _three2.default.Vector3(camera.position.x,camera.position.y,sg.center.z);controls.target.copy(target);}};Potree.utils.leftView=function(camera,controls,pointcloud){camera.position.set(-1,0,0);camera.rotation.set(0,-Math.PI/2,0);camera.zoomTo(pointcloud,1);if(controls.target){var sg=pointcloud.boundingSphere.clone().applyMatrix4(pointcloud.matrixWorld);var target=new _three2.default.Vector3(sg.center.x,camera.position.y,camera.position.z);controls.target.copy(target);}};Potree.utils.rightView=function(camera,controls,pointcloud){camera.position.set(1,0,0);camera.rotation.set(0,Math.PI/2,0);camera.zoomTo(pointcloud,1);if(controls.target){var sg=pointcloud.boundingSphere.clone().applyMatrix4(pointcloud.matrixWorld);var target=new _three2.default.Vector3(sg.center.x,camera.position.y,camera.position.z);controls.target.copy(target);}}; /**
+	 *  
+	 * 0: no intersection
+	 * 1: intersection
+	 * 2: fully inside
+	 */Potree.utils.frustumSphereIntersection=function(frustum,sphere){var planes=frustum.planes;var center=sphere.center;var negRadius=-sphere.radius;var minDistance=Number.MAX_VALUE;for(var i=0;i<6;i++){var distance=planes[i].distanceToPoint(center);if(distance<negRadius){return 0;}minDistance=Math.min(minDistance,distance);}return minDistance>=sphere.radius?2:1;};Potree.utils.screenPass=new function(){this.screenScene=new _three2.default.Scene();this.screenQuad=new _three2.default.Mesh(new _three2.default.PlaneBufferGeometry(2,2,0));this.screenQuad.material.depthTest=true;this.screenQuad.material.depthWrite=true;this.screenQuad.material.transparent=true;this.screenScene.add(this.screenQuad);this.camera=new _three2.default.Camera();this.render=function(renderer,material,target){this.screenQuad.material=material;if((typeof target==='undefined'?'undefined':_typeof(target))===undefined){renderer.render(this.screenScene,this.camera);}else {renderer.render(this.screenScene,this.camera,target);}};}();Potree.Features=function(){var ftCanvas=document.createElement("canvas");var gl=ftCanvas.getContext("webgl")||ftCanvas.getContext("experimental-webgl");if(gl===null)return null; // -- code taken from THREE.WebGLRenderer --
+	var _vertexShaderPrecisionHighpFloat=gl.getShaderPrecisionFormat(gl.VERTEX_SHADER,gl.HIGH_FLOAT);var _vertexShaderPrecisionMediumpFloat=gl.getShaderPrecisionFormat(gl.VERTEX_SHADER,gl.MEDIUM_FLOAT);var _vertexShaderPrecisionLowpFloat=gl.getShaderPrecisionFormat(gl.VERTEX_SHADER,gl.LOW_FLOAT);var _fragmentShaderPrecisionHighpFloat=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.HIGH_FLOAT);var _fragmentShaderPrecisionMediumpFloat=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.MEDIUM_FLOAT);var _fragmentShaderPrecisionLowpFloat=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.LOW_FLOAT);var highpAvailable=_vertexShaderPrecisionHighpFloat.precision>0&&_fragmentShaderPrecisionHighpFloat.precision>0;var mediumpAvailable=_vertexShaderPrecisionMediumpFloat.precision>0&&_fragmentShaderPrecisionMediumpFloat.precision>0; // -----------------------------------------
+	var precision;if(highpAvailable){precision="highp";}else if(mediumpAvailable){precision="mediump";}else {precision="lowp";}return {SHADER_INTERPOLATION:{isSupported:function isSupported(){ //if(typeof this.shaderInterpolationSupported === "undefined"){
+	//  var material = new Potree.PointCloudMaterial();
+	//  material.interpolate = true;
+	//
+	//  var vs = gl.createShader(gl.VERTEX_SHADER);
+	//  var fs = gl.createShader(gl.FRAGMENT_SHADER);
+	//  gl.shaderSource(vs, material.vertexShader);
+	//  gl.shaderSource(fs, material.fragmentShader);
+	//
+	//  gl.compileShader(vs);
+	//  gl.compileShader(fs);
+	//
+	//  var successVS = gl.getShaderParameter(vs, gl.COMPILE_STATUS);
+	//  var successFS = gl.getShaderParameter(fs, gl.COMPILE_STATUS);
+	//  this.shaderInterpolationSupported = successVS && successFS;
+	//}
+	//
+	//return this.shaderInterpolationSupported;
+	var supported=true;supported=supported&&gl.getExtension("EXT_frag_depth");supported=supported&&gl.getParameter(gl.MAX_VARYING_VECTORS)>=8;return supported;}},SHADER_SPLATS:{isSupported:function isSupported(){var supported=true;supported=supported&&gl.getExtension("EXT_frag_depth");supported=supported&&gl.getExtension("OES_texture_float");supported=supported&&gl.getParameter(gl.MAX_VARYING_VECTORS)>=8;return supported;}},SHADER_EDL:{isSupported:function isSupported(){var supported=true;supported=supported&&gl.getExtension("EXT_frag_depth");supported=supported&&gl.getExtension("OES_texture_float");supported=supported&&gl.getParameter(gl.MAX_VARYING_VECTORS)>=8;return supported;}},precision:precision};}(); /**
+	 * adapted from http://stemkoski.github.io/Three.js/Sprite-Text-Labels.html
+	 */Potree.TextSprite=function(text){_three2.default.Object3D.call(this);var texture=new _three2.default.Texture();texture.minFilter=_three2.default.LinearFilter;texture.magFilter=_three2.default.LinearFilter;var spriteMaterial=new _three2.default.SpriteMaterial({map:texture,useScreenCoordinates:false});this.material=spriteMaterial;this.sprite=new _three2.default.Sprite(spriteMaterial);this.add(this.sprite); //THREE.Sprite.call(this, spriteMaterial);
+	this.borderThickness=4;this.fontface="Arial";this.fontsize=28;this.borderColor={r:0,g:0,b:0,a:1.0};this.backgroundColor={r:255,g:255,b:255,a:1.0};this.textColor={r:255,g:255,b:255,a:1.0};this.text="";this.setText(text);};Potree.TextSprite.prototype=new _three2.default.Object3D();Potree.TextSprite.prototype.setText=function(text){this.text=text;this.update();};Potree.TextSprite.prototype.setTextColor=function(color){this.textColor=color;this.update();};Potree.TextSprite.prototype.setBorderColor=function(color){this.borderColor=color;this.update();};Potree.TextSprite.prototype.setBackgroundColor=function(color){this.backgroundColor=color;this.update();};Potree.TextSprite.prototype.update=function(){var canvas=document.createElement('canvas');var context=canvas.getContext('2d');context.font="Bold "+this.fontsize+"px "+this.fontface; // get size data (height depends only on font size)
+	var metrics=context.measureText(this.text);var textWidth=metrics.width;var spriteWidth=textWidth+2*this.borderThickness;var spriteHeight=this.fontsize*1.4+2*this.borderThickness;var canvas=document.createElement('canvas');var context=canvas.getContext('2d');context.canvas.width=spriteWidth;context.canvas.height=spriteHeight;context.font="Bold "+this.fontsize+"px "+this.fontface; // background color
+	context.fillStyle="rgba("+this.backgroundColor.r+","+this.backgroundColor.g+","+this.backgroundColor.b+","+this.backgroundColor.a+")"; // border color
+	context.strokeStyle="rgba("+this.borderColor.r+","+this.borderColor.g+","+this.borderColor.b+","+this.borderColor.a+")";context.lineWidth=this.borderThickness;this.roundRect(context,this.borderThickness/2,this.borderThickness/2,textWidth+this.borderThickness,this.fontsize*1.4+this.borderThickness,6); // text color
+	context.strokeStyle="rgba(0, 0, 0, 1.0)";context.strokeText(this.text,this.borderThickness,this.fontsize+this.borderThickness);context.fillStyle="rgba("+this.textColor.r+","+this.textColor.g+","+this.textColor.b+","+this.textColor.a+")";context.fillText(this.text,this.borderThickness,this.fontsize+this.borderThickness);var texture=new _three2.default.Texture(canvas);texture.minFilter=_three2.default.LinearFilter;texture.magFilter=_three2.default.LinearFilter;texture.needsUpdate=true; //var spriteMaterial = new THREE.SpriteMaterial( 
+	//  { map: texture, useScreenCoordinates: false } );
+	this.sprite.material.map=texture;this.sprite.scale.set(spriteWidth*0.01,spriteHeight*0.01,1.0); //this.material = spriteMaterial;             
+	};Potree.TextSprite.prototype.roundRect=function(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();ctx.stroke();};Potree.Version=function(version){this.version=version;var vmLength=version.indexOf(".")===-1?version.length:version.indexOf(".");this.versionMajor=parseInt(version.substr(0,vmLength));this.versionMinor=parseInt(version.substr(vmLength+1));if(this.versionMinor.length===0){this.versionMinor=0;}};Potree.Version.prototype.newerThan=function(version){var v=new Potree.Version(version);if(this.versionMajor>v.versionMajor){return true;}else if(this.versionMajor===v.versionMajor&&this.versionMinor>v.versionMinor){return true;}else {return false;}};Potree.Version.prototype.equalOrHigher=function(version){var v=new Potree.Version(version);if(this.versionMajor>v.versionMajor){return true;}else if(this.versionMajor===v.versionMajor&&this.versionMinor>=v.versionMinor){return true;}else {return false;}};Potree.Version.prototype.upTo=function(version){return !this.newerThan(version);};Potree.Measure=function(){var scope=this;_three2.default.Object3D.call(this);this.points=[];this._showDistances=true;this._showArea=true;this._closed=true;this.maxMarkers=Number.MAX_SAFE_INTEGER;this.spheres=[];this.edges=[];this.sphereLabels=[];this.edgeLabels=[];this.angleLabels=[];this.areaLabel=new Potree.TextSprite("");this.areaLabel.setBorderColor({r:0,g:255,b:0,a:0.0});this.areaLabel.setBackgroundColor({r:0,g:255,b:0,a:0.0});this.areaLabel.setTextColor({r:180,g:220,b:180,a:1.0});this.areaLabel.material.depthTest=false;this.areaLabel.material.opacity=1;this.add(this.areaLabel);var sphereGeometry=new _three2.default.SphereGeometry(0.4,10,10);this.color=new _three2.default.Color(0xff0000);var createSphereMaterial=function createSphereMaterial(){var sphereMaterial=new _three2.default.MeshLambertMaterial({shading:_three2.default.SmoothShading,color:scope.color,ambient:0xaaaaaa,depthTest:false,depthWrite:false});return sphereMaterial;};var moveEvent=function moveEvent(event){event.target.material.emissive.setHex(0x888888);};var leaveEvent=function leaveEvent(event){event.target.material.emissive.setHex(0x000000);};var dragEvent=function dragEvent(event){var tool=event.tool;var dragstart=tool.dragstart;var mouse=tool.mouse;var I=tool.getMousePointCloudIntersection();if(I){var index=scope.spheres.indexOf(tool.dragstart.object);scope.setPosition(index,I);} //event.event.stopImmediatePropagation();
+	};var dropEvent=function dropEvent(event){};this.addMarker=function(point){this.points.push(point); // sphere
+	var sphere=new _three2.default.Mesh(sphereGeometry,createSphereMaterial());sphere.addEventListener("move",moveEvent);sphere.addEventListener("leave",leaveEvent);sphere.addEventListener("drag",dragEvent);sphere.addEventListener("drop",dropEvent);this.add(sphere);this.spheres.push(sphere);{ // edges
+	var lineGeometry=new _three2.default.Geometry();lineGeometry.vertices.push(new _three2.default.Vector3(),new _three2.default.Vector3());lineGeometry.colors.push(this.color,this.color,this.color);var lineMaterial=new _three2.default.LineBasicMaterial({linewidth:1});lineMaterial.depthTest=false;var edge=new _three2.default.Line(lineGeometry,lineMaterial);edge.visible=true;this.add(edge);this.edges.push(edge);}{ // edge labels
+	var edgeLabel=new Potree.TextSprite(0);edgeLabel.setBorderColor({r:0,g:255,b:0,a:0.0});edgeLabel.setBackgroundColor({r:0,g:255,b:0,a:0.0});edgeLabel.material.depthTest=false;edgeLabel.visible=false;this.edgeLabels.push(edgeLabel);this.add(edgeLabel);}{ // angle labels
+	var angleLabel=new Potree.TextSprite();angleLabel.setBorderColor({r:0,g:255,b:0,a:0.0});angleLabel.setBackgroundColor({r:0,g:255,b:0,a:0.0});angleLabel.material.depthTest=false;angleLabel.material.opacity=1;angleLabel.visible=false;this.angleLabels.push(angleLabel);this.add(angleLabel);}var event={type:"marker_added",measurement:this};this.dispatchEvent(event);this.setPosition(this.points.length-1,point);};this.removeMarker=function(index){this.points.splice(index,1);this.remove(this.spheres[index]);var edgeIndex=index==0?0:index-1;this.remove(this.edges[edgeIndex]);this.edges.splice(edgeIndex,1);this.remove(this.edgeLabels[edgeIndex]);this.edgeLabels.splice(edgeIndex,1);this.spheres.splice(index,1);this.update();};this.setPosition=function(index,position){var point=this.points[index];point.copy(position);var event={type:'marker_moved',measure:this,index:index,position:position.clone()};this.dispatchEvent(event);this.update();};this.getArea=function(){var area=0;var j=this.points.length-1;for(var i=0;i<this.points.length;i++){var p1=this.points[i];var p2=this.points[j];area+=(p2.x+p1.x)*(p1.z-p2.z);j=i;}return Math.abs(area/2);};this.getAngleBetweenLines=function(cornerPoint,point1,point2){var v1=new _three2.default.Vector3().subVectors(point1,cornerPoint);var v2=new _three2.default.Vector3().subVectors(point2,cornerPoint);return v1.angleTo(v2);};this.update=function(){if(this.points.length===0){return;}else if(this.points.length===1){var point=this.points[0];this.spheres[0].position.copy(point);return;}var lastIndex=this.points.length-1;var centroid=new _three2.default.Vector3();for(var i=0;i<=lastIndex;i++){var point=this.points[i];centroid.add(point);}centroid.divideScalar(this.points.length);for(var i=0;i<=lastIndex;i++){var index=i;var nextIndex=i+1>lastIndex?0:i+1;var previousIndex=i===0?lastIndex:i-1;var point=this.points[index];var nextPoint=this.points[nextIndex];var previousPoint=this.points[previousIndex];var sphere=this.spheres[index]; // spheres
+	sphere.position.copy(point);sphere.material.color=scope.color;{ // edges
+	var edge=this.edges[index];edge.material.color=this.color;edge.geometry.vertices[0].copy(point);edge.geometry.vertices[1].copy(nextPoint);edge.geometry.verticesNeedUpdate=true;edge.geometry.computeBoundingSphere();edge.visible=index<lastIndex||this.closed;}{ // edge labels
+	var edgeLabel=this.edgeLabels[i];var center=new _three2.default.Vector3().add(point);center.add(nextPoint);center=center.multiplyScalar(0.5);var distance=point.distanceTo(nextPoint);edgeLabel.position.copy(center);edgeLabel.setText(distance.toFixed(2));edgeLabel.visible=this.showDistances&&(index<lastIndex||this.closed)&&this.points.length>=2&&distance>0;}{ // angle labels
+	var angleLabel=this.angleLabels[i];var angle=this.getAngleBetweenLines(point,previousPoint,nextPoint);var dir=nextPoint.clone().sub(previousPoint);dir.multiplyScalar(0.5);dir=previousPoint.clone().add(dir).sub(point).normalize();var dist=Math.min(point.distanceTo(previousPoint),point.distanceTo(nextPoint));dist=dist/9;var labelPos=point.clone().add(dir.multiplyScalar(dist));angleLabel.position.copy(labelPos);var msg=Potree.utils.addCommas((angle*(180.0/Math.PI)).toFixed(1))+'°';angleLabel.setText(msg);angleLabel.visible=this.showAngles&&(index<lastIndex||this.closed)&&this.points.length>=3&&angle>0;}} // update area label
+	this.areaLabel.position.copy(centroid);this.areaLabel.visible=this.showArea&&this.points.length>=3;var msg=Potree.utils.addCommas(this.getArea().toFixed(1))+"²";this.areaLabel.setText(msg);};this.raycast=function(raycaster,intersects){for(var i=0;i<this.points.length;i++){var sphere=this.spheres[i];sphere.raycast(raycaster,intersects);} // recalculate distances because they are not necessarely correct
+	// for scaled objects.
+	// see https://github.com/mrdoob/three.js/issues/5827
+	// TODO: remove this once the bug has been fixed
+	for(var i=0;i<intersects.length;i++){var I=intersects[i];I.distance=raycaster.ray.origin.distanceTo(I.point);}intersects.sort(function(a,b){return a.distance-b.distance;});};};Potree.Measure.prototype=Object.create(_three2.default.Object3D.prototype);Object.defineProperty(Potree.Measure.prototype,"showArea",{get:function get(){return this._showArea;},set:function set(value){this._showArea=value;this.update();}});Object.defineProperty(Potree.Measure.prototype,"closed",{get:function get(){return this._closed;},set:function set(value){this._closed=value;this.update();}});Object.defineProperty(Potree.Measure.prototype,"showDistances",{get:function get(){return this._showDistances;},set:function set(value){this._showDistances=value;this.update();}});Potree.MeasuringTool=function(scene,camera,renderer){var scope=this;this.enabled=false;this.scene=scene;this.camera=camera;this.renderer=renderer;this.domElement=renderer.domElement;this.mouse={x:0,y:0};var STATE={DEFAULT:0,INSERT:1};var state=STATE.DEFAULT;this.activeMeasurement;this.measurements=[];this.sceneMeasurement=new _three2.default.Scene();this.sceneRoot=new _three2.default.Object3D();this.sceneMeasurement.add(this.sceneRoot);this.light=new _three2.default.DirectionalLight(0xffffff,1);this.light.position.set(0,0,10);this.light.lookAt(new _three2.default.Vector3(0,0,0));this.sceneMeasurement.add(this.light);this.hoveredElement=null;function onClick(event){if(state===STATE.INSERT){var I=scope.getMousePointCloudIntersection();if(I){var pos=I.clone();scope.activeMeasurement.addMarker(pos);var event={type:'newpoint',position:pos.clone()};scope.dispatchEvent(event);if(scope.activeMeasurement.points.length>scope.activeMeasurement.maxMarkers){scope.finishInsertion();}}}};function onMouseMove(event){var rect=scope.domElement.getBoundingClientRect();scope.mouse.x=(event.clientX-rect.left)/scope.domElement.clientWidth*2-1;scope.mouse.y=-((event.clientY-rect.top)/scope.domElement.clientHeight)*2+1;if(scope.dragstart){var arg={type:"drag",event:event,tool:scope};scope.dragstart.object.dispatchEvent(arg);}else if(state==STATE.INSERT&&scope.activeMeasurement){var I=scope.getMousePointCloudIntersection();if(I){var lastIndex=scope.activeMeasurement.points.length-1;scope.activeMeasurement.setPosition(lastIndex,I);}}else {var I=getHoveredElement();if(I){I.object.dispatchEvent({type:"move",target:I.object,event:event});if(scope.hoveredElement&&scope.hoveredElement!==I.object){scope.hoveredElement.dispatchEvent({type:"leave",target:scope.hoveredElement,event:event});}scope.hoveredElement=I.object;}else {if(scope.hoveredElement){scope.hoveredElement.dispatchEvent({type:"leave",target:scope.hoveredElement,event:event});}scope.hoveredElement=null;}}};function onRightClick(event){if(state==STATE.INSERT){scope.finishInsertion();}}this.getState=function(){ // TODO remove
+	return state;};function onMouseDown(event){if(event.which===1){if(state!==STATE.DEFAULT){event.stopImmediatePropagation();}var I=getHoveredElement();if(I){scope.dragstart={object:I.object,sceneClickPos:I.point,sceneStartPos:scope.sceneRoot.position.clone(),mousePos:{x:scope.mouse.x,y:scope.mouse.y}};event.stopImmediatePropagation();}}else if(event.which===3){onRightClick(event);}}function onDoubleClick(event){ // fix move event after double click
+	// see: http://stackoverflow.com/questions/8125165/event-listener-for-dblclick-causes-event-for-mousemove-to-not-work-and-show-a-ci
+	if(window.getSelection){window.getSelection().removeAllRanges();}else if(document.selection){document.selection.empty();}if(scope.activeMeasurement&&state===STATE.INSERT){scope.activeMeasurement.removeMarker(scope.activeMeasurement.points.length-1);scope.finishInsertion();}}function onMouseUp(event){if(scope.dragstart){scope.dragstart.object.dispatchEvent({type:"drop",event:event});scope.dragstart=null;}}function getHoveredElement(){var vector=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0.5);vector.unproject(scope.camera);var raycaster=new _three2.default.Raycaster();raycaster.ray.set(scope.camera.position,vector.sub(scope.camera.position).normalize());var spheres=[];for(var i=0;i<scope.measurements.length;i++){var m=scope.measurements[i];for(var j=0;j<m.spheres.length;j++){spheres.push(m.spheres[j]);}}var intersections=raycaster.intersectObjects(spheres,true);if(intersections.length>0){return intersections[0];}else {return false;}};this.getMousePointCloudIntersection=function(){var vector=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0.5);vector.unproject(scope.camera);var direction=vector.sub(scope.camera.position).normalize();var ray=new _three2.default.Ray(scope.camera.position,direction);var pointClouds=[];scope.scene.traverse(function(object){if(object instanceof Potree.PointCloudOctree||object instanceof Potree.PointCloudArena4D){pointClouds.push(object);}});var closestPoint=null;var closestPointDistance=null;for(var i=0;i<pointClouds.length;i++){var pointcloud=pointClouds[i];var point=pointcloud.pick(scope.renderer,scope.camera,ray);if(!point){continue;}var distance=scope.camera.position.distanceTo(point.position);if(!closestPoint||distance<closestPointDistance){closestPoint=point;closestPointDistance=distance;}}return closestPoint?closestPoint.position:null;};this.startInsertion=function(args){state=STATE.INSERT;var args=args||{};var showDistances=typeof args.showDistances!="undefined"?args.showDistances:true;var showArea=typeof args.showArea!="undefined"?args.showArea:false;var showAngles=typeof args.showAngles!="undefined"?args.showAngles:false;var closed=typeof args.closed!="undefined"?args.closed:false;var maxMarkers=args.maxMarkers||Number.MAX_SAFE_INTEGER;var measurement=new Potree.Measure();measurement.showDistances=showDistances;measurement.showArea=showArea;measurement.showAngles=showAngles;measurement.closed=closed;measurement.maxMarkers=maxMarkers;this.addMeasurement(measurement);measurement.addMarker(new _three2.default.Vector3(0,0,0));this.activeMeasurement=measurement;};this.finishInsertion=function(){this.activeMeasurement.removeMarker(this.activeMeasurement.points.length-1);var event={type:"insertion_finished",measurement:this.activeMeasurement};this.dispatchEvent(event);this.activeMeasurement=null;state=STATE.DEFAULT;};this.addMeasurement=function(measurement){this.sceneMeasurement.add(measurement);this.measurements.push(measurement);this.dispatchEvent({"type":"measurement_added",measurement:measurement});measurement.addEventListener("marker_added",function(event){scope.dispatchEvent(event);});measurement.addEventListener("marker_removed",function(event){scope.dispatchEvent(event);});measurement.addEventListener("marker_moved",function(event){scope.dispatchEvent(event);});};this.removeMeasurement=function(measurement){this.sceneMeasurement.remove(measurement);var index=this.measurements.indexOf(measurement);if(index>=0){this.measurements.splice(index,1);}};this.reset=function(){for(var i=this.measurements.length-1;i>=0;i--){var measurement=this.measurements[i];this.removeMeasurement(measurement);}};this.update=function(){var measurements=[];for(var i=0;i<this.measurements.length;i++){measurements.push(this.measurements[i]);}if(this.activeMeasurement){measurements.push(this.activeMeasurement);} // make sizes independant of distance and fov
+	for(var i=0;i<measurements.length;i++){var measurement=measurements[i]; // spheres
+	for(var j=0;j<measurement.spheres.length;j++){var sphere=measurement.spheres[j];var distance=scope.camera.position.distanceTo(sphere.getWorldPosition());var pr=projectedRadius(1,scope.camera.fov*Math.PI/180,distance,renderer.domElement.clientHeight);var scale=15/pr;sphere.scale.set(scale,scale,scale);} // edgeLabels
+	for(var j=0;j<measurement.edgeLabels.length;j++){var label=measurement.edgeLabels[j];var distance=scope.camera.position.distanceTo(label.getWorldPosition());var pr=projectedRadius(1,scope.camera.fov*Math.PI/180,distance,renderer.domElement.clientHeight);var scale=70/pr;label.scale.set(scale,scale,scale);} // angle labels
+	for(var j=0;j<measurement.edgeLabels.length;j++){var label=measurement.angleLabels[j];var distance=scope.camera.position.distanceTo(label.getWorldPosition());var pr=projectedRadius(1,scope.camera.fov*Math.PI/180,distance,renderer.domElement.clientHeight);var scale=70/pr;label.scale.set(scale,scale,scale);} // areaLabel
+	var distance=scope.camera.position.distanceTo(measurement.areaLabel.getWorldPosition());var pr=projectedRadius(1,scope.camera.fov*Math.PI/180,distance,renderer.domElement.clientHeight);var scale=80/pr;measurement.areaLabel.scale.set(scale,scale,scale);}this.light.position.copy(this.camera.position);this.light.lookAt(this.camera.getWorldDirection().add(this.camera.position));};this.render=function(){this.update();this.renderer.render(this.sceneMeasurement,this.camera);};this.domElement.addEventListener('click',onClick,false);this.domElement.addEventListener('dblclick',onDoubleClick,false);this.domElement.addEventListener('mousemove',onMouseMove,false);this.domElement.addEventListener('mousedown',onMouseDown,false);this.domElement.addEventListener('mouseup',onMouseUp,true);};Potree.MeasuringTool.prototype=Object.create(_three2.default.EventDispatcher.prototype);Potree.HeightProfile=function(){var scope=this;_three2.default.Object3D.call(this);this.points=[];this.spheres=[];this.edges=[];this.boxes=[];this.width=1;this.height=20;this._modifiable=true;var sphereGeometry=new _three2.default.SphereGeometry(0.4,10,10);var lineColor=new _three2.default.Color(0xff0000);var createSphereMaterial=function createSphereMaterial(){var sphereMaterial=new _three2.default.MeshLambertMaterial({shading:_three2.default.SmoothShading,color:0xff0000,ambient:0xaaaaaa,depthTest:false,depthWrite:false});return sphereMaterial;};var moveEvent=function moveEvent(event){event.target.material.emissive.setHex(0x888888);};var leaveEvent=function leaveEvent(event){event.target.material.emissive.setHex(0x000000);};var dragEvent=function dragEvent(event){var tool=event.tool;var dragstart=tool.dragstart;var mouse=tool.mouse;if(event.event.ctrlKey){var mouseStart=new _three2.default.Vector3(dragstart.mousePos.x,dragstart.mousePos.y,0);var mouseEnd=new _three2.default.Vector3(mouse.x,mouse.y,0);var widthStart=dragstart.widthStart;var scale=1-10*(mouseStart.y-mouseEnd.y);scale=Math.max(0.01,scale);if(widthStart){scope.setWidth(widthStart*scale);}}else {var I=tool.getMousePointCloudIntersection();if(I){var index=scope.spheres.indexOf(tool.dragstart.object);scope.setPosition(index,I);}}event.event.stopImmediatePropagation();};var dropEvent=function dropEvent(event){};this.addMarker=function(point){this.points.push(point); // sphere
+	var sphere=new _three2.default.Mesh(sphereGeometry,createSphereMaterial());sphere.addEventListener("mousemove",moveEvent);sphere.addEventListener("mouseleave",leaveEvent);sphere.addEventListener("mousedrag",dragEvent);sphere.addEventListener("drop",dropEvent);this.add(sphere);this.spheres.push(sphere); // edges & boxes
+	if(this.points.length>1){var lineGeometry=new _three2.default.Geometry();lineGeometry.vertices.push(new _three2.default.Vector3(),new _three2.default.Vector3());lineGeometry.colors.push(lineColor,lineColor,lineColor);var lineMaterial=new _three2.default.LineBasicMaterial({vertexColors:_three2.default.VertexColors,linewidth:2,transparent:true,opacity:0.4});lineMaterial.depthTest=false;var edge=new _three2.default.Line(lineGeometry,lineMaterial);edge.visible=false;this.add(edge);this.edges.push(edge);var boxGeometry=new _three2.default.BoxGeometry(1,1,1);var boxMaterial=new _three2.default.MeshBasicMaterial({color:0xff0000,transparent:true,opacity:0.2});var box=new _three2.default.Mesh(boxGeometry,boxMaterial);box.visible=false;this.add(box);this.boxes.push(box);}var event={"type":"marker_added","profile":this};this.dispatchEvent(event);this.setPosition(this.points.length-1,point);};this.removeMarker=function(index){this.points.splice(index,1);this.remove(this.spheres[index]);var edgeIndex=index==0?0:index-1;this.remove(this.edges[edgeIndex]);this.edges.splice(edgeIndex,1);this.remove(this.boxes[edgeIndex]);this.boxes.splice(edgeIndex,1);this.spheres.splice(index,1);this.update();var event={"type":"marker_removed","profile":this};this.dispatchEvent(event);}; /**
+	   * see http://www.mathopenref.com/coordpolygonarea2.html
+	   */this.getArea=function(){var area=0;var j=this.points.length-1;for(var i=0;i<this.points.length;i++){var p1=this.points[i];var p2=this.points[j];area+=(p2.x+p1.x)*(p1.z-p2.z);j=i;}return Math.abs(area/2);};this.setPosition=function(index,position){var point=this.points[index];point.copy(position);var event={type:'marker_moved',profile:this,index:index,position:position.clone()};this.dispatchEvent(event);this.update();};this.setWidth=function(width){this.width=width;this.update();};this.update=function(){if(this.points.length===0){return;}else if(this.points.length===1){var point=this.points[0];this.spheres[0].position.copy(point);return;}var min=this.points[0].clone();var max=this.points[0].clone();var centroid=new _three2.default.Vector3();var lastIndex=this.points.length-1;for(var i=0;i<=lastIndex;i++){var point=this.points[i];var sphere=this.spheres[i];var leftIndex=i===0?lastIndex:i-1;var rightIndex=i===lastIndex?0:i+1;var leftVertex=this.points[leftIndex];var rightVertex=this.points[rightIndex];var leftEdge=this.edges[leftIndex];var rightEdge=this.edges[i];var leftBox=this.boxes[leftIndex];var rightBox=this.boxes[i];var leftEdgeLength=point.distanceTo(leftVertex);var rightEdgeLength=point.distanceTo(rightVertex);var leftEdgeCenter=new _three2.default.Vector3().addVectors(leftVertex,point).multiplyScalar(0.5);var rightEdgeCenter=new _three2.default.Vector3().addVectors(point,rightVertex).multiplyScalar(0.5);sphere.position.copy(point);if(this._modifiable){sphere.visible=true;}else {sphere.visible=false;}if(leftEdge){leftEdge.geometry.vertices[1].copy(point);leftEdge.geometry.verticesNeedUpdate=true;leftEdge.geometry.computeBoundingSphere();}if(rightEdge){rightEdge.geometry.vertices[0].copy(point);rightEdge.geometry.verticesNeedUpdate=true;rightEdge.geometry.computeBoundingSphere();}if(leftBox){var start=leftVertex;var end=point;var length=start.clone().setY(0).distanceTo(end.clone().setY(0));leftBox.scale.set(length,this.height,this.width);var center=new _three2.default.Vector3().addVectors(start,end).multiplyScalar(0.5);var diff=new _three2.default.Vector3().subVectors(end,start);var target=new _three2.default.Vector3(diff.z,0,-diff.x);leftBox.position.set(0,0,0);leftBox.lookAt(target);leftBox.position.copy(center);}centroid.add(point);min.min(point);max.max(point);}centroid.multiplyScalar(1/this.points.length);for(var i=0;i<this.boxes.length;i++){var box=this.boxes[i];box.position.y=min.y+(max.y-min.y)/2; //box.scale.y = max.y - min.y + 50;
+	box.scale.y=1000000;}};this.raycast=function(raycaster,intersects){for(var i=0;i<this.points.length;i++){var sphere=this.spheres[i];sphere.raycast(raycaster,intersects);} // recalculate distances because they are not necessarely correct
+	// for scaled objects.
+	// see https://github.com/mrdoob/three.js/issues/5827
+	// TODO: remove this once the bug has been fixed
+	for(var i=0;i<intersects.length;i++){var I=intersects[i];I.distance=raycaster.ray.origin.distanceTo(I.point);}intersects.sort(function(a,b){return a.distance-b.distance;});};};Potree.HeightProfile.prototype=Object.create(_three2.default.Object3D.prototype);Object.defineProperty(Potree.HeightProfile.prototype,"modifiable",{get:function get(){return this.modifiable;},set:function set(value){this._modifiable=value;this.update();}}); //
+	// calculating area of a polygon:
+	// http://www.mathopenref.com/coordpolygonarea2.html
+	//
+	//
+	//
+	Potree.ProfileTool=function(scene,camera,renderer){var scope=this;this.enabled=false;this.scene=scene;this.camera=camera;this.renderer=renderer;this.domElement=renderer.domElement;this.mouse={x:0,y:0};var STATE={DEFAULT:0,INSERT:1};var state=STATE.DEFAULT;var sphereGeometry=new _three2.default.SphereGeometry(0.4,10,10);this.activeProfile;this.profiles=[];this.sceneProfile=new _three2.default.Scene();this.sceneRoot=new _three2.default.Object3D();this.sceneProfile.add(this.sceneRoot);this.light=new _three2.default.DirectionalLight(0xffffff,1);this.light.position.set(0,0,10);this.light.lookAt(new _three2.default.Vector3(0,0,0));this.sceneProfile.add(this.light);this.hoveredElement=null;function createSphereMaterial(){var sphereMaterial=new _three2.default.MeshLambertMaterial({shading:_three2.default.SmoothShading,color:0xff0000,ambient:0xaaaaaa,depthTest:false,depthWrite:false});return sphereMaterial;};function onClick(event){if(state===STATE.INSERT){var I=scope.getMousePointCloudIntersection();if(I){var pos=I.clone();scope.activeProfile.addMarker(pos);var event={type:'newpoint',position:pos.clone()};scope.dispatchEvent(event);}}};function onMouseMove(event){var rect=scope.domElement.getBoundingClientRect();scope.mouse.x=(event.clientX-rect.left)/scope.domElement.clientWidth*2-1;scope.mouse.y=-((event.clientY-rect.top)/scope.domElement.clientHeight)*2+1;if(scope.dragstart){var arg={type:"mousedrag",event:event,tool:scope};scope.dragstart.object.dispatchEvent(arg);}else if(state==STATE.INSERT&&scope.activeProfile){var I=scope.getMousePointCloudIntersection();if(I){var lastIndex=scope.activeProfile.points.length-1;scope.activeProfile.setPosition(lastIndex,I);}}else {var I=getHoveredElement();if(I){I.object.dispatchEvent({type:"mousemove",target:I.object,event:event});if(scope.hoveredElement&&scope.hoveredElement!==I.object){scope.hoveredElement.dispatchEvent({type:"mouseleave",target:scope.hoveredElement,event:event});}scope.hoveredElement=I.object;}else {if(scope.hoveredElement){scope.hoveredElement.dispatchEvent({type:"mouseleave",target:scope.hoveredElement,event:event});}scope.hoveredElement=null;}}};function onRightClick(event){if(state==STATE.INSERT){scope.finishInsertion();}}function onMouseDown(event){if(state!==STATE.DEFAULT){event.stopImmediatePropagation();}if(event.which===1){var I=getHoveredElement();if(I){var widthStart=null;for(var i=0;i<scope.profiles.length;i++){var profile=scope.profiles[i];for(var j=0;j<profile.spheres.length;j++){var sphere=profile.spheres[j];if(sphere===I.object){widthStart=profile.width;}}}scope.dragstart={object:I.object,sceneClickPos:I.point,sceneStartPos:scope.sceneRoot.position.clone(),mousePos:{x:scope.mouse.x,y:scope.mouse.y},widthStart:widthStart};event.stopImmediatePropagation();}}else if(event.which===3){onRightClick(event);}}function onDoubleClick(event){ // fix move event after double click
+	// see: http://stackoverflow.com/questions/8125165/event-listener-for-dblclick-causes-event-for-mousemove-to-not-work-and-show-a-ci
+	if(window.getSelection){window.getSelection().removeAllRanges();}else if(document.selection){document.selection.empty();}if(scope.activeProfile&&state===STATE.INSERT){scope.activeProfile.removeMarker(scope.activeProfile.points.length-1);scope.finishInsertion();}}function onMouseUp(event){if(scope.dragstart){scope.dragstart.object.dispatchEvent({type:"drop",event:event});scope.dragstart=null;}}function getHoveredElement(){var vector=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0.5);vector.unproject(scope.camera);var raycaster=new _three2.default.Raycaster();raycaster.ray.set(scope.camera.position,vector.sub(scope.camera.position).normalize());var intersections=raycaster.intersectObjects(scope.profiles);if(intersections.length>0){return intersections[0];}else {return false;}};this.getMousePointCloudIntersection=function(){var vector=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0.5);vector.unproject(scope.camera);var direction=vector.sub(scope.camera.position).normalize();var ray=new _three2.default.Ray(scope.camera.position,direction);var pointClouds=[];scope.scene.traverse(function(object){if(object instanceof Potree.PointCloudOctree||object instanceof Potree.PointCloudArena4D){pointClouds.push(object);}});var closestPoint=null;var closestPointDistance=null;for(var i=0;i<pointClouds.length;i++){var pointcloud=pointClouds[i];var point=pointcloud.pick(scope.renderer,scope.camera,ray);if(!point){continue;}var distance=scope.camera.position.distanceTo(point.position);if(!closestPoint||distance<closestPointDistance){closestPoint=point;closestPointDistance=distance;}}return closestPoint?closestPoint.position:null;};this.startInsertion=function(args){state=STATE.INSERT;var args=args||{};var clip=args.clip||false;var width=args.width||1.0;this.activeProfile=new Potree.HeightProfile();this.activeProfile.clip=clip;this.activeProfile.setWidth(width);this.addProfile(this.activeProfile);this.activeProfile.addMarker(new _three2.default.Vector3(0,0,0));return this.activeProfile;};this.finishInsertion=function(){this.activeProfile.removeMarker(this.activeProfile.points.length-1);var event={type:"insertion_finished",profile:this.activeProfile};this.dispatchEvent(event);this.activeProfile=null;state=STATE.DEFAULT;};this.addProfile=function(profile){this.profiles.push(profile);this.sceneProfile.add(profile);profile.update();this.dispatchEvent({"type":"profile_added",profile:profile});profile.addEventListener("marker_added",function(event){scope.dispatchEvent(event);});profile.addEventListener("marker_removed",function(event){scope.dispatchEvent(event);});profile.addEventListener("marker_moved",function(event){scope.dispatchEvent(event);});};this.removeProfile=function(profile){this.sceneProfile.remove(profile);var index=this.profiles.indexOf(profile);if(index>=0){this.profiles.splice(index,1);}this.dispatchEvent({"type":"profile_removed",profile:profile});};this.reset=function(){for(var i=this.profiles.length-1;i>=0;i--){var profile=this.profiles[i];this.removeProfile(profile);}};this.update=function(){for(var i=0;i<this.profiles.length;i++){var profile=this.profiles[i];for(var j=0;j<profile.spheres.length;j++){var sphere=profile.spheres[j];var distance=scope.camera.position.distanceTo(sphere.getWorldPosition());var pr=projectedRadius(1,scope.camera.fov*Math.PI/180,distance,renderer.domElement.clientHeight);var scale=15/pr;sphere.scale.set(scale,scale,scale);}}this.light.position.copy(this.camera.position);this.light.lookAt(this.camera.getWorldDirection().add(this.camera.position));};this.render=function(){this.update();renderer.render(this.sceneProfile,this.camera);};this.domElement.addEventListener('click',onClick,false);this.domElement.addEventListener('dblclick',onDoubleClick,false);this.domElement.addEventListener('mousemove',onMouseMove,false);this.domElement.addEventListener('mousedown',onMouseDown,false);this.domElement.addEventListener('mouseup',onMouseUp,true);};Potree.ProfileTool.prototype=Object.create(_three2.default.EventDispatcher.prototype);Potree.TransformationTool=function(scene,camera,renderer){var scope=this;this.enabled=false;this.scene=scene;this.camera=camera;this.renderer=renderer;this.domElement=renderer.domElement;this.mouse={x:0,y:0};this.dragstart=null;this.sceneTransformation=new _three2.default.Scene();this.sceneRoot=new _three2.default.Object3D();this.sceneTransformation.add(this.sceneRoot);this.sceneRotation=new _three2.default.Scene();this.translationNode=new _three2.default.Object3D();this.rotationNode=new _three2.default.Object3D();this.scaleNode=new _three2.default.Object3D();this.sceneRoot.add(this.translationNode);this.sceneRoot.add(this.rotationNode);this.sceneRoot.add(this.scaleNode);this.sceneRoot.visible=false;this.hoveredElement=null;this.STATE={DEFAULT:0,TRANSLATE_X:1,TRANSLATE_Y:2,TRANSLATE_Z:3,SCALE_X:1,SCALE_Y:2,SCALE_Z:3};this.parts={ARROW_X:{name:"arrow_x",object:undefined,color:new _three2.default.Color(0xff0000),state:this.STATE.TRANSLATE_X},ARROW_Z:{name:"arrow_z",object:undefined,color:new _three2.default.Color(0x0000ff),state:this.STATE.TRANSLATE_Z},ARROW_Y:{name:"arrow_y",object:undefined,color:new _three2.default.Color(0x00ff00),state:this.STATE.TRANSLATE_Y},SCALE_X:{name:"scale_x",object:undefined,color:new _three2.default.Color(0xff0000),state:this.STATE.SCALE_X},SCALE_Z:{name:"scale_z",object:undefined,color:new _three2.default.Color(0x0000ff),state:this.STATE.SCALE_Z},SCALE_Y:{name:"scale_y",object:undefined,color:new _three2.default.Color(0x00ff00),state:this.STATE.SCALE_Y},ROTATE_X:{name:"rotate_x",object:undefined,color:new _three2.default.Color(0xff0000),state:this.STATE.ROTATE_X},ROTATE_Z:{name:"rotate_z",object:undefined,color:new _three2.default.Color(0x0000ff),state:this.STATE.ROTATE_Z},ROTATE_Y:{name:"rotate_y",object:undefined,color:new _three2.default.Color(0x00ff00),state:this.STATE.ROTATE_Y}};this.buildTranslationNode=function(){var arrowX=scope.createArrow(scope.parts.ARROW_X,scope.parts.ARROW_X.color);arrowX.rotation.z=-Math.PI/2;var arrowY=scope.createArrow(scope.parts.ARROW_Y,scope.parts.ARROW_Y.color);var arrowZ=scope.createArrow(scope.parts.ARROW_Z,scope.parts.ARROW_Z.color);arrowZ.rotation.x=-Math.PI/2;this.translationNode.add(arrowX);this.translationNode.add(arrowY);this.translationNode.add(arrowZ);};this.buildScaleNode=function(){var xHandle=this.createScaleHandle(scope.parts.SCALE_X,0xff0000);xHandle.rotation.z=-Math.PI/2;var yHandle=this.createScaleHandle(scope.parts.SCALE_Y,0x00ff00);var zHandle=this.createScaleHandle(scope.parts.SCALE_Z,0x0000ff);zHandle.rotation.x=-Math.PI/2;this.scaleNode.add(xHandle);this.scaleNode.add(yHandle);this.scaleNode.add(zHandle);};this.buildRotationNode=function(){var xHandle=this.createRotationCircle(scope.parts.ROTATE_X,0xff0000);xHandle.rotation.y=-Math.PI/2;var yHandle=this.createRotationCircle(scope.parts.ROTATE_Y,0x00ff00);var zHandle=this.createRotationCircle(scope.parts.ROTATE_Z,0x0000ff);yHandle.rotation.x=-Math.PI/2;this.rotationNode.add(xHandle);this.rotationNode.add(yHandle);this.rotationNode.add(zHandle);var sg=new _three2.default.SphereGeometry(2.9,24,24);var sphere=new _three2.default.Mesh(sg,new _three2.default.MeshBasicMaterial({color:0xaaaaaa,transparent:true,opacity:0.4}));this.sceneRotation.add(sphere);var moveEvent=function moveEvent(event){sphere.material.color.setHex(0x555555);};var leaveEvent=function leaveEvent(event){sphere.material.color.setHex(0xaaaaaa);};var dragEvent=function dragEvent(event){event.event.stopImmediatePropagation();var mouseStart=new _three2.default.Vector3(scope.dragstart.mousePos.x,scope.dragstart.mousePos.y,0.1);var mouseEnd=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0.1);var mouseDiff=new _three2.default.Vector3().subVectors(mouseEnd,mouseStart);var sceneStart=mouseStart.clone().unproject(scope.camera);var sceneEnd=mouseEnd.clone().unproject(scope.camera);var sceneDiff=new _three2.default.Vector3().subVectors(sceneEnd,sceneStart);var sceneDir=sceneDiff.clone().normalize();var toCamDir=new _three2.default.Vector3().subVectors(scope.camera.position,sceneStart).normalize();var rotationAxis=toCamDir.clone().cross(sceneDir);var rotationAmount=6*mouseDiff.length();for(var i=0;i<scope.targets.length;i++){var target=scope.targets[i];var startRotation=scope.dragstart.rotations[i];target.rotation.copy(startRotation);var q=new _three2.default.Quaternion();q.setFromAxisAngle(rotationAxis,rotationAmount);target.quaternion.multiplyQuaternions(q,target.quaternion);}};var dropEvent=function dropEvent(event){};sphere.addEventListener("mousemove",moveEvent);sphere.addEventListener("mouseleave",leaveEvent);sphere.addEventListener("mousedrag",dragEvent);sphere.addEventListener("drop",dropEvent);};this.createBox=function(color){var boxGeometry=new _three2.default.BoxGeometry(1,1,1);var boxMaterial=new _three2.default.MeshBasicMaterial({color:color,transparent:true,opacity:0.5});var box=new _three2.default.Mesh(boxGeometry,boxMaterial);return box;};var sph1,sph2,sph3;this.createRotationCircle=function(partID,color){ //var geometry = new THREE.TorusGeometry(3, 0.1, 12, 48);
+	//var material = new THREE.MeshBasicMaterial({color: color});
+	//
+	//var ring = new THREE.Mesh(geometry, material);
+	var vertices=[];var segments=128;for(var i=0;i<=segments;i++){var u=2*Math.PI*i/segments;var x=3*Math.cos(u);var y=3*Math.sin(u);vertices.push(new _three2.default.Vector3(x,y,0));}var geometry=new _three2.default.Geometry();for(var i=0;i<vertices.length;i++){geometry.vertices.push(vertices[i]);}var material=new _three2.default.LineBasicMaterial({color:color});var ring=new _three2.default.Line(geometry,material);ring.mode=_three2.default.LineStrip;ring.scale.set(1,1,1); //this.rotationNode.add(ring);
+	var moveEvent=function moveEvent(event){material.color.setRGB(1,1,0);};var leaveEvent=function leaveEvent(event){material.color.setHex(color);};var dragEvent=function dragEvent(event){event.event.stopImmediatePropagation();var normal=new _three2.default.Vector3();if(partID===scope.parts.ROTATE_X){normal.x=1;}else if(partID===scope.parts.ROTATE_Y){normal.y=1;}else if(partID===scope.parts.ROTATE_Z){normal.z=-1;}var sceneClickPos=scope.dragstart.sceneClickPos.clone();var sceneOrigin=scope.sceneRoot.position.clone();var sceneNormal=sceneClickPos.clone().sub(sceneOrigin).normalize();var screenClickPos=sceneClickPos.clone().project(scope.camera);var screenOrigin=sceneOrigin.clone().project(scope.camera);var screenNormal=screenClickPos.clone().sub(screenOrigin).normalize();var screenTangent=new _three2.default.Vector3(screenNormal.y,screenNormal.x,0);var mouseStart=new _three2.default.Vector3(scope.dragstart.mousePos.x,scope.dragstart.mousePos.y,0);var mouseEnd=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0);var plane=new _three2.default.Plane().setFromNormalAndCoplanarPoint(normal,scope.sceneRoot.position);var camOrigin=scope.camera.position;var camDirection=new _three2.default.Vector3(0,0,-1).applyQuaternion(scope.camera.quaternion);var direction=new _three2.default.Vector3(mouseEnd.x,mouseEnd.y,0.5).unproject(scope.camera).sub(scope.camera.position).normalize();var ray=new _three2.default.Ray(camOrigin,direction);var I=ray.intersectPlane(plane);if(!I){return;}sceneTargetNormal=I.clone().sub(sceneOrigin).normalize();var angleToClick;var angleToTarget;if(partID===scope.parts.ROTATE_X){angleToClick=2*Math.PI+Math.atan2(sceneNormal.y,-sceneNormal.z);angleToTarget=4*Math.PI+Math.atan2(sceneTargetNormal.y,-sceneTargetNormal.z);}else if(partID===scope.parts.ROTATE_Y){angleToClick=2*Math.PI+Math.atan2(-sceneNormal.z,sceneNormal.x);angleToTarget=4*Math.PI+Math.atan2(-sceneTargetNormal.z,sceneTargetNormal.x);}else if(partID===scope.parts.ROTATE_Z){angleToClick=2*Math.PI+Math.atan2(sceneNormal.x,sceneNormal.y);angleToTarget=4*Math.PI+Math.atan2(sceneTargetNormal.x,sceneTargetNormal.y);}var diff=angleToTarget-angleToClick;for(var i=0;i<scope.targets.length;i++){var target=scope.targets[i];var startRotation=scope.dragstart.rotations[i];target.rotation.copy(startRotation);var q=new _three2.default.Quaternion();q.setFromAxisAngle(normal,diff); // axis must be normalized, angle in radians
+	target.quaternion.multiplyQuaternions(q,target.quaternion);}};var dropEvent=function dropEvent(event){};ring.addEventListener("mousemove",moveEvent);ring.addEventListener("mouseleave",leaveEvent);ring.addEventListener("mousedrag",dragEvent);ring.addEventListener("drop",dropEvent);return ring;};this.createScaleHandle=function(partID,color){var boxGeometry=new _three2.default.BoxGeometry(1,1,1);var material=new _three2.default.MeshBasicMaterial({color:color,depthTest:false,depthWrite:false});var box=new _three2.default.Mesh(boxGeometry,material);box.scale.set(0.3,0.3,0.3);box.position.set(0,3,0);var shaftGeometry=new _three2.default.Geometry();shaftGeometry.vertices.push(new _three2.default.Vector3(0,0,0));shaftGeometry.vertices.push(new _three2.default.Vector3(0,3,0));var shaftMaterial=new _three2.default.LineBasicMaterial({color:color,depthTest:false,depthWrite:false});var shaft=new _three2.default.Line(shaftGeometry,shaftMaterial);var handle=new _three2.default.Object3D();handle.add(box);handle.add(shaft);handle.partID=partID;var moveEvent=function moveEvent(event){shaftMaterial.color.setRGB(1,1,0);material.color.setRGB(1,1,0);};var leaveEvent=function leaveEvent(event){shaftMaterial.color.setHex(color);material.color.setHex(color);};var dragEvent=function dragEvent(event){var sceneDirection=new _three2.default.Vector3();if(partID===scope.parts.SCALE_X){sceneDirection.x=1;}else if(partID===scope.parts.SCALE_Y){sceneDirection.y=1;}else if(partID===scope.parts.SCALE_Z){sceneDirection.z=-1;}var sceneClickPos=scope.dragstart.sceneClickPos.clone();sceneClickPos.multiply(sceneDirection);sceneClickPos.z*=-1;var lineStart=scope.dragstart.sceneStartPos.clone().project(scope.camera);var lineEnd=scope.dragstart.sceneStartPos.clone().add(sceneDirection).project(scope.camera);var origin=lineStart.clone();var screenDirection=lineEnd.clone().sub(lineStart);screenDirection.normalize();var mouseStart=new _three2.default.Vector3(scope.dragstart.mousePos.x,scope.dragstart.mousePos.y,0);var mouseEnd=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0);var directionDistance=new _three2.default.Vector3().subVectors(mouseEnd,mouseStart).dot(screenDirection);var pointOnLine=screenDirection.clone().multiplyScalar(directionDistance).add(origin);pointOnLine.unproject(scope.camera);var diff=scope.sceneRoot.position.clone().sub(pointOnLine);diff.multiply(new _three2.default.Vector3(-1,-1,1));for(var i=0;i<scope.targets.length;i++){var target=scope.targets[i];var startScale=scope.dragstart.scales[i];target.scale.copy(startScale).add(diff);target.scale.x=Math.max(target.scale.x,0.01);target.scale.y=Math.max(target.scale.y,0.01);target.scale.z=Math.max(target.scale.z,0.01);}event.event.stopImmediatePropagation();};var dropEvent=function dropEvent(event){material.color.set(color);};box.addEventListener("mousemove",moveEvent);box.addEventListener("mouseleave",leaveEvent);box.addEventListener("mousedrag",dragEvent);box.addEventListener("drop",dropEvent);shaft.addEventListener("mousemove",moveEvent);shaft.addEventListener("mouseleave",leaveEvent);shaft.addEventListener("mousedrag",dragEvent);shaft.addEventListener("drop",dropEvent);return handle;};this.createArrow=function(partID,color){var material=new _three2.default.MeshBasicMaterial({color:color,depthTest:false,depthWrite:false}); //var shaftGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3, 10, 1, false);
+	//var shaftMaterial  = material;
+	//var shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+	//shaft.position.y = 1.5;
+	var shaftGeometry=new _three2.default.Geometry();shaftGeometry.vertices.push(new _three2.default.Vector3(0,0,0));shaftGeometry.vertices.push(new _three2.default.Vector3(0,3,0));var shaftMaterial=new _three2.default.LineBasicMaterial({color:color,depthTest:false,depthWrite:false});var shaft=new _three2.default.Line(shaftGeometry,shaftMaterial);var headGeometry=new _three2.default.CylinderGeometry(0,0.2,0.5,10,1,false);var headMaterial=material;var head=new _three2.default.Mesh(headGeometry,headMaterial);head.position.y=3;var arrow=new _three2.default.Object3D();arrow.add(shaft);arrow.add(head);arrow.partID=partID;arrow.material=material;var moveEvent=function moveEvent(event){headMaterial.color.setRGB(1,1,0);shaftMaterial.color.setRGB(1,1,0);};var leaveEvent=function leaveEvent(event){headMaterial.color.set(color);shaftMaterial.color.set(color);};var dragEvent=function dragEvent(event){var sceneDirection=new _three2.default.Vector3();if(partID===scope.parts.ARROW_X){sceneDirection.x=1;}else if(partID===scope.parts.ARROW_Y){sceneDirection.y=1;}else if(partID===scope.parts.ARROW_Z){sceneDirection.z=-1;}var sceneClickPos=scope.dragstart.sceneClickPos.clone();sceneClickPos.multiply(sceneDirection);sceneClickPos.z*=-1; //var lineStart = new THREE.Vector3();
+	//lineStart.x = scope.dragstart.mousePos.x;     
+	//lineStart.y = scope.dragstart.mousePos.y;
+	var lineStart=scope.dragstart.sceneStartPos.clone().project(scope.camera);var lineEnd=scope.dragstart.sceneStartPos.clone().add(sceneDirection).project(scope.camera);var origin=lineStart.clone();var screenDirection=lineEnd.clone().sub(lineStart);screenDirection.normalize();var mouseStart=new _three2.default.Vector3(scope.dragstart.mousePos.x,scope.dragstart.mousePos.y,0);var mouseEnd=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0); //var htmlStart = mouseStart.clone().addScalar(1).multiplyScalar(0.5);
+	//htmlStart.x *= scope.domElement.clientWidth;
+	//htmlStart.y *= scope.domElement.clientHeight;
+	//
+	//var htmlEnd = mouseEnd.clone().addScalar(1).multiplyScalar(0.5);
+	//htmlEnd.x *= scope.domElement.clientWidth;
+	//htmlEnd.y *= scope.domElement.clientHeight;
+	//
+	//var el = document.getElementById("testDiv");
+	//el.style.left = htmlStart.x;
+	//el.style.width = htmlEnd.x - htmlStart.x;
+	//el.style.bottom = htmlStart.y;
+	//el.style.top = scope.domElement.clientHeight - htmlEnd.y;
+	//var directionDistance = new THREE.Vector3().subVectors(mouseEnd, origin).dot(screenDirection);
+	var directionDistance=new _three2.default.Vector3().subVectors(mouseEnd,mouseStart).dot(screenDirection);var pointOnLine=screenDirection.clone().multiplyScalar(directionDistance).add(origin);pointOnLine.unproject(scope.camera);var diff=scope.sceneRoot.position.clone(); //scope.position.copy(pointOnLine);
+	var offset=sceneClickPos.clone().sub(scope.dragstart.sceneStartPos);scope.sceneRoot.position.copy(pointOnLine); //scope.sceneRoot.position.sub(offset);
+	diff.sub(scope.sceneRoot.position);for(var i=0;i<scope.targets.length;i++){var target=scope.targets[i];target.position.sub(diff);} //if(!sph1){
+	//  var g = new THREE.SphereGeometry(0.2);
+	//  
+	//  var m1 = new THREE.MeshBasicMaterial({color: 0xff0000});
+	//  var m2 = new THREE.MeshBasicMaterial({color: 0x00ff00});
+	//  var m3 = new THREE.MeshBasicMaterial({color: 0x0000ff});
+	//  
+	//  sph1 = new THREE.Mesh(g, m1);
+	//  sph2 = new THREE.Mesh(g, m2);
+	//  sph3 = new THREE.Mesh(g, m3);
+	//  
+	//  scope.scene.add(sph1);
+	//  scope.scene.add(sph2);
+	//  scope.scene.add(sph3);
+	//}
+	//sph1.position.copy(scope.dragstart.sceneStartPos);
+	//sph2.position.copy(scope.dragstart.sceneClickPos);
+	//sph3.position.copy(pointOnLine);
+	event.event.stopImmediatePropagation();};var dropEvent=function dropEvent(event){shaftMaterial.color.set(color);};shaft.addEventListener("mousemove",moveEvent);head.addEventListener("mousemove",moveEvent);shaft.addEventListener("mouseleave",leaveEvent);head.addEventListener("mouseleave",leaveEvent);shaft.addEventListener("mousedrag",dragEvent);head.addEventListener("mousedrag",dragEvent);shaft.addEventListener("drop",dropEvent);head.addEventListener("drop",dropEvent);return arrow;};function onMouseMove(event){scope.mouse.x=event.clientX/scope.domElement.clientWidth*2-1;scope.mouse.y=-(event.clientY/scope.domElement.clientHeight)*2+1;if(scope.dragstart){scope.dragstart.object.dispatchEvent({type:"mousedrag",event:event});}else {var I=getHoveredElement();if(I){var object=I.object; //var g = new THREE.SphereGeometry(2);
+	//var m = new THREE.Mesh(g);
+	//scope.scene.add(m);
+	//m.position.copy(I.point);
+	object.dispatchEvent({type:"mousemove",event:event});if(scope.hoveredElement&&scope.hoveredElement!==object){scope.hoveredElement.dispatchEvent({type:"mouseleave",event:event});}scope.hoveredElement=object;}else {if(scope.hoveredElement){scope.hoveredElement.dispatchEvent({type:"mouseleave",event:event});}scope.hoveredElement=null;}}};function onMouseDown(event){if(event.which===1){ // left click
+	var I=getHoveredElement();if(I){var scales=[];var rotations=[];for(var i=0;i<scope.targets.length;i++){scales.push(scope.targets[i].scale.clone());rotations.push(scope.targets[i].rotation.clone());}scope.dragstart={object:I.object,sceneClickPos:I.point,sceneStartPos:scope.sceneRoot.position.clone(),mousePos:{x:scope.mouse.x,y:scope.mouse.y},scales:scales,rotations:rotations};event.stopImmediatePropagation();}}else if(event.which===3){ // right click
+	scope.setTargets([]);}};function onMouseUp(event){if(scope.dragstart){scope.dragstart.object.dispatchEvent({type:"drop",event:event});scope.dragstart=null;}};function getHoveredElement(){if(scope.targets.length===0){return;}var vector=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0.5);vector.unproject(scope.camera);var raycaster=new _three2.default.Raycaster();raycaster.ray.set(scope.camera.position,vector.sub(scope.camera.position).normalize());raycaster.linePrecision=0.2;var objects=[];if(scope.translationNode.visible){objects.push(scope.translationNode);}else if(scope.scaleNode.visible){objects.push(scope.scaleNode);}else if(scope.rotationNode.visible){objects.push(scope.rotationNode);objects.push(scope.sceneRotation);}var intersections=raycaster.intersectObjects(objects,true); // recalculate distances because they are not necessarely correct
+	// for scaled objects.
+	// see https://github.com/mrdoob/three.js/issues/5827
+	// TODO: remove this once the bug has been fixed
+	for(var i=0;i<intersections.length;i++){var I=intersections[i];I.distance=scope.camera.position.distanceTo(I.point);}intersections.sort(function(a,b){return a.distance-b.distance;});if(intersections.length>0){return intersections[0];}else {return false;}};this.setTargets=function(targets){scope.targets=targets;if(scope.targets.length===0){this.sceneRoot.visible=false;this.sceneRotation.visible=false;return;}else {this.sceneRoot.visible=true;} //TODO calculate centroid of all targets
+	var target=targets[0];var bb;if(target.geometry&&target.geometry.boundingBox){bb=target.geometry.boundingBox;}else {bb=target.boundingBox;}if(bb){var centroid=bb.clone().applyMatrix4(target.matrixWorld).center();scope.sceneRoot.position.copy(centroid);} //for(var i = 0; i < targets.length; i++){
+	//  var target = targets[i];
+	//}
+	};this.update=function(){var node=this.sceneRoot;var wp=node.getWorldPosition().applyMatrix4(this.camera.matrixWorldInverse);var pp=new _three2.default.Vector4(wp.x,wp.y,wp.z).applyMatrix4(camera.projectionMatrix);var w=Math.abs(wp.z/20); // * (2 - pp.z / pp.w);
+	node.scale.set(w,w,w);if(this.targets&&this.targets.length===1){this.scaleNode.rotation.copy(this.targets[0].rotation);}this.sceneRotation.scale.set(w,w,w);};this.render=function(){this.update();this.sceneRotation.position.copy(this.sceneRoot.position);this.sceneRotation.visible=this.rotationNode.visible&&this.sceneRoot.visible;renderer.render(this.sceneRotation,this.camera);renderer.render(this.sceneTransformation,this.camera);};this.translate=function(){this.translationNode.visible=true;this.scaleNode.visible=false;this.rotationNode.visible=false;};this.scale=function(){this.translationNode.visible=false;this.scaleNode.visible=true;this.rotationNode.visible=false;};this.rotate=function(){this.translationNode.visible=false;this.scaleNode.visible=false;this.rotationNode.visible=true;};this.buildTranslationNode();this.buildScaleNode();this.buildRotationNode(); //this.translate();
+	this.rotate();this.setTargets([]); //this.domElement.addEventListener( 'click', onClick, false);
+	this.domElement.addEventListener('mousemove',onMouseMove,true);this.domElement.addEventListener('mousedown',onMouseDown,true);this.domElement.addEventListener('mouseup',onMouseUp,true);};Potree.Volume=function(args){_three2.default.Object3D.call(this);args=args||{};this._clip=args.clip||false;this._modifiable=args.modifiable||true;var boxGeometry=new _three2.default.BoxGeometry(1,1,1);boxGeometry.computeBoundingBox();var boxFrameGeometry=new _three2.default.Geometry(); // bottom
+	boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,-0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,-0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,-0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,-0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,-0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,-0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,-0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,-0.5,0.5)); // top
+	boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,0.5,0.5)); // sides
+	boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,-0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,-0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,0.5,0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,-0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(0.5,0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,-0.5,-0.5));boxFrameGeometry.vertices.push(new _three2.default.Vector3(-0.5,0.5,-0.5));this.dimension=new _three2.default.Vector3(1,1,1);var material=new _three2.default.MeshBasicMaterial({color:0x00ff00,transparent:true,opacity:0.3});this.box=new _three2.default.Mesh(boxGeometry,material);this.box.geometry.computeBoundingBox();this.boundingBox=this.box.geometry.boundingBox;this.add(this.box);this.frame=new _three2.default.Line(boxFrameGeometry,new _three2.default.LineBasicMaterial({color:0x000000}));this.frame.mode=_three2.default.LinePieces;this.add(this.frame);this.label=new Potree.TextSprite("0");this.label.setBorderColor({r:0,g:255,b:0,a:0.0});this.label.setBackgroundColor({r:0,g:255,b:0,a:0.0});this.label.material.depthTest=false;this.label.position.y-=0.5;this.add(this.label);var v=this;this.label.updateMatrixWorld=function(){var volumeWorldPos=new _three2.default.Vector3();volumeWorldPos.setFromMatrixPosition(v.matrixWorld);v.label.position.copy(volumeWorldPos);v.label.updateMatrix();v.label.matrixWorld.copy(v.label.matrix);v.label.matrixWorldNeedsUpdate=false;for(var i=0,l=v.label.children.length;i<l;i++){v.label.children[i].updateMatrixWorld(true);}};this.setDimension=function(x,y,z){this.dimension.set(x,y,z);this.box.scale.set(x,y,z);this.frame.scale.set(x,y,z);};this.volume=function(){return Math.abs(this.scale.x*this.scale.y*this.scale.z); //return Math.abs(this.dimension.x * this.dimension.y * this.dimension.z);
+	};this.update=function(){this.boundingBox=this.box.geometry.boundingBox;if(this._clip){this.box.visible=false;this.label.visible=false;}else {this.box.visible=true;this.label.visible=true;}};this.raycast=function(raycaster,intersects){var is=[];this.box.raycast(raycaster,is);if(is.length>0){var I=is[0];intersects.push({distance:I.distance,object:this,point:I.point.clone()});}};this.update();};Potree.Volume.prototype=Object.create(_three2.default.Object3D.prototype);Object.defineProperty(Potree.Volume.prototype,"clip",{get:function get(){return this._clip;},set:function set(value){this._clip=value;this.update();}});Object.defineProperty(Potree.Volume.prototype,"modifiable",{get:function get(){return this._modifiable;},set:function set(value){this._modifiable=value;this.update();}});Potree.VolumeTool=function(scene,camera,renderer){var scope=this;this.enabled=false;this.scene=scene;this.sceneVolume=new _three2.default.Scene();this.camera=camera;this.renderer=renderer;this.domElement=renderer.domElement;this.mouse={x:0,y:0};this.volumes=[];var STATE={DEFAULT:0,INSERT_VOLUME:1};var state=STATE.DEFAULT;function onMouseMove(event){var rect=scope.domElement.getBoundingClientRect();scope.mouse.x=(event.clientX-rect.left)/scope.domElement.clientWidth*2-1;scope.mouse.y=-((event.clientY-rect.top)/scope.domElement.clientHeight)*2+1;};function onMouseClick(event){ //if(state === STATE.INSERT_VOLUME){
+	//  scope.finishInsertion();
+	//}else if(event.which === 1){
+	//  var I = getHoveredElement();
+	//  
+	//  if(I){
+	//    transformationTool.setTargets([I.object]);
+	//  }
+	//}
+	};function onMouseDown(event){if(state!==STATE.DEFAULT){event.stopImmediatePropagation();}if(state===STATE.INSERT_VOLUME){scope.finishInsertion();}else if(event.which===1){var I=getHoveredElement();if(I&&I.object.modifiable){transformationTool.setTargets([I.object]);}}if(event.which===3){ // open context menu
+	//var element = getHoveredElement();
+	//
+	//if(element){
+	//  var menu = document.createElement("div");
+	//  menu.style.position = "fixed";
+	//  menu.style.backgroundColor = "#bbbbbb";
+	//  menu.style.top = event.clientY + "px";
+	//  menu.style.left = event.clientX + "px";
+	//  menu.style.width = "200px";
+	//  menu.style.height = "100px";
+	//  menu.innerHTML = "abc";
+	//  menu.addEventListener("contextmenu", function(event){
+	//    event.preventDefault();
+	//    return false;
+	//  }, false);
+	//  
+	//  scope.renderer.domElement.parentElement.appendChild(menu);
+	//}
+	}};function onContextMenu(event){event.preventDefault();return false;}function getHoveredElement(){var vector=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0.5);vector.unproject(scope.camera);var raycaster=new _three2.default.Raycaster();raycaster.ray.set(scope.camera.position,vector.sub(scope.camera.position).normalize());var objects=[];for(var i=0;i<scope.volumes.length;i++){var object=scope.volumes[i];objects.push(object);}var intersections=raycaster.intersectObjects(objects,false);if(intersections.length>0){return intersections[0];}else {return false;}};function getMousePointCloudIntersection(){var vector=new _three2.default.Vector3(scope.mouse.x,scope.mouse.y,0.5);vector.unproject(scope.camera);var direction=vector.sub(scope.camera.position).normalize();var ray=new _three2.default.Ray(scope.camera.position,direction);var pointClouds=[];scope.scene.traverse(function(object){if(object instanceof Potree.PointCloudOctree||object instanceof Potree.PointCloudArena4D){pointClouds.push(object);}});var closestPoint=null;var closestPointDistance=null;for(var i=0;i<pointClouds.length;i++){var pointcloud=pointClouds[i];var point=pointcloud.pick(scope.renderer,scope.camera,ray);if(!point){continue;}var distance=scope.camera.position.distanceTo(point.position);if(!closestPoint||distance<closestPointDistance){closestPoint=point;closestPointDistance=distance;}}return closestPoint?closestPoint.position:null;}this.update=function(delta){if(state===STATE.INSERT_VOLUME){var I=getMousePointCloudIntersection();if(I){this.activeVolume.position.copy(I);var wp=this.activeVolume.getWorldPosition().applyMatrix4(this.camera.matrixWorldInverse);var pp=new _three2.default.Vector4(wp.x,wp.y,wp.z).applyMatrix4(this.camera.projectionMatrix);var w=Math.abs(wp.z/10); //this.activeVolume.setDimension(w, w, w);
+	this.activeVolume.scale.set(w,w,w);}}var volumes=[];for(var i=0;i<this.volumes.length;i++){volumes.push(this.volumes[i]);}if(this.activeVolume){volumes.push(this.activeVolume);}for(var i=0;i<volumes.length;i++){var volume=volumes[i];var box=volume.box;var label=volume.label;var capacity=volume.volume();var msg=Potree.utils.addCommas(capacity.toFixed(1))+"³";label.setText(msg);var distance=scope.camera.position.distanceTo(label.getWorldPosition());var pr=projectedRadius(1,scope.camera.fov*Math.PI/180,distance,renderer.domElement.clientHeight);var scale=70/pr;label.scale.set(scale,scale,scale);}};this.startInsertion=function(args){state=STATE.INSERT_VOLUME;var args=args||{};var clip=args.clip||false;this.activeVolume=new Potree.Volume();this.activeVolume.clip=clip;this.sceneVolume.add(this.activeVolume);this.volumes.push(this.activeVolume);};this.finishInsertion=function(){transformationTool.setTargets([this.activeVolume]);var event={type:"insertion_finished",volume:this.activeVolume};this.dispatchEvent(event);this.activeVolume=null;state=STATE.DEFAULT;};this.addVolume=function(volume){this.sceneVolume.add(volume);this.volumes.push(volume);};this.removeVolume=function(volume){this.sceneVolume.remove(volume);var index=this.volumes.indexOf(volume);if(index>=0){this.volumes.splice(index,1);}};this.reset=function(){for(var i=this.volumes.length-1;i>=0;i--){var volume=this.volumes[i];this.removeVolume(volume);}};this.render=function(){renderer.render(this.sceneVolume,this.camera);};this.domElement.addEventListener('click',onMouseClick,false);this.domElement.addEventListener('mousedown',onMouseDown,false);this.domElement.addEventListener('mousemove',onMouseMove,false);this.domElement.addEventListener('contextmenu',onContextMenu,false);};Potree.VolumeTool.prototype=Object.create(_three2.default.EventDispatcher.prototype);Potree.PointCloudArena4DProxyNode=function(geometryNode){_three2.default.Object3D.call(this);this.geometryNode=geometryNode;this.pcoGeometry=geometryNode;this.boundingBox=geometryNode.boundingBox;this.boundingSphere=geometryNode.boundingSphere;this.number=geometryNode.name;this.numPoints=geometryNode.numPoints;this.level=geometryNode.level;};Potree.PointCloudArena4DProxyNode.prototype=Object.create(_three2.default.Object3D.prototype);Potree.PointCloudArena4D=function(geometry){_three2.default.Object3D.call(this);this.root=null;this.visiblePointsTarget=2*1000*1000;this.minimumNodePixelSize=150;this.position.sub(geometry.offset);this.updateMatrix();this.numVisibleNodes=0;this.numVisiblePoints=0;this.boundingBoxNodes=[];this.loadQueue=[];this.visibleNodes=[];this.pcoGeometry=geometry;this.boundingBox=this.pcoGeometry.boundingBox;this.boundingSphere=this.pcoGeometry.boundingSphere;this.material=new Potree.PointCloudMaterial({vertexColors:_three2.default.VertexColors,size:0.05,treeType:Potree.TreeType.KDTREE});this.material.sizeType=Potree.PointSizeType.ATTENUATED;this.material.size=0.05;this.pickTarget;this.pickMaterial;this.updateMatrixWorld();};Potree.PointCloudArena4D.prototype=Object.create(_three2.default.Object3D.prototype);Potree.PointCloudArena4D.prototype.updateMaterial=function(camera,renderer){this.material.fov=camera.fov*(Math.PI/180);this.material.screenWidth=renderer.domElement.clientWidth;this.material.screenHeight=renderer.domElement.clientHeight;this.material.spacing=this.pcoGeometry.spacing;this.material.near=camera.near;this.material.far=camera.far;this.material.minSize=3;var bbSize=this.boundingBox.size();this.material.bbSize=[bbSize.x,bbSize.y,bbSize.z];};Potree.PointCloudArena4D.prototype.hideDescendants=function(object){var stack=[];for(var i=0;i<object.children.length;i++){var child=object.children[i];if(child.visible){stack.push(child);}}while(stack.length>0){var object=stack.shift();object.visible=false;if(object.boundingBoxNode){object.boundingBoxNode.visible=false;}for(var i=0;i<object.children.length;i++){var child=object.children[i];if(child.visible){stack.push(child);}}}};Potree.PointCloudArena4D.prototype.updateMatrixWorld=function(force){ //node.matrixWorld.multiplyMatrices( node.parent.matrixWorld, node.matrix );
+	if(this.matrixAutoUpdate===true)this.updateMatrix();if(this.matrixWorldNeedsUpdate===true||force===true){if(this.parent===undefined){this.matrixWorld.copy(this.matrix);}else {this.matrixWorld.multiplyMatrices(this.parent.matrixWorld,this.matrix);}this.matrixWorldNeedsUpdate=false;force=true;}};var dbgFullyInside=0;Potree.PointCloudArena4D.prototype.update=function(camera,renderer){var geometry=this.pcoGeometry;if(!geometry.root){return;}else if(!this.rootProxyGenerated){var rootProxy=new Potree.PointCloudArena4DProxyNode(this.pcoGeometry.root);this.add(rootProxy);this.rootProxyGenerated=true;}this.updateMatrixWorld(true);this.loadQueue=[];this.visibleNodes=[];this.numVisibleNodes=0;this.numVisiblePoints=0;dbgFullyInside=0;if(!this.showBoundingBox){for(var i=0;i<this.boundingBoxNodes.length;i++){var bbNode=this.boundingBoxNodes[i];this.remove(bbNode);bbNode.geometry.dispose();}}this.updateMaterial(camera,renderer);this.hideDescendants(this.children[0]); // create frustum in object space
+	camera.updateMatrixWorld();var frustum=new _three2.default.Frustum();var viewI=camera.matrixWorldInverse;var world=this.matrixWorld;var proj=camera.projectionMatrix;var fm=new _three2.default.Matrix4().multiply(proj).multiply(viewI).multiply(world);frustum.setFromMatrix(fm); // calculate camera position in object space
+	var view=camera.matrixWorld;var worldI=new _three2.default.Matrix4().getInverse(world);var camMatrixObject=new _three2.default.Matrix4().multiply(worldI).multiply(view);var camObjPos=new _three2.default.Vector3().setFromMatrixPosition(camMatrixObject);var stack=[];stack.push({node:this.children[0],weight:1});while(stack.length>0){var element=stack.shift();var node=element.node;var weight=element.weight; //if(node.level > 3){
+	//  continue;
+	//}
+	node.matrixWorld.multiplyMatrices(this.matrixWorld,node.matrix);var box=node.boundingBox.clone(); //box.min.sub(this.boundingBox.min);
+	//box.max.sub(this.boundingBox.min);
+	var insideFrustum=frustum.intersectsBox(box);var visible=insideFrustum;node.visible=visible;if(!visible){continue;}var pointsInside=0; //pointsInside += frustum.containsPoint(new THREE.Vector3(box.min.x, box.min.y, box.min.z)) ? 1 : 0;
+	//pointsInside += frustum.containsPoint(new THREE.Vector3(box.min.x, box.min.y, box.max.z)) ? 1 : 0;
+	//pointsInside += frustum.containsPoint(new THREE.Vector3(box.min.x, box.max.y, box.min.z)) ? 1 : 0;
+	//pointsInside += frustum.containsPoint(new THREE.Vector3(box.min.x, box.max.y, box.max.z)) ? 1 : 0;
+	//pointsInside += frustum.containsPoint(new THREE.Vector3(box.max.x, box.min.y, box.min.z)) ? 1 : 0;
+	//pointsInside += frustum.containsPoint(new THREE.Vector3(box.max.x, box.min.y, box.max.z)) ? 1 : 0;
+	//pointsInside += frustum.containsPoint(new THREE.Vector3(box.max.x, box.max.y, box.min.z)) ? 1 : 0;
+	//pointsInside += frustum.containsPoint(new THREE.Vector3(box.max.x, box.max.y, box.max.z)) ? 1 : 0;
+	if(pointsInside===8){dbgFullyInside++;}if(node instanceof Potree.PointCloudArena4DProxyNode){var geometryNode=node.geometryNode;if(geometryNode.loaded===true){this.replaceProxy(node);}else {this.loadQueue.push(element);}}else if(node instanceof _three2.default.PointCloud){if(this.numVisiblePoints+node.pcoGeometry.numPoints>pointcloud.visiblePointsTarget){break;}this.numVisibleNodes++;this.numVisiblePoints+=node.pcoGeometry.numPoints;this.visibleNodes.push({node:node,weight:weight});if(this.showBoundingBox&&!node.boundingBoxNode){var boxHelper=new _three2.default.BoxHelper(node);this.add(boxHelper);this.boundingBoxNodes.push(boxHelper);node.boundingBoxNode=boxHelper;node.boundingBoxNode.matrixWorld.copy(node.matrixWorld);}else if(this.showBoundingBox&&node.boundingBoxNode){node.boundingBoxNode.visible=true;}else if(!this.showBoundingBox){delete node.boundingBoxNode;}for(var i=0;i<node.children.length;i++){var child=node.children[i]; //var box = child.geometryNode.boundingBox;
+	var sphere=child.boundingSphere;var distance=sphere.center.distanceTo(camObjPos);var radius=box.size().length()/2;var fov=camera.fov/2*Math.PI/180.0;var pr=1/Math.tan(fov)*radius/Math.sqrt(distance*distance-radius*radius);if(distance<radius){pr=Number.MAX_VALUE;}var screenPixelRadius=renderer.domElement.clientHeight*pr;if(screenPixelRadius<this.minimumNodePixelSize){continue;}var weight=pr;if(stack.length===0){stack.push({node:child,weight:weight});}else {var ipos=0;for(var j=0;j<stack.length;j++){if(weight>stack[j].weight){var ipos=j;break;}else if(j==stack.length-1){ipos=stack.length;break;}}stack.splice(ipos,0,{node:child,weight:weight});} //stack.push({node: child, weight: 1});
+	}}}this.updateLoadQueue();this.maxLevel=0;for(var i=0;i<this.visibleNodes.length;i++){this.maxLevel=Math.max(this.visibleNodes[i].node.pcoGeometry.level,this.maxLevel);}var vn=[];for(var i=0;i<this.visibleNodes.length;i++){vn.push(this.visibleNodes[i].node);}this.updateVisibilityTexture(this.material,vn); //{ // only show nodes on ray
+	//  var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
+	//  vector.unproject(camera);
+	//
+	//  var direction = vector.sub(camera.position).normalize();
+	//  var ray = new THREE.Ray(camera.position, direction);
+	//    
+	//    
+	//  var nodesOnRay = pointcloud.nodesOnRay(pointcloud.visibleNodes, ray); 
+	//  
+	//  for(var i = 0; i < this.visibleNodes.length; i++){
+	//    var node = this.visibleNodes[i].node;
+	//    
+	//    node.visible = false;
+	//    if(node.boundingBoxNode){
+	//      node.boundingBoxNode.visible = false;
+	//    }
+	//  }
+	//  
+	//  for(var i = 0; i < nodesOnRay.length; i++){
+	//    var node = nodesOnRay[i];
+	//  
+	//    node.visible = true;
+	//    this.numVisiblePoints += node.pcoGeometry.numPoints;
+	//    if(node.boundingBoxNode){
+	//      node.boundingBoxNode.visible = true;
+	//    }
+	//  }
+	//  this.numVisibleNodes = nodesOnRay.length;
+	//  
+	//  var pickPos = this.pick(renderer, camera, ray, {});
+	//  if(pickPos){
+	//    var sg = new THREE.SphereGeometry(0.2);
+	//    var sm = new THREE.Mesh(sg);
+	//    sm.position.copy(pickPos.position);
+	//    scene.add(sm);
+	//  }
+	//}
+	};Potree.PointCloudArena4D.prototype.replaceProxy=function(proxy){var geometryNode=proxy.geometryNode;if(geometryNode.loaded===true){var geometry=geometryNode.geometry;var node=new _three2.default.PointCloud(geometry,this.material);node.number=proxy.number;node.numPoints=proxy.numPoints;node.boundingBox=geometryNode.boundingBox;node.boundingSphere=geometryNode.boundingSphere;node.pcoGeometry=geometryNode;var parent=proxy.parent;parent.remove(proxy);parent.add(node); //node.position.copy(node.boundingBox.min);
+	//node.position.sub(this.pcoGeometry.boundingBox.min);
+	//var current = parent;
+	//while(!(current instanceof Potree.PointCloudArena4D)){
+	//  node.position.sub(current.boundingBox.min);
+	//  
+	//  current = current.parent;
+	//}
+	node.updateMatrix(); //console.log(geometryNode.number + ": " + node.position.x + ", " + node.position.y + ", " + node.position.z);
+	node.matrixWorld.multiplyMatrices(this.matrixWorld,node.matrix);if(geometryNode.left){var child=geometryNode.left;var childProxy=new Potree.PointCloudArena4DProxyNode(child);node.add(childProxy);}if(geometryNode.right){var child=geometryNode.right;var childProxy=new Potree.PointCloudArena4DProxyNode(child);node.add(childProxy);}return node;}};Potree.PointCloudArena4D.prototype.updateLoadQueue=function(vn){if(this.loadQueue.length>0){if(this.loadQueue.length>=2){this.loadQueue.sort(function(a,b){return b.weight-a.weight;});}for(var i=0;i<Math.min(5,this.loadQueue.length);i++){this.loadQueue[i].node.geometryNode.load();}}};Potree.PointCloudArena4D.prototype.getVisibleGeometry=function(camera){var visibleGeometry=[]; // create frustum in object space
+	camera.updateMatrixWorld();var frustum=new _three2.default.Frustum();var viewI=camera.matrixWorldInverse;var world=this.matrixWorld;var proj=camera.projectionMatrix;var fm=new _three2.default.Matrix4().multiply(proj).multiply(viewI).multiply(world);frustum.setFromMatrix(fm);var stack=[];var pointCount=0;stack.push(this.pcoGeometry.root);while(stack.length>0){if(visibleGeometry.length>12){break;}var node=stack.shift();var box=node.boundingBox.clone();box.max.sub(box.min);box.min.sub(box.min);var insideFrustum=frustum.intersectsBox(box);var visible=insideFrustum;if(!visible){continue;}if(pointCount+node.numPoints>this.visiblePointsTarget){break;}pointCount+=node.numPoints;visibleGeometry.push(node);if(node.loaded){if(node.left){stack.push(node.left);}if(node.right){stack.push(node.right);}}}return visibleGeometry;};Potree.PointCloudArena4D.prototype.nodesOnRay=function(nodes,ray){var nodesOnRay=[];var _ray=ray.clone();for(var i=0;i<nodes.length;i++){var node=nodes[i].node; //var inverseWorld = new THREE.Matrix4().getInverse(node.matrixWorld);
+	var sphere=node.boundingSphere.clone().applyMatrix4(node.matrixWorld);var box=node.boundingBox.clone().applyMatrix4(node.matrixWorld);if(_ray.isIntersectionBox(box)){ //if(_ray.isIntersectionSphere(sphere)){
+	nodesOnRay.push(node);}}return nodesOnRay;};Potree.PointCloudArena4D.prototype.pick=function(renderer,camera,ray,params){var params=params||{};var pickWindowSize=params.pickWindowSize||17;var nodes=this.nodesOnRay(this.visibleNodes,ray);if(nodes.length===0){return null;}var width=Math.ceil(renderer.domElement.clientWidth);var height=Math.ceil(renderer.domElement.clientHeight);var pixelPos=new _three2.default.Vector3().addVectors(camera.position,ray.direction).project(camera);pixelPos.addScalar(1).multiplyScalar(0.5);pixelPos.x*=width;pixelPos.y*=height;if(!this.pickTarget){this.pickTarget=new _three2.default.WebGLRenderTarget(1,1,{minFilter:_three2.default.LinearFilter,magFilter:_three2.default.NearestFilter,format:_three2.default.RGBAFormat});}else if(this.pickTarget.width!=width||this.pickTarget.height!=height){this.pickTarget.dispose();this.pickTarget=new _three2.default.WebGLRenderTarget(1,1,{minFilter:_three2.default.LinearFilter,magFilter:_three2.default.NearestFilter,format:_three2.default.RGBAFormat});}this.pickTarget.setSize(width,height); // setup pick material.
+	// use the same point size functions as the main material to get the same point sizes.
+	if(!this.pickMaterial){this.pickMaterial=new Potree.PointCloudMaterial({treeType:Potree.TreeType.KDTREE});this.pickMaterial.pointColorType=Potree.PointColorType.POINT_INDEX;this.pickMaterial.pointSizeType=Potree.PointSizeType.FIXED;}this.pickMaterial.pointSizeType=this.material.pointSizeType;this.pickMaterial.size=this.material.size;this.pickMaterial.fov=this.material.fov;this.pickMaterial.screenWidth=this.material.screenWidth;this.pickMaterial.screenHeight=this.material.screenHeight;this.pickMaterial.spacing=this.material.spacing;this.pickMaterial.near=this.material.near;this.pickMaterial.far=this.material.far;this.pickMaterial.interpolate=this.material.interpolate;this.pickMaterial.minSize=this.material.minSize;this.pickMaterial.maxSize=this.material.maxSize;this.pickMaterial.bbSize=this.material.bbSize;if(this.pickMaterial.pointSizeType===Potree.PointSizeType.ADAPTIVE){this.updateVisibilityTexture(this.pickMaterial,nodes);}var _gl=renderer.context;_gl.enable(_gl.SCISSOR_TEST);_gl.scissor(pixelPos.x-(pickWindowSize-1)/2,pixelPos.y-(pickWindowSize-1)/2,pickWindowSize,pickWindowSize);_gl.disable(_gl.SCISSOR_TEST);var material=this.pickMaterial;renderer.setRenderTarget(this.pickTarget);renderer.state.setDepthTest(material.depthTest);renderer.state.setDepthWrite(material.depthWrite);renderer.state.setBlending(_three2.default.NoBlending);renderer.clear(renderer.autoClearColor,renderer.autoClearDepth,renderer.autoClearStencil); //TODO: UGLY HACK CHAMPIONSHIP SUBMISSION!! drawing first node does not work properly so we draw it twice.
+	if(nodes.length>0){nodes.push(nodes[0]);}for(var i=0;i<nodes.length;i++){var object=nodes[i];var geometry=object.geometry;if(!geometry.attributes.indices.buffer){continue;}material.pcIndex=i;if(material.program){var program=material.program.program;_gl.useProgram(program); //_gl.disable( _gl.BLEND );
+	var attributePointer=_gl.getAttribLocation(program,"indices");var attributeSize=4;_gl.bindBuffer(_gl.ARRAY_BUFFER,geometry.attributes.indices.buffer); //if(!bufferSubmitted){
+	//  _gl.bufferData( _gl.ARRAY_BUFFER, new Uint8Array(geometry.attributes.indices.array), _gl.STATIC_DRAW );
+	//  bufferSubmitted = true;
+	//}
+	_gl.enableVertexAttribArray(attributePointer);_gl.vertexAttribPointer(attributePointer,attributeSize,_gl.UNSIGNED_BYTE,true,0,0);_gl.uniform1f(material.program.uniforms.pcIndex,material.pcIndex);}renderer.renderBufferDirect(camera,[],null,material,geometry,object);}var pickWindowSize=17;var pixelCount=pickWindowSize*pickWindowSize;var buffer=new ArrayBuffer(pixelCount*4);var pixels=new Uint8Array(buffer);var ibuffer=new Uint32Array(buffer);renderer.context.readPixels(pixelPos.x-(pickWindowSize-1)/2,pixelPos.y-(pickWindowSize-1)/2,pickWindowSize,pickWindowSize,renderer.context.RGBA,renderer.context.UNSIGNED_BYTE,pixels); //{ // show big render target for debugging purposes
+	//  var br = new ArrayBuffer(width*height*4);
+	//  var bp = new Uint8Array(br);
+	//  renderer.context.readPixels( 0, 0, width, height, 
+	//    renderer.context.RGBA, renderer.context.UNSIGNED_BYTE, bp);
+	//
+	//  var img = pixelsArrayToImage(bp, width, height);
+	//  img.style.boder = "2px solid red";
+	//  img.style.position = "absolute";
+	//  img.style.top  = "0px";
+	//  img.style.width = width + "px";
+	//  img.style.height = height + "px";
+	//  img.onclick = function(){document.body.removeChild(img)};
+	//  document.body.appendChild(img);
+	//}
+	// find closest hit inside pixelWindow boundaries
+	var min=Number.MAX_VALUE;var hit=null; //console.log("finding closest hit");
+	for(var u=0;u<pickWindowSize;u++){for(var v=0;v<pickWindowSize;v++){var offset=u+v*pickWindowSize;var distance=Math.pow(u-(pickWindowSize-1)/2,2)+Math.pow(v-(pickWindowSize-1)/2,2);var pcIndex=pixels[4*offset+3];pixels[4*offset+3]=0;var pIndex=ibuffer[offset];if((pIndex!==0||pcIndex!==0)&&distance<min){hit={pIndex:pIndex,pcIndex:pcIndex};min=distance;}}}if(hit){var point={};var pc=nodes[hit.pcIndex];var attributes=pc.geometry.attributes;for(var property in attributes){if(attributes.hasOwnProperty(property)){var values=geometry.attributes[property];if(property==="position"){var positionArray=pc.geometry.attributes.position.array;var x=positionArray[3*hit.pIndex+0];var y=positionArray[3*hit.pIndex+1];var z=positionArray[3*hit.pIndex+2];var position=new _three2.default.Vector3(x,y,z);position.applyMatrix4(this.matrixWorld);point[property]=position;}else if(property==="indices"){}else {if(values.itemSize===1){point[property]=values.array[i+j];}else {var value=[];for(var j=0;j<values.itemSize;j++){value.push(values.array[i*values.itemSize+j]);}point[property]=value;}}}}return point;}else {return null;}};Potree.PointCloudArena4D.prototype.updateVisibilityTexture=function(material,visibleNodes){if(!material){return;}var texture=material.visibleNodesTexture;var data=texture.image.data; // copy array
+	visibleNodes=visibleNodes.slice(); // sort by level and number
+	var sort=function sort(a,b){var la=a.pcoGeometry.level;var lb=b.pcoGeometry.level;var na=a.pcoGeometry.number;var nb=b.pcoGeometry.number;if(la!=lb)return la-lb;if(na<nb)return -1;if(na>nb)return 1;return 0;};visibleNodes.sort(sort);var visibleNodeNames=[];for(var i=0;i<visibleNodes.length;i++){ //visibleNodeNames[visibleNodes[i].pcoGeometry.number] = true;
+	visibleNodeNames.push(visibleNodes[i].pcoGeometry.number);}for(var i=0;i<visibleNodes.length;i++){var node=visibleNodes[i];var b1=0; // children
+	var b2=0; // offset to first child
+	var b3=0; // split 
+	if(node.pcoGeometry.left&&visibleNodeNames.indexOf(node.pcoGeometry.left.number)>0){b1+=1;b2=visibleNodeNames.indexOf(node.pcoGeometry.left.number)-i;}if(node.pcoGeometry.right&&visibleNodeNames.indexOf(node.pcoGeometry.right.number)>0){b1+=2;b2=b2===0?visibleNodeNames.indexOf(node.pcoGeometry.right.number)-i:b2;}if(node.pcoGeometry.split==="X"){b3=1;}else if(node.pcoGeometry.split==="Y"){b3=2;}else if(node.pcoGeometry.split==="Z"){b3=4;}data[i*3+0]=b1;data[i*3+1]=b2;data[i*3+2]=b3;}texture.needsUpdate=true;};Object.defineProperty(Potree.PointCloudArena4D.prototype,"progress",{get:function get(){if(this.pcoGeometry.root){return Potree.PointCloudArena4DGeometryNode.nodesLoading>0?0:1;}else {return 0;}}}); //Potree.PointCloudArena4D.prototype.updateMatrixWorld = function( force ){
+	//  //node.matrixWorld.multiplyMatrices( node.parent.matrixWorld, node.matrix );
+	//  
+	//  if ( this.matrixAutoUpdate === true ) this.updateMatrix();
+	//
+	//  if ( this.matrixWorldNeedsUpdate === true || force === true ) {
+	//
+	//    if ( this.parent === undefined ) {
+	//
+	//      this.matrixWorld.copy( this.matrix );
+	//
+	//    } else {
+	//
+	//      this.matrixWorld.multiplyMatrices( this.parent.matrixWorld, this.matrix );
+	//
+	//    }
+	//
+	//    this.matrixWorldNeedsUpdate = false;
+	//
+	//    force = true;
+	//
+	//  }
+	//};
+	Potree.PointCloudArena4DGeometryNode=function(){var scope=this;this.left=null;this.right=null;this.boundingBox=null;this.number=null;this.pcoGeometry=null;this.loaded=false;this.numPoints=0;this.level=0;};Potree.PointCloudArena4DGeometryNode.nodesLoading=0;Potree.PointCloudArena4DGeometryNode.prototype.load=function(){if(this.loaded||this.loading){return;}if(Potree.PointCloudArena4DGeometryNode.nodesLoading>=5){return;}this.loading=true;Potree.PointCloudArena4DGeometryNode.nodesLoading++;var url=this.pcoGeometry.url+"?node="+this.number;var xhr=new XMLHttpRequest();xhr.open("GET",url,true);xhr.responseType="arraybuffer";var scope=this;xhr.onreadystatechange=function(){if(!(xhr.readyState===4&&xhr.status===200)){return;}var buffer=xhr.response;var view=new DataView(buffer);var numPoints=buffer.byteLength/17;var positions=new Float32Array(numPoints*3);var colors=new Float32Array(numPoints*3);var indices=new Uint32Array(numPoints);for(var i=0;i<numPoints;i++){var x=view.getFloat32(i*17+0,true)+scope.boundingBox.min.x;var y=view.getFloat32(i*17+4,true)+scope.boundingBox.min.y;var z=view.getFloat32(i*17+8,true)+scope.boundingBox.min.z;var r=view.getUint8(i*17+12,true)/256;var g=view.getUint8(i*17+13,true)/256;var b=view.getUint8(i*17+14,true)/256;positions[i*3+0]=x;positions[i*3+1]=y;positions[i*3+2]=z;colors[i*3+0]=r;colors[i*3+1]=g;colors[i*3+2]=b;indices[i]=i;}var geometry=new _three2.default.BufferGeometry();geometry.addAttribute("position",new _three2.default.BufferAttribute(positions,3));geometry.addAttribute("color",new _three2.default.BufferAttribute(colors,3));geometry.addAttribute("indices",new _three2.default.BufferAttribute(indices,1));geometry.addAttribute("normal",new _three2.default.BufferAttribute(new Float32Array(numPoints*3),3));scope.geometry=geometry;scope.loaded=true;Potree.PointCloudArena4DGeometryNode.nodesLoading--;geometry.boundingBox=scope.boundingBox;geometry.boundingSphere=scope.boundingSphere;scope.numPoints=numPoints;scope.loading=false;};xhr.send(null);};Potree.PointCloudArena4DGeometry=function(){var scope=this;this.numPoints=0;this.version=0;this.boundingBox=null;this.numNodes=0;this.name=null;this.provider=null;this.url=null;this.root=null;this.levels=0;this._spacing=null;this.pointAttributes=new Potree.PointAttributes(["POSITION_CARTESIAN","COLOR_PACKED"]);};Potree.PointCloudArena4DGeometry.load=function(url,callback){var xhr=new XMLHttpRequest();xhr.open('GET',url+"?info",true);xhr.onreadystatechange=function(){try{if(xhr.readyState===4&&xhr.status===200){var response=JSON.parse(xhr.responseText);var geometry=new Potree.PointCloudArena4DGeometry();geometry.url=url;geometry.name=response.Name;geometry.provider=response.Provider;geometry.numNodes=response.Nodes;geometry.numPoints=response.Points;geometry.version=response.Version;geometry.boundingBox=new _three2.default.Box3(new _three2.default.Vector3().fromArray(response.BoundingBox.slice(0,3)),new _three2.default.Vector3().fromArray(response.BoundingBox.slice(3,6)));if(response.Spacing){geometry.spacing=response.Spacing;}var offset=geometry.boundingBox.min.clone().multiplyScalar(-1);geometry.boundingBox.min.add(offset);geometry.boundingBox.max.add(offset);geometry.offset=offset;var center=geometry.boundingBox.center();var radius=geometry.boundingBox.size().length()/2;geometry.boundingSphere=new _three2.default.Sphere(center,radius);geometry.loadHierarchy();callback(geometry);}else if(xhr.readyState===4){callback(null);}}catch(e){callback(null);}};xhr.send(null);};Potree.PointCloudArena4DGeometry.prototype.loadHierarchy=function(){var url=this.url+"?tree";var xhr=new XMLHttpRequest();xhr.open("GET",url,true);xhr.responseType="arraybuffer";var scope=this;xhr.onreadystatechange=function(){if(!(xhr.readyState===4&&xhr.status===200)){return;}var buffer=xhr.response;var numNodes=buffer.byteLength/3;var view=new DataView(buffer);var stack=[];var root=null;var levels=0;var start=new Date().getTime(); // read hierarchy
+	for(var i=0;i<numNodes;i++){var mask=view.getUint8(i*3+0,true);var numPoints=view.getUint16(i*3+1,true);var hasLeft=(mask&1)>0;var hasRight=(mask&2)>0;var splitX=(mask&4)>0;var splitY=(mask&8)>0;var splitZ=(mask&16)>0;var split=null;if(splitX){split="X";}else if(splitY){split="Y";}if(splitZ){split="Z";}var node=new Potree.PointCloudArena4DGeometryNode();node.hasLeft=hasLeft;node.hasRight=hasRight;node.split=split;node.isLeaf=!hasLeft&&!hasRight;node.number=i;node.left=null;node.right=null;node.pcoGeometry=scope;node.level=stack.length;levels=Math.max(levels,node.level);if(stack.length>0){var parent=stack[stack.length-1];node.boundingBox=parent.boundingBox.clone();var parentBBSize=parent.boundingBox.size();if(parent.hasLeft&&!parent.left){parent.left=node;if(parent.split==="X"){node.boundingBox.max.x=node.boundingBox.min.x+parentBBSize.x/2;}else if(parent.split==="Y"){node.boundingBox.max.y=node.boundingBox.min.y+parentBBSize.y/2;}else if(parent.split==="Z"){node.boundingBox.max.z=node.boundingBox.min.z+parentBBSize.z/2;}var center=node.boundingBox.center();var radius=node.boundingBox.size().length()/2;node.boundingSphere=new _three2.default.Sphere(center,radius);}else {parent.right=node;if(parent.split==="X"){node.boundingBox.min.x=node.boundingBox.min.x+parentBBSize.x/2;}else if(parent.split==="Y"){node.boundingBox.min.y=node.boundingBox.min.y+parentBBSize.y/2;}else if(parent.split==="Z"){node.boundingBox.min.z=node.boundingBox.min.z+parentBBSize.z/2;}var center=node.boundingBox.center();var radius=node.boundingBox.size().length()/2;node.boundingSphere=new _three2.default.Sphere(center,radius);}}else {root=node;root.boundingBox=scope.boundingBox.clone();var center=root.boundingBox.center();var radius=root.boundingBox.size().length()/2;root.boundingSphere=new _three2.default.Sphere(center,radius);}var bbSize=node.boundingBox.size();node.spacing=(bbSize.x+bbSize.y+bbSize.z)/3/75;stack.push(node);if(node.isLeaf){var done=false;while(!done&&stack.length>0){stack.pop();var top=stack[stack.length-1];done=stack.length>0&&top.hasRight&&top.right==null;}}}var end=new Date().getTime();var parseDuration=end-start;var msg=parseDuration; //document.getElementById("lblDebug").innerHTML = msg;
+	scope.root=root;scope.levels=levels; //console.log(this.root);
+	};xhr.send(null);};Object.defineProperty(Potree.PointCloudArena4DGeometry.prototype,"spacing",{get:function get(){if(this._spacing){return this._spacing;}else if(this.root){return this.root.spacing;}else {null;}},set:function set(value){this._spacing=value;}}); // Export the Potree object for **Node.js**, with
+	// backwards-compatibility for the old `require()` API. If we're in
+	// the browser, add `_` as a global object via a string identifier,
+	// for Closure Compiler "advanced" mode.
+	if(true){if(typeof module!=='undefined'&&module.exports){exports=module.exports=Potree;}exports.Potree=Potree;}else {undefined['Potree']=Potree;}
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _three = __webpack_require__(2);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var ImageUtils = {
+
+	  getNormalMap: function getNormalMap(image, depth) {
+
+	    // Adapted from http://www.paulbrunt.co.uk/lab/heightnormal/
+
+	    function cross(a, b) {
+
+	      return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+	    }
+
+	    function subtract(a, b) {
+
+	      return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+	    }
+
+	    function normalize(a) {
+
+	      var l = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+	      return [a[0] / l, a[1] / l, a[2] / l];
+	    }
+
+	    depth = depth | 1;
+
+	    var width = image.width;
+	    var height = image.height;
+
+	    var canvas = document.createElement('canvas');
+	    canvas.width = width;
+	    canvas.height = height;
+
+	    var context = canvas.getContext('2d');
+	    context.drawImage(image, 0, 0);
+
+	    var data = context.getImageData(0, 0, width, height).data;
+	    var imageData = context.createImageData(width, height);
+	    var output = imageData.data;
+
+	    for (var x = 0; x < width; x++) {
+
+	      for (var y = 0; y < height; y++) {
+
+	        var ly = y - 1 < 0 ? 0 : y - 1;
+	        var uy = y + 1 > height - 1 ? height - 1 : y + 1;
+	        var lx = x - 1 < 0 ? 0 : x - 1;
+	        var ux = x + 1 > width - 1 ? width - 1 : x + 1;
+
+	        var points = [];
+	        var origin = [0, 0, data[(y * width + x) * 4] / 255 * depth];
+	        points.push([-1, 0, data[(y * width + lx) * 4] / 255 * depth]);
+	        points.push([-1, -1, data[(ly * width + lx) * 4] / 255 * depth]);
+	        points.push([0, -1, data[(ly * width + x) * 4] / 255 * depth]);
+	        points.push([1, -1, data[(ly * width + ux) * 4] / 255 * depth]);
+	        points.push([1, 0, data[(y * width + ux) * 4] / 255 * depth]);
+	        points.push([1, 1, data[(uy * width + ux) * 4] / 255 * depth]);
+	        points.push([0, 1, data[(uy * width + x) * 4] / 255 * depth]);
+	        points.push([-1, 1, data[(uy * width + lx) * 4] / 255 * depth]);
+
+	        var normals = [];
+	        var num_points = points.length;
+
+	        for (var i = 0; i < num_points; i++) {
+
+	          var v1 = points[i];
+	          var v2 = points[(i + 1) % num_points];
+	          v1 = subtract(v1, origin);
+	          v2 = subtract(v2, origin);
+	          normals.push(normalize(cross(v1, v2)));
+	        }
+
+	        var normal = [0, 0, 0];
+
+	        for (var i = 0; i < normals.length; i++) {
+
+	          normal[0] += normals[i][0];
+	          normal[1] += normals[i][1];
+	          normal[2] += normals[i][2];
+	        }
+
+	        normal[0] /= normals.length;
+	        normal[1] /= normals.length;
+	        normal[2] /= normals.length;
+
+	        var idx = (y * width + x) * 4;
+
+	        output[idx] = (normal[0] + 1.0) / 2.0 * 255 | 0;
+	        output[idx + 1] = (normal[1] + 1.0) / 2.0 * 255 | 0;
+	        output[idx + 2] = normal[2] * 255 | 0;
+	        output[idx + 3] = 255;
+	      }
+	    }
+
+	    context.putImageData(imageData, 0, 0);
+
+	    return canvas;
+	  },
+
+	  generateDataTexture: function generateDataTexture(width, height, color) {
+
+	    var size = width * height;
+	    var data = new Uint8Array(3 * size);
+
+	    var r = Math.floor(color.r * 255);
+	    var g = Math.floor(color.g * 255);
+	    var b = Math.floor(color.b * 255);
+
+	    for (var i = 0; i < size; i++) {
+
+	      data[i * 3] = r;
+	      data[i * 3 + 1] = g;
+	      data[i * 3 + 2] = b;
+	    }
+
+	    var texture = new _three2.default.DataTexture(data, width, height, _three2.default.RGBFormat);
+	    texture.needsUpdate = true;
+
+	    return texture;
+	  },
+
+	  crossOrigin: undefined,
+
+	  loadTexture: function loadTexture(url, mapping, onLoad, onError) {
+
+	    console.warn('THREE.ImageUtils.loadTexture has been deprecated. Use THREE.TextureLoader() instead.');
+
+	    var loader = new _three2.default.TextureLoader();
+	    loader.setCrossOrigin(this.crossOrigin);
+
+	    var texture = loader.load(url, onLoad, undefined, onError);
+
+	    if (mapping) texture.mapping = mapping;
+
+	    return texture;
+	  },
+
+	  loadTextureCube: function loadTextureCube(urls, mapping, onLoad, onError) {
+
+	    console.warn('THREE.ImageUtils.loadTextureCube has been deprecated. Use THREE.CubeTextureLoader() instead.');
+
+	    var loader = new _three2.default.CubeTextureLoader();
+	    loader.setCrossOrigin(this.crossOrigin);
+
+	    var texture = loader.load(urls, onLoad, undefined, onError);
+
+	    if (mapping) texture.mapping = mapping;
+
+	    return texture;
+	  },
+
+	  loadCompressedTexture: function loadCompressedTexture() {
+
+	    console.error('THREE.ImageUtils.loadCompressedTexture has been removed. Use THREE.DDSLoader instead.');
+	  },
+
+	  loadCompressedTextureCube: function loadCompressedTextureCube() {
+
+	    console.error('THREE.ImageUtils.loadCompressedTextureCube has been removed. Use THREE.DDSLoader instead.');
+	  }
+
+	}; /**
+	    * @author alteredq / http://alteredqualia.com/
+	    * @author mrdoob / http://mrdoob.com/
+	    * @author Daosheng Mu / https://github.com/DaoshengMu/
+	    */
+
+	exports.default = ImageUtils;
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/**
+	 * from: http://eloquentjavascript.net/1st_edition/appendix2.html
+	 *
+	 */
+
+	var BinaryHeap = function BinaryHeap(scoreFunction) {
+	  this.content = [];
+	  this.scoreFunction = scoreFunction;
+	};
+
+	BinaryHeap.prototype = {
+	  push: function push(element) {
+	    // Add the new element to the end of the array.
+	    this.content.push(element);
+	    // Allow it to bubble up.
+	    this.bubbleUp(this.content.length - 1);
+	  },
+
+	  pop: function pop() {
+	    // Store the first element so we can return it later.
+	    var result = this.content[0];
+	    // Get the element at the end of the array.
+	    var end = this.content.pop();
+	    // If there are any elements left, put the end element at the
+	    // start, and let it sink down.
+	    if (this.content.length > 0) {
+	      this.content[0] = end;
+	      this.sinkDown(0);
+	    }
+	    return result;
+	  },
+
+	  remove: function remove(node) {
+	    var length = this.content.length;
+	    // To remove a value, we must search through the array to find
+	    // it.
+	    for (var i = 0; i < length; i++) {
+	      if (this.content[i] != node) continue;
+	      // When it is found, the process seen in 'pop' is repeated
+	      // to fill up the hole.
+	      var end = this.content.pop();
+	      // If the element we popped was the one we needed to remove,
+	      // we're done.
+	      if (i == length - 1) break;
+	      // Otherwise, we replace the removed element with the popped
+	      // one, and allow it to float up or sink down as appropriate.
+	      this.content[i] = end;
+	      this.bubbleUp(i);
+	      this.sinkDown(i);
+	      break;
+	    }
+	  },
+
+	  size: function size() {
+	    return this.content.length;
+	  },
+
+	  bubbleUp: function bubbleUp(n) {
+	    // Fetch the element that has to be moved.
+	    var element = this.content[n],
+	        score = this.scoreFunction(element);
+	    // When at 0, an element can not go up any further.
+	    while (n > 0) {
+	      // Compute the parent element's index, and fetch it.
+	      var parentN = Math.floor((n + 1) / 2) - 1,
+	          parent = this.content[parentN];
+	      // If the parent has a lesser score, things are in order and we
+	      // are done.
+	      if (score >= this.scoreFunction(parent)) break;
+
+	      // Otherwise, swap the parent with the current element and
+	      // continue.
+	      this.content[parentN] = element;
+	      this.content[n] = parent;
+	      n = parentN;
+	    }
+	  },
+
+	  sinkDown: function sinkDown(n) {
+	    // Look up the target element and its score.
+	    var length = this.content.length,
+	        element = this.content[n],
+	        elemScore = this.scoreFunction(element);
+
+	    while (true) {
+	      // Compute the indices of the child elements.
+	      var child2N = (n + 1) * 2,
+	          child1N = child2N - 1;
+	      // This is used to store the new position of the element,
+	      // if any.
+	      var swap = null;
+	      // If the first child exists (is inside the array)...
+	      if (child1N < length) {
+	        // Look it up and compute its score.
+	        var child1 = this.content[child1N],
+	            child1Score = this.scoreFunction(child1);
+	        // If the score is less than our element's, we need to swap.
+	        if (child1Score < elemScore) swap = child1N;
+	      }
+	      // Do the same checks for the other child.
+	      if (child2N < length) {
+	        var child2 = this.content[child2N],
+	            child2Score = this.scoreFunction(child2);
+	        if (child2Score < (swap == null ? elemScore : child1Score)) swap = child2N;
+	      }
+
+	      // No need to swap further, we are done.
+	      if (swap == null) break;
+
+	      // Otherwise, swap and continue.
+	      this.content[n] = this.content[swap];
+	      this.content[swap] = element;
+	      n = swap;
+	    }
+	  }
+	};
+
+	exports.default = BinaryHeap;
+
+/***/ },
+/* 11 */
 /***/ function(module, exports) {
 
 	// stats.js - http://github.com/mrdoob/stats.js
@@ -41823,78 +49758,96 @@
 
 
 /***/ },
-/* 4 */
+/* 12 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	/**
-	 * @author alteredq / http://alteredqualia.com/
-	 * @author mr.doob / http://mrdoob.com/
-	 */
+	function ProgressBar() {
+	  this._progress = 0;
+	  this._message = "";
 
-	var Detector = {
+	  this.maxOpacity = 0.6;
 
-	  canvas: !!window.CanvasRenderingContext2D,
-	  webgl: function () {
+	  this.element = document.createElement("div");
+	  this.elProgress = document.createElement("div");
+	  this.elProgressMessage = document.createElement("div");
 
-	    try {
+	  //this.element.innerHTML = "element";
+	  //this.elProgress.innerHTML = "progress";
 
-	      var canvas = document.createElement('canvas');return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-	    } catch (e) {
+	  this.element.innerHTML = "";
+	  this.element.style.position = "fixed";
+	  this.element.style.bottom = "40px";
+	  this.element.style.width = "200px";
+	  this.element.style.marginLeft = "-100px";
+	  this.element.style.left = "50%";
+	  this.element.style.borderRadius = "5px";
+	  this.element.style.border = "1px solid #727678";
+	  this.element.style.height = "16px";
+	  this.element.style.padding = "1px";
+	  this.element.style.textAlign = "center";
+	  this.element.style.backgroundColor = "#6ba8e5";
+	  this.element.style.opacity = this.maxOpacity;
+	  this.element.style.pointerEvents = "none";
 
-	      return false;
-	    }
-	  }(),
-	  workers: !!window.Worker,
-	  fileapi: window.File && window.FileReader && window.FileList && window.Blob,
+	  this.elProgress.innerHTML = " ";
+	  this.elProgress.style.backgroundColor = "#b8e1fc";
+	  this.elProgress.style.position = "absolute";
+	  this.elProgress.style.borderRadius = "5px";
+	  this.elProgress.style.width = "0%";
+	  this.elProgress.style.height = "100%";
+	  this.elProgress.style.margin = "0px";
+	  this.elProgress.style.padding = "0px";
 
-	  getWebGLErrorMessage: function getWebGLErrorMessage() {
+	  this.elProgressMessage.style.position = "absolute";
+	  this.elProgressMessage.style.width = "100%";
+	  this.elProgressMessage.innerHTML = "loading 1 / 10";
 
-	    var element = document.createElement('div');
-	    element.id = 'webgl-error-message';
-	    element.style.fontFamily = 'monospace';
-	    element.style.fontSize = '13px';
-	    element.style.fontWeight = 'normal';
-	    element.style.textAlign = 'center';
-	    element.style.background = '#fff';
-	    element.style.color = '#000';
-	    element.style.padding = '1.5em';
-	    element.style.width = '400px';
-	    element.style.margin = '5em auto 0';
+	  document.body.appendChild(this.element);
+	  this.element.appendChild(this.elProgress);
+	  this.element.appendChild(this.elProgressMessage);
 
-	    if (!this.webgl) {
-
-	      element.innerHTML = window.WebGLRenderingContext ? ['Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />', 'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'].join('\n') : ['Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>', 'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'].join('\n');
-	    }
-
-	    return element;
-	  },
-
-	  addGetWebGLMessage: function addGetWebGLMessage(parameters) {
-
-	    var parent, id, element;
-
-	    parameters = parameters || {};
-
-	    parent = parameters.parent !== undefined ? parameters.parent : document.body;
-	    id = parameters.id !== undefined ? parameters.id : 'oldie';
-
-	    element = Detector.getWebGLErrorMessage();
-	    element.id = id;
-
-	    parent.appendChild(element);
-	  }
-
+	  this.hide();
 	};
 
-	exports.default = Detector;
+	ProgressBar.prototype.hide = function () {
+	  this.element.style.opacity = 0;
+	  this.element.style.transition = "all 0.2s ease";
+	};
+
+	ProgressBar.prototype.show = function () {
+	  this.element.style.opacity = this.maxOpacity;
+	  this.element.style.transition = "all 0.2s ease";
+	};
+
+	Object.defineProperty(ProgressBar.prototype, "progress", {
+	  get: function get() {
+	    return this._progress;
+	  },
+	  set: function set(value) {
+	    this._progress = value;
+	    this.elProgress.style.width = value * 100 + "%";
+	  }
+	});
+
+	Object.defineProperty(ProgressBar.prototype, "message", {
+	  get: function get() {
+	    return this._message;
+	  },
+	  set: function set(message) {
+	    this._message = message;
+	    this.elProgressMessage.innerHTML = message;
+	  }
+	});
+
+	exports.default = ProgressBar;
 
 /***/ },
-/* 5 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -42398,7 +50351,7 @@
 
 	  _three2.default.Object3D.call(this);
 
-	  domElement = domElement !== undefined ? domElement : document;
+	  var domElement = domElement !== undefined ? domElement : document;
 
 	  this.object = undefined;
 	  this.visible = false;
@@ -42868,8 +50821,8 @@
 	        panEnd.copy(panStart);
 	      }
 
-	      document.addEventListener('mousemove', mousemove, false);
-	      document.addEventListener('mouseup', mouseup, false);
+	      domElement.addEventListener('mousemove', mousemove, false);
+	      domElement.addEventListener('mouseup', mouseup, false);
 
 	      scope.dispatchEvent(startEvent);
 	    }
@@ -42899,8 +50852,8 @@
 
 	    currState = STATE.NONE;
 
-	    document.removeEventListener('mousemove', mousemove);
-	    document.removeEventListener('mouseup', mouseup);
+	    domElement.removeEventListener('mousemove', mousemove);
+	    domElement.removeEventListener('mouseup', mouseup);
 
 	    scope.dispatchEvent(endEvent);
 	  }
@@ -43201,578 +51154,7 @@
 	exports.default = TransformControls;
 
 /***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _three = __webpack_require__(2);
-
-	var _three2 = _interopRequireDefault(_three);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var TrackballControls = function TrackballControls(object, domElement) {
-
-	  var _this = this;
-	  var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
-
-	  this.object = object;
-	  this.domElement = domElement !== undefined ? domElement : document;
-
-	  // API
-
-	  this.enabled = true;
-
-	  this.screen = { left: 0, top: 0, width: 0, height: 0 };
-
-	  this.rotateSpeed = 1.0;
-	  this.zoomSpeed = 1.2;
-	  this.panSpeed = 0.3;
-
-	  this.noRotate = false;
-	  this.noZoom = false;
-	  this.noPan = false;
-
-	  this.staticMoving = false;
-	  this.dynamicDampingFactor = 0.2;
-
-	  this.minDistance = 0;
-	  this.maxDistance = Infinity;
-
-	  this.keys = [65 /*A*/, 83 /*S*/, 68 /*D*/];
-
-	  // internals
-
-	  this.target = new _three2.default.Vector3();
-
-	  var EPS = 0.000001;
-
-	  var lastPosition = new _three2.default.Vector3();
-
-	  var _state = STATE.NONE,
-	      _prevState = STATE.NONE,
-	      _eye = new _three2.default.Vector3(),
-	      _movePrev = new _three2.default.Vector2(),
-	      _moveCurr = new _three2.default.Vector2(),
-	      _lastAxis = new _three2.default.Vector3(),
-	      _lastAngle = 0,
-	      _zoomStart = new _three2.default.Vector2(),
-	      _zoomEnd = new _three2.default.Vector2(),
-	      _touchZoomDistanceStart = 0,
-	      _touchZoomDistanceEnd = 0,
-	      _panStart = new _three2.default.Vector2(),
-	      _panEnd = new _three2.default.Vector2();
-
-	  // for reset
-
-	  this.target0 = this.target.clone();
-	  this.position0 = this.object.position.clone();
-	  this.up0 = this.object.up.clone();
-
-	  // events
-
-	  var changeEvent = { type: 'change' };
-	  var startEvent = { type: 'start' };
-	  var endEvent = { type: 'end' };
-
-	  // methods
-
-	  this.handleResize = function () {
-
-	    if (this.domElement === document) {
-
-	      this.screen.left = 0;
-	      this.screen.top = 0;
-	      this.screen.width = window.innerWidth;
-	      this.screen.height = window.innerHeight;
-	    } else {
-
-	      var box = this.domElement.getBoundingClientRect();
-	      // adjustments come from similar code in the jquery offset() function
-	      var d = this.domElement.ownerDocument.documentElement;
-	      this.screen.left = box.left + window.pageXOffset - d.clientLeft;
-	      this.screen.top = box.top + window.pageYOffset - d.clientTop;
-	      this.screen.width = box.width;
-	      this.screen.height = box.height;
-	    }
-	  };
-
-	  this.handleEvent = function (event) {
-
-	    if (typeof this[event.type] == 'function') {
-
-	      this[event.type](event);
-	    }
-	  };
-
-	  var getMouseOnScreen = function () {
-
-	    var vector = new _three2.default.Vector2();
-
-	    return function getMouseOnScreen(pageX, pageY) {
-
-	      vector.set((pageX - _this.screen.left) / _this.screen.width, (pageY - _this.screen.top) / _this.screen.height);
-
-	      return vector;
-	    };
-	  }();
-
-	  var getMouseOnCircle = function () {
-
-	    var vector = new _three2.default.Vector2();
-
-	    return function getMouseOnCircle(pageX, pageY) {
-
-	      vector.set((pageX - _this.screen.width * 0.5 - _this.screen.left) / (_this.screen.width * 0.5), (_this.screen.height + 2 * (_this.screen.top - pageY)) / _this.screen.width);
-
-	      // screen.width intentional
-	      return vector;
-	    };
-	  }();
-
-	  this.rotateCamera = function () {
-
-	    var axis = new _three2.default.Vector3(),
-	        quaternion = new _three2.default.Quaternion(),
-	        eyeDirection = new _three2.default.Vector3(),
-	        objectUpDirection = new _three2.default.Vector3(),
-	        objectSidewaysDirection = new _three2.default.Vector3(),
-	        moveDirection = new _three2.default.Vector3(),
-	        angle;
-
-	    return function rotateCamera() {
-
-	      moveDirection.set(_moveCurr.x - _movePrev.x, _moveCurr.y - _movePrev.y, 0);
-	      angle = moveDirection.length();
-
-	      if (angle) {
-
-	        _eye.copy(_this.object.position).sub(_this.target);
-
-	        eyeDirection.copy(_eye).normalize();
-	        objectUpDirection.copy(_this.object.up).normalize();
-	        objectSidewaysDirection.crossVectors(objectUpDirection, eyeDirection).normalize();
-
-	        objectUpDirection.setLength(_moveCurr.y - _movePrev.y);
-	        objectSidewaysDirection.setLength(_moveCurr.x - _movePrev.x);
-
-	        moveDirection.copy(objectUpDirection.add(objectSidewaysDirection));
-
-	        axis.crossVectors(moveDirection, _eye).normalize();
-
-	        angle *= _this.rotateSpeed;
-	        quaternion.setFromAxisAngle(axis, angle);
-
-	        _eye.applyQuaternion(quaternion);
-	        _this.object.up.applyQuaternion(quaternion);
-
-	        _lastAxis.copy(axis);
-	        _lastAngle = angle;
-	      } else if (!_this.staticMoving && _lastAngle) {
-
-	        _lastAngle *= Math.sqrt(1.0 - _this.dynamicDampingFactor);
-	        _eye.copy(_this.object.position).sub(_this.target);
-	        quaternion.setFromAxisAngle(_lastAxis, _lastAngle);
-	        _eye.applyQuaternion(quaternion);
-	        _this.object.up.applyQuaternion(quaternion);
-	      }
-
-	      _movePrev.copy(_moveCurr);
-	    };
-	  }();
-
-	  this.zoomCamera = function () {
-
-	    var factor;
-
-	    if (_state === STATE.TOUCH_ZOOM_PAN) {
-
-	      factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
-	      _touchZoomDistanceStart = _touchZoomDistanceEnd;
-	      _eye.multiplyScalar(factor);
-	    } else {
-
-	      factor = 1.0 + (_zoomEnd.y - _zoomStart.y) * _this.zoomSpeed;
-
-	      if (factor !== 1.0 && factor > 0.0) {
-
-	        _eye.multiplyScalar(factor);
-
-	        if (_this.staticMoving) {
-
-	          _zoomStart.copy(_zoomEnd);
-	        } else {
-
-	          _zoomStart.y += (_zoomEnd.y - _zoomStart.y) * this.dynamicDampingFactor;
-	        }
-	      }
-	    }
-	  };
-
-	  this.panCamera = function () {
-
-	    var mouseChange = new _three2.default.Vector2(),
-	        objectUp = new _three2.default.Vector3(),
-	        pan = new _three2.default.Vector3();
-
-	    return function panCamera() {
-
-	      mouseChange.copy(_panEnd).sub(_panStart);
-
-	      if (mouseChange.lengthSq()) {
-
-	        mouseChange.multiplyScalar(_eye.length() * _this.panSpeed);
-
-	        pan.copy(_eye).cross(_this.object.up).setLength(mouseChange.x);
-	        pan.add(objectUp.copy(_this.object.up).setLength(mouseChange.y));
-
-	        _this.object.position.add(pan);
-	        _this.target.add(pan);
-
-	        if (_this.staticMoving) {
-
-	          _panStart.copy(_panEnd);
-	        } else {
-
-	          _panStart.add(mouseChange.subVectors(_panEnd, _panStart).multiplyScalar(_this.dynamicDampingFactor));
-	        }
-	      }
-	    };
-	  }();
-
-	  this.checkDistances = function () {
-
-	    if (!_this.noZoom || !_this.noPan) {
-
-	      if (_eye.lengthSq() > _this.maxDistance * _this.maxDistance) {
-
-	        _this.object.position.addVectors(_this.target, _eye.setLength(_this.maxDistance));
-	        _zoomStart.copy(_zoomEnd);
-	      }
-
-	      if (_eye.lengthSq() < _this.minDistance * _this.minDistance) {
-
-	        _this.object.position.addVectors(_this.target, _eye.setLength(_this.minDistance));
-	        _zoomStart.copy(_zoomEnd);
-	      }
-	    }
-	  };
-
-	  this.update = function () {
-
-	    _eye.subVectors(_this.object.position, _this.target);
-
-	    if (!_this.noRotate) {
-
-	      _this.rotateCamera();
-	    }
-
-	    if (!_this.noZoom) {
-
-	      _this.zoomCamera();
-	    }
-
-	    if (!_this.noPan) {
-
-	      _this.panCamera();
-	    }
-
-	    _this.object.position.addVectors(_this.target, _eye);
-
-	    _this.checkDistances();
-
-	    _this.object.lookAt(_this.target);
-
-	    if (lastPosition.distanceToSquared(_this.object.position) > EPS) {
-
-	      _this.dispatchEvent(changeEvent);
-
-	      lastPosition.copy(_this.object.position);
-	    }
-	  };
-
-	  this.reset = function () {
-
-	    _state = STATE.NONE;
-	    _prevState = STATE.NONE;
-
-	    _this.target.copy(_this.target0);
-	    _this.object.position.copy(_this.position0);
-	    _this.object.up.copy(_this.up0);
-
-	    _eye.subVectors(_this.object.position, _this.target);
-
-	    _this.object.lookAt(_this.target);
-
-	    _this.dispatchEvent(changeEvent);
-
-	    lastPosition.copy(_this.object.position);
-	  };
-
-	  // listeners
-
-	  function keydown(event) {
-
-	    if (_this.enabled === false) return;
-
-	    window.removeEventListener('keydown', keydown);
-
-	    _prevState = _state;
-
-	    if (_state !== STATE.NONE) {
-
-	      return;
-	    } else if (event.keyCode === _this.keys[STATE.ROTATE] && !_this.noRotate) {
-
-	      _state = STATE.ROTATE;
-	    } else if (event.keyCode === _this.keys[STATE.ZOOM] && !_this.noZoom) {
-
-	      _state = STATE.ZOOM;
-	    } else if (event.keyCode === _this.keys[STATE.PAN] && !_this.noPan) {
-
-	      _state = STATE.PAN;
-	    }
-	  }
-
-	  function keyup(event) {
-
-	    if (_this.enabled === false) return;
-
-	    _state = _prevState;
-
-	    window.addEventListener('keydown', keydown, false);
-	  }
-
-	  function mousedown(event) {
-
-	    if (_this.enabled === false) return;
-
-	    event.preventDefault();
-	    event.stopPropagation();
-
-	    if (_state === STATE.NONE) {
-
-	      _state = event.button;
-	    }
-
-	    if (_state === STATE.ROTATE && !_this.noRotate) {
-
-	      _moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
-	      _movePrev.copy(_moveCurr);
-	    } else if (_state === STATE.ZOOM && !_this.noZoom) {
-
-	      _zoomStart.copy(getMouseOnScreen(event.pageX, event.pageY));
-	      _zoomEnd.copy(_zoomStart);
-	    } else if (_state === STATE.PAN && !_this.noPan) {
-
-	      _panStart.copy(getMouseOnScreen(event.pageX, event.pageY));
-	      _panEnd.copy(_panStart);
-	    }
-
-	    document.addEventListener('mousemove', mousemove, false);
-	    document.addEventListener('mouseup', mouseup, false);
-
-	    _this.dispatchEvent(startEvent);
-	  }
-
-	  function mousemove(event) {
-
-	    if (_this.enabled === false) return;
-
-	    event.preventDefault();
-	    event.stopPropagation();
-
-	    if (_state === STATE.ROTATE && !_this.noRotate) {
-
-	      _movePrev.copy(_moveCurr);
-	      _moveCurr.copy(getMouseOnCircle(event.pageX, event.pageY));
-	    } else if (_state === STATE.ZOOM && !_this.noZoom) {
-
-	      _zoomEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
-	    } else if (_state === STATE.PAN && !_this.noPan) {
-
-	      _panEnd.copy(getMouseOnScreen(event.pageX, event.pageY));
-	    }
-	  }
-
-	  function mouseup(event) {
-
-	    if (_this.enabled === false) return;
-
-	    event.preventDefault();
-	    event.stopPropagation();
-
-	    _state = STATE.NONE;
-
-	    document.removeEventListener('mousemove', mousemove);
-	    document.removeEventListener('mouseup', mouseup);
-	    _this.dispatchEvent(endEvent);
-	  }
-
-	  function mousewheel(event) {
-
-	    if (_this.enabled === false) return;
-
-	    event.preventDefault();
-	    event.stopPropagation();
-
-	    var delta = 0;
-
-	    if (event.wheelDelta) {
-
-	      // WebKit / Opera / Explorer 9
-
-	      delta = event.wheelDelta / 40;
-	    } else if (event.detail) {
-
-	      // Firefox
-
-	      delta = -event.detail / 3;
-	    }
-
-	    _zoomStart.y += delta * 0.01;
-
-	    _this.dispatchEvent(startEvent);
-	    _this.dispatchEvent(endEvent);
-	  }
-
-	  function touchstart(event) {
-
-	    if (_this.enabled === false) return;
-
-	    switch (event.touches.length) {
-
-	      case 1:
-	        _state = STATE.TOUCH_ROTATE;
-	        _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-	        _movePrev.copy(_moveCurr);
-	        break;
-
-	      default:
-	        // 2 or more
-	        _state = STATE.TOUCH_ZOOM_PAN;
-	        var dx = event.touches[0].pageX - event.touches[1].pageX;
-	        var dy = event.touches[0].pageY - event.touches[1].pageY;
-	        _touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt(dx * dx + dy * dy);
-
-	        var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-	        var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-	        _panStart.copy(getMouseOnScreen(x, y));
-	        _panEnd.copy(_panStart);
-	        break;
-
-	    }
-
-	    _this.dispatchEvent(startEvent);
-	  }
-
-	  function touchmove(event) {
-
-	    if (_this.enabled === false) return;
-
-	    event.preventDefault();
-	    event.stopPropagation();
-
-	    switch (event.touches.length) {
-
-	      case 1:
-	        _movePrev.copy(_moveCurr);
-	        _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-	        break;
-
-	      default:
-	        // 2 or more
-	        var dx = event.touches[0].pageX - event.touches[1].pageX;
-	        var dy = event.touches[0].pageY - event.touches[1].pageY;
-	        _touchZoomDistanceEnd = Math.sqrt(dx * dx + dy * dy);
-
-	        var x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
-	        var y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
-	        _panEnd.copy(getMouseOnScreen(x, y));
-	        break;
-
-	    }
-	  }
-
-	  function touchend(event) {
-
-	    if (_this.enabled === false) return;
-
-	    switch (event.touches.length) {
-
-	      case 0:
-	        _state = STATE.NONE;
-	        break;
-
-	      case 1:
-	        _state = STATE.TOUCH_ROTATE;
-	        _moveCurr.copy(getMouseOnCircle(event.touches[0].pageX, event.touches[0].pageY));
-	        _movePrev.copy(_moveCurr);
-	        break;
-
-	    }
-
-	    _this.dispatchEvent(endEvent);
-	  }
-
-	  function contextmenu(event) {
-
-	    event.preventDefault();
-	  }
-
-	  this.dispose = function () {
-
-	    this.domElement.removeEventListener('contextmenu', contextmenu, false);
-	    this.domElement.removeEventListener('mousedown', mousedown, false);
-	    this.domElement.removeEventListener('mousewheel', mousewheel, false);
-	    this.domElement.removeEventListener('MozMousePixelScroll', mousewheel, false); // firefox
-
-	    this.domElement.removeEventListener('touchstart', touchstart, false);
-	    this.domElement.removeEventListener('touchend', touchend, false);
-	    this.domElement.removeEventListener('touchmove', touchmove, false);
-
-	    document.removeEventListener('mousemove', mousemove, false);
-	    document.removeEventListener('mouseup', mouseup, false);
-
-	    window.removeEventListener('keydown', keydown, false);
-	    window.removeEventListener('keyup', keyup, false);
-	  };
-
-	  this.domElement.addEventListener('contextmenu', contextmenu, false);
-	  this.domElement.addEventListener('mousedown', mousedown, false);
-	  this.domElement.addEventListener('mousewheel', mousewheel, false);
-	  this.domElement.addEventListener('MozMousePixelScroll', mousewheel, false); // firefox
-
-	  this.domElement.addEventListener('touchstart', touchstart, false);
-	  this.domElement.addEventListener('touchend', touchend, false);
-	  this.domElement.addEventListener('touchmove', touchmove, false);
-
-	  window.addEventListener('keydown', keydown, false);
-	  window.addEventListener('keyup', keyup, false);
-
-	  this.handleResize();
-
-	  // force an update at start
-	  this.update();
-	}; /**
-	    * @author Eberhard Graether / http://egraether.com/
-	    * @author Mark Lundin  / http://mark-lundin.com
-	    * @author Simone Manini / http://daron1337.github.io
-	    * @author Luca Antiga  / http://lantiga.github.io
-	    */
-
-	TrackballControls.prototype = Object.create(_three2.default.EventDispatcher.prototype);
-	TrackballControls.prototype.constructor = TrackballControls;
-
-	exports.default = TrackballControls;
-
-/***/ },
-/* 7 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -44210,70 +51592,6 @@
 	};
 
 	exports.default = PLYLoader;
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _three = __webpack_require__(2);
-
-	var _three2 = _interopRequireDefault(_three);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var ArcBallHelper = function ArcBallHelper(geometry) {
-	  _three2.default.Object3D.call(this);
-
-	  this.type = 'ArcBallHelper';
-
-	  var x_min = Number.MAX_VALUE;
-	  var y_min = Number.MAX_VALUE;
-	  var z_min = Number.MAX_VALUE;
-	  var x_max = -Number.MAX_VALUE;
-	  var y_max = -Number.MAX_VALUE;
-	  var z_max = -Number.MAX_VALUE;
-
-	  for (var i = 0; i < geometry.vertices.length; i++) {
-	    var vertex = geometry.vertices[i];
-
-	    if (vertex.x > x_max) x_max = vertex.x;else if (vertex.x < x_min) x_min = vertex.x;
-
-	    if (vertex.y > y_max) y_max = vertex.y;else if (vertex.y < y_min) y_min = vertex.y;
-
-	    if (vertex.z > z_max) z_max = vertex.z;else if (vertex.z < z_min) z_min = vertex.z;
-	  }
-
-	  var radius = Math.max(x_max - x_min, y_max - y_min, z_max - z_min) / 2;
-
-	  var x_geo = new _three2.default.CircleGeometry(radius, 64);
-	  var x_mat = new _three2.default.LineBasicMaterial({ color: 0xff0000 });
-	  var x_arc = new _three2.default.Line(x_geo, x_mat);
-	  x_arc.rotateOnAxis(new _three2.default.Vector3(0, 1, 0), Math.PI / 2);
-
-	  var y_geo = new _three2.default.CircleGeometry(radius, 64);
-	  var y_mat = new _three2.default.LineBasicMaterial({ color: 0x00ff00 });
-	  var y_arc = new _three2.default.Line(y_geo, y_mat);
-	  y_arc.rotateOnAxis(new _three2.default.Vector3(1, 0, 0), Math.PI / 2);
-
-	  var z_geo = new _three2.default.CircleGeometry(radius, 64);
-	  var z_mat = new _three2.default.LineBasicMaterial({ color: 0x0000ff });
-	  var z_arc = new _three2.default.Line(z_geo, z_mat);
-
-	  this.add(x_arc);
-	  this.add(y_arc);
-	  this.add(z_arc);
-	};
-
-	ArcBallHelper.prototype = Object.create(_three2.default.Object3D.prototype);
-	ArcBallHelper.prototype.constructor = ArcBallHelper;
-
-	exports.default = ArcBallHelper;
 
 /***/ }
 /******/ ]);

@@ -603,7 +603,7 @@ var TransformControls = function ( camera, domElement ) {
 
   THREE.Object3D.call( this );
 
-  domElement = ( domElement !== undefined ) ? domElement : document;
+  var domElement = ( domElement !== undefined ) ? domElement : document;
 
   this.object = undefined;
   this.visible = false;
@@ -1105,8 +1105,8 @@ var TransformControls = function ( camera, domElement ) {
         panEnd.copy(panStart);
       }
 
-      document.addEventListener( 'mousemove', mousemove, false );
-      document.addEventListener( 'mouseup', mouseup, false );
+      domElement.addEventListener( 'mousemove', mousemove, false );
+      domElement.addEventListener( 'mouseup', mouseup, false );
 
       scope.dispatchEvent( startEvent );
     }
@@ -1139,8 +1139,8 @@ var TransformControls = function ( camera, domElement ) {
 
     currState = STATE.NONE;
 
-    document.removeEventListener('mousemove', mousemove);
-    document.removeEventListener('mouseup', mouseup);
+    domElement.removeEventListener('mousemove', mousemove);
+    domElement.removeEventListener('mouseup', mouseup);
 
     scope.dispatchEvent( endEvent );
   }

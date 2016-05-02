@@ -1,3 +1,7 @@
+h2 {
+  padding-left: 1rem;
+}
+
 #container {
   margin: 0px;
   width: 80%;
@@ -7,12 +11,24 @@
 
 #panel {
   margin: 0px;
-  padding: 1rem;
   width: 20%;
   height: 100vh;
-  /*position: absolute;*/
   float: right;
   background-color: #ee7f2d;
   color: white;
   font-weight: 2px;
+}
+
+#instructions {
+  padding-left: 1rem;
+  font-weight: 4px;
+}
+
+#preview {
+  position: absolute;
+
+}
+
+.dg {
+  left: 0px;
 }
