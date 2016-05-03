@@ -5,7 +5,7 @@
  * @author Luca Antiga  / http://lantiga.github.io
  */
 
-import THREE from 'three'
+import THREE from 'three';
 
 var TrackballControls = function ( object, domElement ) {
 

@@ -38,6 +38,7 @@ npm start
 - Bring back measurement tools
 - Implement undo
 - Reproject model on color image
+- Fix reset camera
 
 ### Low priority
 - Handle on mobile (touch input)

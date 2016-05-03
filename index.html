@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="style/style.css">
-    <link rel="stylesheet" href="https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css">
-    <script src="https://maps.googleapis.com/maps/api/js"></script>
+    <link rel='stylesheet' href='style/style.css'>
+    <link rel='stylesheet' href='https://cdn.rawgit.com/twbs/bootstrap/v4-dev/dist/css/bootstrap.css'>
+    <script src='https://maps.googleapis.com/maps/api/js'></script>
   </head>
   <body>
-    <div id="container">
+    <div id='container'>
     </div>
-    <div id="panel">
+    <div id='panel'>
       <h2>Commands</h2>
-      <div id="instructions">
+      <div id='instructions'>
         Object manipulation
         <ul>
           <li>Q - toggle world / object coordinates</li>
           <li>W - translate gizmo</li>
           <li>E - rotate gizmo</li>
           <li>R - scale gizmo</li>
+          <li>T - center object on pivot</li>
         </ul>
         Camera manipulation
         <ul>
@@ -24,13 +25,16 @@
           <li>Right mouse - pan</li>
           <li>Mouse wheel - zoom</li>
           <li>A - reset camera</li>
+          <li>Double click - center zoom on point</li>
         </ul>
       </div>
 
       <h2>Preview</h2>
-      <canvas id="preview">
+      <canvas id='preview'>
       </canvas>
+
+      <button type='button' id='submit'>Herro!</button>
     </div>
   </body>
-  <script src="build/js/bundle.js"></script>
+  <script src='build/js/bundle.js'></script>
 </html>

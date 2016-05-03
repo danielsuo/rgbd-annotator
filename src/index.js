@@ -3,7 +3,7 @@ import Viewer from './potree/Viewer';
 import PLYLoader from './three/loaders/PLYLoader';
 import getURLParams from './utils/getURLParams';
 
-var loader, model, light;
+var loader, model, light, axes;
 
 // Load URL parameters
 var params = getURLParams();
@@ -22,7 +22,7 @@ var viewer = new Viewer(document.getElementById("container"),
     material: "RGB",    // other options: "Height", "Intensity", "Classification"
     pointLimit: 1,        // max number of points in millions
     pointSize: 1,       // 
-    navigation: "Orbit",    // other options: "Orbit", "Flight"
+    navigation: "Transform",    // other options: "Orbit", "Flight"
     useEDL: false,        
   }, {
   "onPointCloudLoaded": function(event) {}
@@ -38,6 +38,9 @@ loader.load('./test/data/glue.ply', function(geometry) {
 
   configControls(viewer);
   viewer.controls.attach(model);
+
+  // axes = new THREE.AxisHelper(5);
+  // viewer.scene.add(axes);
 });
 
 light = new THREE.DirectionalLight( 0xffffff );
@@ -53,6 +56,7 @@ viewer.scene.add( light );
 
 function configControls(viewer) {
   window.addEventListener( 'keydown', function ( event ) {
+    console.log(event.keyCode, 'pressed!');
 
     switch ( event.keyCode ) {
 
@@ -76,6 +80,9 @@ function configControls(viewer) {
       case 82: // R
         viewer.controls.setMode( "scale" );
         break;
+      case 84: // T
+        model.position.copy(viewer.controls.target);
+        break;
 
       case 65: // 
         viewer.controls.reset();
@@ -90,6 +97,11 @@ function configControls(viewer) {
       case 109: // -, _, num-
         viewer.controls.setSize( Math.max( viewer.controls.size - 0.1, 0.1 ) );
         break;
+
+      case 90: // Z
+        console.log(model)
+        console.log(viewer.controls)
+      break;
     }
   });
 
@@ -103,12 +115,5 @@ function configControls(viewer) {
         break;
     }
   });
-  
-  viewer.controls.zoomSpeed = 5.0;
-  viewer.controls.rotateSpeed = 5.0;
-  viewer.controls.panSpeed = 0.8;
 
-  viewer.controls.staticMoving = true;
-  viewer.controls.dynamicDampingFactor = 0.3;
-  viewer.controls.addEventListener( 'change', viewer.render );
 }

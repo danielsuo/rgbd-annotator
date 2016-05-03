@@ -2,6 +2,16 @@ h2 {
   padding-left: 1rem;
 }
 
+#submit {
+  width: 50%;
+  margin: 0 auto;
+  background-color: #111111;
+}
+
+#submit:active {
+  background-color: #222222;
+}
+
 #container {
   margin: 0px;
   width: 80%;

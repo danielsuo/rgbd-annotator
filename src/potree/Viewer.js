@@ -1,12 +1,14 @@
 import THREE from 'three';
 import dat from 'dat-gui';
-import TWEEN from 'tween';
+import TWEEN from 'tween.js';
 import Potree from './potree';
 import Stats from 'stats.js'
 
 import ProgressBar from './ProgressBar';
 
 import TransformControls from '../three/controls/TransformControls';
+import FirstPersonControls from '../three/controls/FirstPersonControls';
+import EarthControls from '../three/controls/EarthControls';
 
 var Viewer = function(domElement, settings, args){
   var scope = this;
@@ -281,6 +283,7 @@ var Viewer = function(domElement, settings, args){
     bs = bs.clone().applyMatrix4(node.matrixWorld); 
     
     scope.orbitControls.target.copy(bs.center);
+    scope.transformControls.target.copy(bs.center);
   };
 
   this.initGUI = function(){
@@ -543,11 +546,7 @@ var Viewer = function(domElement, settings, args){
       scope.minNodeSize = value;
     });
     
-    
-    
-    
     var fDebug = gui.addFolder('Debug');
-
     
     var pStats = fDebug.add(params, 'stats');
     pStats.onChange(function(value){
@@ -580,7 +579,7 @@ var Viewer = function(domElement, settings, args){
   
   this.createControls = function(){
     { // create FIRST PERSON CONTROLS
-      scope.fpControls = new THREE.FirstPersonControls(scope.camera, scope.renderer.domElement);
+      scope.fpControls = new FirstPersonControls(scope.camera, scope.renderer.domElement);
       scope.fpControls.addEventListener("proposeTransform", function(event){
         if(!scope.pointcloud || !scope.useDEMCollisions){
           return;
@@ -629,11 +628,9 @@ var Viewer = function(domElement, settings, args){
           y: - ( (event.clientY - rect.top) / scope.renderArea.clientHeight ) * 2 + 1
         };
         
-        
         var I = getMousePointCloudIntersection(mouse, scope.camera, scope.renderer, [scope.pointcloud]);
         if(I != null){
-        
-          var camTargetDistance = scope.camera.position.distanceTo(scope.orbitControls.target);
+          var camTargetDistance = scope.camera.position.distanceTo(scope.transformControls.target);
         
           var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
           vector.unproject(scope.camera);
@@ -662,7 +659,7 @@ var Viewer = function(domElement, settings, args){
           tween.start();
           
           // animate target
-          var tween = new TWEEN.Tween(scope.orbitControls.target).to(I, animationDuration);
+          var tween = new TWEEN.Tween(scope.transformControls.target).to(I, animationDuration);
           tween.easing(easing);
           tween.onComplete(function(){
             scope.controls.enabled = true;
@@ -674,7 +671,7 @@ var Viewer = function(domElement, settings, args){
     }
     
     { // create EARTH CONTROLS
-      scope.earthControls = new THREE.EarthControls(scope.camera, scope.renderer, scope.scenePointCloud);
+      scope.earthControls = new EarthControls(scope.camera, scope.renderer, scope.scenePointCloud);
       scope.earthControls.addEventListener("proposeTransform", function(event){
         if(!scope.pointcloud || !scope.useDEMCollisions){
           return;
@@ -689,7 +686,23 @@ var Viewer = function(domElement, settings, args){
 
     { // create TRANSFORM CONTROLS
       scope.transformControls = new TransformControls(scope.camera, scope.renderer.domElement);
-      scope.transformControls.rotateSpeed = 5.0;
+      scope.transformControls.addEventListener("proposeTransform", function(event){
+        if(!scope.pointcloud || !scope.useDEMCollisions){
+          return;
+        }
+        
+        var demHeight = scope.pointcloud.getDEMHeight(event.newPosition);
+        if(event.newPosition.y < demHeight){
+          event.objections++;
+          
+          var counterProposal = event.newPosition.clone();
+          counterProposal.y = demHeight;
+          
+          event.counterProposals.push(counterProposal);
+        }
+      });
+
+      scope.transformControls.zoomSpeed = 5.0;
       scope.transformControls.rotateSpeed = 5.0;
       scope.transformControls.panSpeed = 0.8;
 
@@ -734,7 +747,8 @@ var Viewer = function(domElement, settings, args){
     this.createControls();
     
     scope.useTransformControls();
-    
+    // scope.useOrbitControls();
+
     // enable frag_depth extension for the interpolation shader, if available
     scope.renderer.context.getExtension("EXT_frag_depth");
     
@@ -769,7 +783,6 @@ var Viewer = function(domElement, settings, args){
           scope.camera.near = 0.1;
         }
         
-        
         scope.flipYZ();
         scope.zoomTo(scope.pointcloud, 1);
         
@@ -777,16 +790,16 @@ var Viewer = function(domElement, settings, args){
       
         scope.earthControls.pointclouds.push(scope.pointcloud); 
         
-        // if(defaultSettings.navigation === "Earth"){
-        //   scope.useEarthControls();
-        // }else if(defaultSettings.navigation === "Orbit"){
-        //   scope.useOrbitControls();
-        // }else if(defaultSettings.navigation === "Flight"){
-        //   scope.useFPSControls();
-        // }else{
-        //   console.warning("No navigation mode specified. Using OrbitControls");
-        //   scope.useTransformControls();
-        // }
+        if(defaultSettings.navigation === "Earth"){
+          scope.useEarthControls();
+        }else if(defaultSettings.navigation === "Orbit"){
+          scope.useOrbitControls();
+        }else if(defaultSettings.navigation === "Flight"){
+          scope.useFPSControls();
+        }else{
+          // console.warning("No navigation mode specified. Using OrbitControls");
+          scope.useTransformControls();
+        }
         
         if(defaultSettings.cameraPosition != null){
           var cp = new THREE.Vector3(defaultSettings.cameraPosition[0], defaultSettings.cameraPosition[1], defaultSettings.cameraPosition[2]);
@@ -797,7 +810,7 @@ var Viewer = function(domElement, settings, args){
           var ct = new THREE.Vector3(defaultSettings.cameraTarget[0], defaultSettings.cameraTarget[1], defaultSettings.cameraTarget[2]);
           scope.camera.lookAt(ct);
           
-          if(defaultSettings.navigation === "Orbit"){
+          if(defaultSettings.navigation === "Orbit" || defaultSettings.navigation === 'Transform'){
             scope.controls.target.copy(ct);
           }
         }
@@ -847,7 +860,7 @@ var Viewer = function(domElement, settings, args){
           scope.useFPSControls();
         }else{
           console.warning("No navigation mode specivied. Using OrbitControls");
-          scope.useOrbitControls();
+          scope.useTransformControls();
         }
         
         if(defaultSettings.cameraPosition != null){
@@ -862,9 +875,9 @@ var Viewer = function(domElement, settings, args){
         
       });
     }
-    
-    var grid = Potree.utils.createGrid(5, 5, 2);
-    scope.scene.add(grid);
+
+    // var grid = Potree.utils.createGrid(5, 5, 2);
+    // scope.scene.add(grid);
     
     scope.measuringTool = new Potree.MeasuringTool(scope.scenePointCloud, scope.camera, scope.renderer);
     scope.profileTool = new Potree.ProfileTool(scope.scenePointCloud, scope.camera, scope.renderer);
@@ -1159,11 +1172,18 @@ var Viewer = function(domElement, settings, args){
       scope.controls.enabled = false;
     }
 
+    scope.earthControls.enabled = false;
+    scope.fpControls.enabled = false;
+    scope.orbitControls.enabled = false;
+
     scope.controls = scope.transformControls;
     scope.controls.enabled = true;
-    console.log(scope)
     scope.controls.addEventListener( 'change', scope.render );
     scope.scene.add(scope.controls);
+
+    if(scope.pointcloud){
+      scope.controls.target.copy(scope.pointcloud.boundingSphere.center.clone().applyMatrix4(scope.pointcloud.matrixWorld));
+    }
   }
   
   this.addAnnotation = function(position, args){
@@ -1609,6 +1629,37 @@ var Viewer = function(domElement, settings, args){
 
   requestAnimationFrame(loop);
 };
+
+function getMousePointCloudIntersection(mouse, camera, renderer, pointclouds){
+  var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
+  vector.unproject(camera);
+
+  var direction = vector.sub(camera.position).normalize();
+  var ray = new THREE.Ray(camera.position, direction);
+  
+  var closestPoint = null;
+  var closestPointDistance = null;
+  
+  for(var i = 0; i < pointclouds.length; i++){
+    var pointcloud = pointclouds[i];
+    var point = pointcloud.pick(renderer, camera, ray);
+    
+    if(!point){
+      continue;
+    }
+    
+    var distance = camera.position.distanceTo(point.position);
+    
+    if(!closestPoint || distance < closestPointDistance){
+      closestPoint = point;
+      closestPointDistance = distance;
+    }
+  }
+
+  console.log(closestPoint);
+  
+  return closestPoint ? closestPoint.position : null;
+}
 
 Viewer.prototype = Object.create( THREE.EventDispatcher.prototype );
 

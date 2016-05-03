@@ -225,13 +225,13 @@ var TransformGizmoTranslate = function () {
   arrowGeometry.merge( mesh.geometry, mesh.matrix );
 
   var lineXGeometry = new THREE.BufferGeometry();
-  lineXGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  1, 0, 0 ], 3 ) );
+  lineXGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array([ 0, 0, 0,  1, 0, 0 ]), 3 ) );
 
   var lineYGeometry = new THREE.BufferGeometry();
-  lineYGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  0, 1, 0 ], 3 ) );
+  lineYGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array([ 0, 0, 0,  0, 1, 0 ]), 3 ) );
 
   var lineZGeometry = new THREE.BufferGeometry();
-  lineZGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  0, 0, 1 ], 3 ) );
+  lineZGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array([ 0, 0, 0,  0, 0, 1 ]), 3 ) );
 
   this.handleGizmos = {
 
@@ -364,7 +364,7 @@ var TransformGizmoRotate = function () {
 
     }
 
-    geometry.addAttribute( 'position', new THREE.Float32Attribute( vertices, 3 ) );
+    geometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array(vertices), 3 ) );
     return geometry;
 
   };
@@ -508,13 +508,13 @@ var TransformGizmoScale = function () {
   arrowGeometry.merge( mesh.geometry, mesh.matrix );
 
   var lineXGeometry = new THREE.BufferGeometry();
-  lineXGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  1, 0, 0 ], 3 ) );
+  lineXGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array([ 0, 0, 0,  1, 0, 0 ]), 3 ) );
 
   var lineYGeometry = new THREE.BufferGeometry();
-  lineYGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  0, 1, 0 ], 3 ) );
+  lineYGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array([ 0, 0, 0,  0, 1, 0 ]), 3 ) );
 
   var lineZGeometry = new THREE.BufferGeometry();
-  lineZGeometry.addAttribute( 'position', new THREE.Float32Attribute( [ 0, 0, 0,  0, 0, 1 ], 3 ) );
+  lineZGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array([ 0, 0, 0,  0, 0, 1 ]), 3 ) );
 
   this.handleGizmos = {
 
@@ -687,10 +687,10 @@ var TransformControls = function ( camera, domElement ) {
 
   // Camera moving
   var EPS = 0.000001;
-  var target = new THREE.Vector3();
+  this.target = new THREE.Vector3();
 
   // for reset
-  var target0 = target.clone();
+  var target0 = this.target.clone();
   var position0 = camera.position.clone();
   var up0 = camera.up.clone();
 
@@ -890,13 +890,13 @@ var TransformControls = function ( camera, domElement ) {
 
     _gizmo[ _mode ].highlight( scope.axis );
 
-    eyeCamera.subVectors(camera.position, target);
+    eyeCamera.subVectors(camera.position, scope.target);
     scope.rotateCamera();
     scope.panCamera();
     scope.zoomCamera();
     zoomStart.copy( zoomEnd );
-    camera.position.addVectors(target, eyeCamera);
-    camera.lookAt(target);
+    camera.position.addVectors(scope.target, eyeCamera);
+    camera.lookAt(scope.target);
 
     scope.dispatchEvent( changeEvent );
   };
@@ -915,7 +915,7 @@ var TransformControls = function ( camera, domElement ) {
       angle = moveDirection.length();
 
       if (angle) {
-        eyeCamera.copy(camera.position).sub(target);
+        eyeCamera.copy(camera.position).sub(scope.target);
 
         eyeDirection.copy(eyeCamera).normalize();
         cameraUp.copy(camera.up).normalize();
@@ -938,7 +938,7 @@ var TransformControls = function ( camera, domElement ) {
         lastAngle = angle;
       } else if (!scope.staticMoving && lastAngle) {
         lastAngle *= Math.sqrt(1.0 - scope.dynamicDampingFactor);
-        eyeCamera.copy(camera.position).sub(target);
+        eyeCamera.copy(camera.position).sub(scope.target);
         quaternion.setFromAxisAngle(lastAxis, lastAngle);
         eyeCamera.applyQuaternion(quaternion);
         cameraUp.applyQuaternion(quaternion);
@@ -964,7 +964,7 @@ var TransformControls = function ( camera, domElement ) {
         pan.add(cameraUp.copy(camera.up).setLength(mouseChange.y));
 
         camera.position.add(pan);
-        target.add(pan);
+        scope.target.add(pan);
 
         if (scope.staticMoving) {
           panStart.copy(panEnd);
@@ -1004,12 +1004,12 @@ var TransformControls = function ( camera, domElement ) {
     currState = STATE.NONE;
     prevState = STATE.NONE;
 
-    target.copy(target0);
+    this.target.copy(target0);
     camera.position.copy(position0);
     camera.up.copy(up0);
 
-    eyeCamera.subVectors(camera.position, target);
-    camera.lookAt(target);
+    eyeCamera.subVectors(camera.position, this.target);
+    camera.lookAt(this.target);
 
     scope.dispatchEvent(changeEvent);
   }

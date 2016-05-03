@@ -627,7 +627,6 @@ Potree.Viewer = function(domElement, settings, args){
 					y: - ( (event.clientY - rect.top) / scope.renderArea.clientHeight ) * 2 + 1
 				};
 				
-				
 				var I = getMousePointCloudIntersection(mouse, scope.camera, scope.renderer, [scope.pointcloud]);
 				if(I != null){
 				
@@ -651,6 +650,7 @@ Potree.Viewer = function(domElement, settings, args){
 					var animationDuration = 600;
 					
 					var easing = TWEEN.Easing.Quartic.Out;
+					console.log(TWEEN);
 					
 					scope.controls.enabled = false;
 					
