@@ -65,19 +65,37 @@
 
 	var _PLYLoader2 = _interopRequireDefault(_PLYLoader);
 
-	var _getURLParams = __webpack_require__(17);
+	var _ExtrinsicsLoader = __webpack_require__(17);
+
+	var _ExtrinsicsLoader2 = _interopRequireDefault(_ExtrinsicsLoader);
+
+	var _getURLParams = __webpack_require__(18);
 
 	var _getURLParams2 = _interopRequireDefault(_getURLParams);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var loader, model, light, axes;
+	var loader, model, light, axes, extrinsics;
+
+	var submit = document.getElementById('submit');
+	submit.onclick = function () {
+	  console.log('HERRO!');
+	};
 
 	// Load URL parameters
 	var params = (0, _getURLParams2.default)();
 	var label = params.label === undefined ? 'glue' : params.label;
 	var frame = params.frame === undefined ? 0 : params.frame;
 	frame = 'frame-' + String('000000' + frame).slice(-6);
+
+	var extrinsicsLoader = new _ExtrinsicsLoader2.default();
+
+	extrinsicsLoader.load('./test/data/' + frame + '.pose.txt', function (matrix) {
+	  // extrinsics = new THREE.Matrix4();
+	  // extrinsics.getInverse(matrix);
+	  extrinsics = matrix;
+	  console.log(extrinsics);
+	});
 
 	var viewer = new _Viewer2.default(document.getElementById("container"), {
 	  path: './data/resources/pointclouds/' + frame + '/cloud.js',
@@ -98,6 +116,35 @@
 	loader = new _PLYLoader2.default();
 
 	loader.load('./test/data/glue.ply', function (geometry) {
+	  // var position = new THREE.Vector3();
+	  // var lookAt = new THREE.Vector3();
+	  // var up = new THREE.Vector3();
+
+	  // position.copy(viewer.camera.position);
+	  // lookAt.copy(viewer.camera.getWorldDirection());
+	  // up.copy(viewer.camera.up);
+
+	  // var rotation = new THREE.Quaternion();
+	  // var position = new THREE.Vector3();
+
+	  // rotation.setFromRotationMatrix(extrinsics);
+	  // position.setFromMatrixPosition(extrinsics);
+	  // console.log(rotation, position);
+
+	  // viewer.camera.matrixWorldInverse.getInverse(extrinsics);
+	  // console.log(viewer.camera.matrixWorldInverse)
+	  // viewer.camera.updateMatrix();
+	  // viewer.camera.up.applyMatrix4(extrinsics);
+	  // lookAt.applyMatrix4(extrinsics);
+	  // viewer.camera.lookAt(lookAt);
+	  // viewer.camera.up = new THREE.Vector3(0, 0, 1);
+	  // viewer.camera.position.copy(new THREE.Vector3());
+	  // viewer.camera.quaternion.copy(new THREE.Quaternion());
+	  // viewer.camera.position.setFromMatrixPosition(extrinsics);
+	  // viewer.camera.quaternion.setFromRotationMatrix(extrinsics);
+
+	  // console.log(viewer.camera.position, viewer.camera.quaternion);
+
 	  var material = new _three2.default.MeshPhongMaterial({ color: 0xffffff, shading: _three2.default.FlatShading });
 	  model = new _three2.default.Mesh(geometry, material);
 	  viewer.scene.add(model);
@@ -105,8 +152,8 @@
 	  configControls(viewer);
 	  viewer.controls.attach(model);
 
-	  // axes = new THREE.AxisHelper(5);
-	  // viewer.scene.add(axes);
+	  axes = new _three2.default.AxisHelper(5);
+	  viewer.scene.add(axes);
 	});
 
 	light = new _three2.default.DirectionalLight(0xffffff);
@@ -45948,6 +45995,56 @@
 
 /***/ },
 /* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _three = __webpack_require__(2);
+
+	var _three2 = _interopRequireDefault(_three);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var ExtrinsicsLoader = function ExtrinsicsLoader(manager) {
+	  this.manager = manager !== undefined ? manager : _three2.default.DefaultLoadingManager;
+	  this.propertyNameMapping = {};
+	};
+
+	ExtrinsicsLoader.prototype = {
+	  constructor: ExtrinsicsLoader,
+
+	  load: function load(url, onLoad) {
+	    var scope = this;
+
+	    var loader = new _three2.default.XHRLoader(this.manager);
+	    loader.setResponseType('text');
+	    loader.load(url, function (text) {
+	      onLoad(scope.text2matrix(text));
+	    });
+	  },
+
+	  text2matrix: function text2matrix(text) {
+	    var result = new _three2.default.Matrix4();
+
+	    var data = text.split('\n').map(function (row) {
+	      return row.split(' ').map(function (el) {
+	        return parseFloat(el);
+	      });
+	    });
+	    result.set(data[0][0], data[0][1], data[0][2], data[0][3], data[1][0], data[1][1], data[1][2], data[1][3], data[2][0], data[2][1], data[2][2], data[2][3], data[3][0], data[3][1], data[3][2], data[3][3]);
+
+	    return result;
+	  }
+	};
+
+	exports.default = ExtrinsicsLoader;
+
+/***/ },
+/* 18 */
 /***/ function(module, exports) {
 
 	"use strict";

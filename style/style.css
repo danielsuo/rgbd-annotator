@@ -1,15 +1,38 @@
+body {
+  margin: 0px;
+}
+
 h2 {
   padding-left: 1rem;
 }
 
 #submit {
-  width: 50%;
-  margin: 0 auto;
-  background-color: #111111;
+  position:relative; 
+  margin: 0 -60px; 
+  width:120px; 
+  top:50%; 
+  left:50%;
+
+  padding: 10px 25px;
+  font-size: 20px;
+  cursor: pointer;
+  text-align: center; 
+  outline: none;
+  color: #fff;
+  background-color: #008CBA;
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 4px #999;
+}
+
+#submit:hover {
+  background-color: #008CCB
 }
 
 #submit:active {
-  background-color: #222222;
+  background-color: #008CCB;
+  box-shadow: 0 2px #666;
+  transform: translateY(1px);
 }
 
 #container {
@@ -20,13 +43,14 @@ h2 {
 }
 
 #panel {
-  margin: 0px;
+  margin: 0 auto;
   width: 20%;
   height: 100vh;
   float: right;
   background-color: #ee7f2d;
   color: white;
   font-weight: 2px;
+  position: relative;
 }
 
 #instructions {

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+./scripts/im2ply/build/im2ply $1 $2 $3
+./scripts/PotreeConverter/build/PotreeConverter/PotreeConverter $3 -o ./data --generate-page $4

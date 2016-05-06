@@ -29,8 +29,8 @@ npm start
 ## TODO
 
 ### High priority
-- Get transformations right
 - Start camera at camera position where depth was taken
+- Clean out repository / gitignore data and build folders
 - Export to python script
 
 ### Medium priority

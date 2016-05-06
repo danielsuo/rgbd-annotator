@@ -1,0 +1,6 @@
+[submodule "scripts/PotreeConverter"]
+	path = scripts/PotreeConverter
+	url = https://github.com/danielsuo/PotreeConverter
+[submodule "scripts/LAStools"]
+	path = scripts/LAStools
+	url = https://github.com/m-schuetz/LAStools.git

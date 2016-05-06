@@ -1,15 +1,30 @@
 import THREE from 'three';
 import Viewer from './potree/Viewer';
 import PLYLoader from './three/loaders/PLYLoader';
+import ExtrinsicsLoader from './three/loaders/ExtrinsicsLoader';
 import getURLParams from './utils/getURLParams';
 
-var loader, model, light, axes;
+var loader, model, light, axes, extrinsics;
+
+var submit = document.getElementById('submit');
+submit.onclick = function() {
+  console.log('HERRO!');
+};
 
 // Load URL parameters
 var params = getURLParams();
 var label = params.label === undefined ? 'glue' : params.label;
 var frame = params.frame === undefined ? 0 : params.frame;
 frame = 'frame-' + String('000000' + frame).slice(-6);
+
+var extrinsicsLoader = new ExtrinsicsLoader();
+
+extrinsicsLoader.load('./test/data/' + frame + '.pose.txt', function(matrix) {
+  // extrinsics = new THREE.Matrix4();
+  // extrinsics.getInverse(matrix);
+  extrinsics = matrix;
+  console.log(extrinsics)
+});
 
 var viewer = new Viewer(document.getElementById("container"), 
   {
@@ -32,6 +47,37 @@ var viewer = new Viewer(document.getElementById("container"),
 loader = new PLYLoader();
 
 loader.load('./test/data/glue.ply', function(geometry) {
+  // var position = new THREE.Vector3();
+  // var lookAt = new THREE.Vector3();
+  // var up = new THREE.Vector3();
+
+  // position.copy(viewer.camera.position);
+  // lookAt.copy(viewer.camera.getWorldDirection());
+  // up.copy(viewer.camera.up);
+
+  // var rotation = new THREE.Quaternion();
+  // var position = new THREE.Vector3();
+
+  // rotation.setFromRotationMatrix(extrinsics);
+  // position.setFromMatrixPosition(extrinsics);
+  // console.log(rotation, position);
+
+  // viewer.camera.matrixWorldInverse.getInverse(extrinsics);
+  // console.log(viewer.camera.matrixWorldInverse)
+  // viewer.camera.updateMatrix();
+  // viewer.camera.up.applyMatrix4(extrinsics);
+  // lookAt.applyMatrix4(extrinsics);
+  // viewer.camera.lookAt(lookAt);
+  // viewer.camera.up = new THREE.Vector3(0, 0, 1);
+  // viewer.camera.position.copy(new THREE.Vector3());
+  // viewer.camera.quaternion.copy(new THREE.Quaternion());
+  // viewer.camera.position.setFromMatrixPosition(extrinsics);
+  // viewer.camera.quaternion.setFromRotationMatrix(extrinsics);
+
+  // console.log(viewer.camera.position, viewer.camera.quaternion);
+  
+  
+
   var material =  new THREE.MeshPhongMaterial( { color:0xffffff, shading: THREE.FlatShading } );
   model = new THREE.Mesh(geometry, material);
   viewer.scene.add(model);
@@ -39,8 +85,8 @@ loader.load('./test/data/glue.ply', function(geometry) {
   configControls(viewer);
   viewer.controls.attach(model);
 
-  // axes = new THREE.AxisHelper(5);
-  // viewer.scene.add(axes);
+  axes = new THREE.AxisHelper(5);
+  viewer.scene.add(axes);
 });
 
 light = new THREE.DirectionalLight( 0xffffff );
