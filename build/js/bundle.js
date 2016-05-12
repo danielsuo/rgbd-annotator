@@ -167,6 +167,10 @@
 	light = new _three2.default.AmbientLight(0x222222);
 	viewer.scene.add(light);
 
+	var ICP = new _three2.default.Matrix4();
+
+	ICP.set(-0.30736157298088074, 0.9514855742454529, -0.014286503195762634, 0.040610045194625854, -0.9129675030708313, -0.29908642172813416, -0.27755674719810486, 0.17960302531719208, -0.2683641314506531, -0.07226715236902237, 0.9606029987335205, -0.009037109091877937, 0, 0, 0, 1);
+
 	function configControls(viewer) {
 	  window.addEventListener('keydown', function (event) {
 	    console.log(event.keyCode, 'pressed!');
@@ -203,6 +207,12 @@
 	        model.position.copy(viewer.controls.target);
 	        break;
 
+	      case 89:
+	        // Y
+	        model.position.setFromMatrixPosition(ICP);
+	        model.quaternion.setFromRotationMatrix(ICP);
+	        break;
+
 	      case 65:
 	        //
 	        viewer.controls.reset();
@@ -222,8 +232,7 @@
 
 	      case 90:
 	        // Z
-	        console.log(model);
-	        console.log(viewer.controls);
+	        console.log(model.matrix);
 	        break;
 	    }
 	  });
